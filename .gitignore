@@ -1,0 +1,389 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/*
+!bin/.gitkeep
+dist/
+build/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+*.prof
+
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment files
+*.env
+.env*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+*.log
+log/*
+!log/.gitkeep
+logs/
+internal/infra/logger/log/*
+!internal/infra/logger/log/.gitkeep
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# meow/WhatsmeOW related files
+*.session
+*.store
+whatsmeow_store.db
+device_store.db
+session_store.db
+*.qr
+qr_codes/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.metadata/
+.recommenders/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+*.rej
+backup_*/
+backup*/
+*_backup/
+*backup*
+
+# Test and temporary files
+test_*.jpg
+test_*.png
+test_*.txt
+*_test.*
+MISSING_METHODS.md
+REAL_MISSING_METHODS.md
+TESTE_COMPLETO_RESULTADOS.md
+ROUTES.md
+*.md.bak
+*.md.old
+
+# Archive files
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+*.lz
+*.lzma
+*.Z
+*.deb
+*.rpm
+*.dmg
+*.iso
+*.img
+
+# Media and upload directories
+uploads/
+downloads/
+/media/
+storage/
+static/uploads/
+public/uploads/
+# Exclude media files in root and common directories, but NOT source code
+**/uploads/media/
+**/public/media/
+**/static/media/
+**/assets/media/
+
+# IMPORTANT: Do NOT ignore source code directories
+!internal/infra/media/
+!**/infrastructure/media/
+
+# Cache directories
+.cache/
+cache/
+tmp/
+temp/
+
+# Node.js (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Coverage reports
+coverage/
+coverage.txt
+coverage.html
+coverage.xml
+*.cover
+*.py,cover
+.coverage
+.coverage.*
+
+# Profiling files
+*.pprof
+cpu.prof
+mem.prof
+block.prof
+mutex.prof
+
+# Runtime files
+*.pid
+*.sock
+*.lock
+
+# Security and certificate files
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+*.keystore
+*.truststore
+*.pfx
+*.cer
+*.der
+*.csr
+*.p7b
+*.p7c
+*.p7s
+*.p7r
+*.spc
+*.crl
+*.ocsp
+*.tsr
+*.tsa
+*.tsq
+
+# Docker files (optional - uncomment if you want to ignore)
+# docker-compose.override.yml
+
+# Local development files
+.local/
+local/
+
+# Documentation build files
+docs/_build/
+docs/site/
+
+# Patch files
+*.patch
+*.diff
+
+# Air live reload tool
+tmp/
+.air.toml
+
+# Delve debugger
+__debug_bin
+
+# GoLand
+.idea/
+
+# VS Code
+.vscode/
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# JetBrains
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+.idea/replstate.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based Rest Client
+.idea/httpRequests
+
+# Android Studio 3.1+ serialized cache file
+.idea/caches/build_file_checksums.ser
+
+# JetBrains templates
+**___jb_tmp___
+
+# Gradle
+.gradle
+build/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Ignore Mac DS_Store files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk

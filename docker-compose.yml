@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:13-alpine
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  dbgate:
+    image: dbgate/dbgate:latest
+    container_name: meow-dbgate
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      CONNECTIONS: con1
+      LABEL_con1: meow PostgreSQL
+      SERVER_con1: postgres
+      USER_con1: ${DB_USER}
+      PASSWORD_con1: ${DB_PASSWORD}
+      PORT_con1: 5432
+      ENGINE_con1: postgres@dbgate-plugin-postgres
+      DATABASE_con1: ${DB_NAME}
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  minio_data:
