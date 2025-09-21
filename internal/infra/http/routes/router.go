@@ -57,9 +57,8 @@ func SetupRoutes(
 	sessionGroup.Get("/:sessionId/status", handlers.SessionHandler.GetSessionStatus)
 	sessionGroup.Put("/:sessionId/webhook", handlers.SessionHandler.UpdateSessionWebhook)
 
-	// Session API routes - TEMPORARILY COMMENTED OUT UNTIL HANDLERS ARE MIGRATED
-	// TODO: Uncomment after migrating all handlers to Fiber
-	/*
+	// Session API routes organized in the specified order:
+	// Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	sessionAPIGroup := app.Group("/session/:sessionId")
 	sessionAPIGroup.Use(authMiddleware.AuthenticateSession())
 
@@ -83,119 +82,110 @@ func SetupRoutes(
 	sessionAPIGroup.Post("/message/delete", handlers.MessageHandler.DeleteMessage)
 
 	// 2. Privacy
-	// TODO: Migrate PrivacyHandler to Fiber
-	/*
 	privacy := sessionAPIGroup.Group("/privacy")
-	privacy.PUT("/set", handlers.PrivacyHandler.SetAllPrivacySettings)
-	privacy.POST("/find", handlers.PrivacyHandler.FindPrivacySettings)
-	privacy.GET("/blocklist", handlers.PrivacyHandler.GetBlocklist)
-	privacy.PUT("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
+	privacy.Put("/set", handlers.PrivacyHandler.SetAllPrivacySettings)
+	privacy.Post("/find", handlers.PrivacyHandler.FindPrivacySettings)
+	privacy.Get("/blocklist", handlers.PrivacyHandler.GetBlocklist)
+	privacy.Put("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
 
 	// 3. Chat
-	// TODO: Migrate ChatHandler to Fiber
 	chat := sessionAPIGroup.Group("/chat")
-	chat.POST("/presence", handlers.ChatHandler.SetPresence)
-	chat.GET("/history", handlers.ChatHandler.GetChatHistory)
+	chat.Post("/presence", handlers.ChatHandler.SetPresence)
+	chat.Get("/history", handlers.ChatHandler.GetChatHistory)
 
 	download := chat.Group("/download")
-	download.POST("/image", handlers.ChatHandler.DownloadImage)
-	download.POST("/video", handlers.ChatHandler.DownloadVideo)
-	download.POST("/audio", handlers.ChatHandler.DownloadAudio)
-	download.POST("/document", handlers.ChatHandler.DownloadDocument)
+	download.Post("/image", handlers.ChatHandler.DownloadImage)
+	download.Post("/video", handlers.ChatHandler.DownloadVideo)
+	download.Post("/audio", handlers.ChatHandler.DownloadAudio)
+	download.Post("/document", handlers.ChatHandler.DownloadDocument)
 
-	chat.POST("/list", handlers.ChatHandler.ListChats)
-	chat.POST("/info", handlers.ChatHandler.GetChatInfo)
-	chat.POST("/pin", handlers.ChatHandler.PinChat)
-	chat.POST("/mute", handlers.ChatHandler.MuteChat)
-	chat.POST("/archive", handlers.ChatHandler.ArchiveChat)
-	chat.POST("/disappearing-timer", handlers.ChatHandler.SetDisappearingTimer)
+	chat.Post("/list", handlers.ChatHandler.ListChats)
+	chat.Post("/info", handlers.ChatHandler.GetChatInfo)
+	chat.Post("/pin", handlers.ChatHandler.PinChat)
+	chat.Post("/mute", handlers.ChatHandler.MuteChat)
+	chat.Post("/archive", handlers.ChatHandler.ArchiveChat)
+	chat.Post("/disappearing-timer", handlers.ChatHandler.SetDisappearingTimer)
 
 	// 4. Contacts
-	// TODO: Migrate ContactHandler to Fiber
 	contacts := sessionAPIGroup.Group("/contacts")
-	contacts.POST("/check", handlers.ContactHandler.CheckUser)
-	contacts.POST("/info", handlers.ContactHandler.GetUserInfo)
-	contacts.POST("/avatar", handlers.ContactHandler.GetAvatar)
-	contacts.GET("/list", handlers.ContactHandler.GetContacts)
-	contacts.POST("/sync", handlers.ContactHandler.GetContacts)
+	contacts.Post("/check", handlers.ContactHandler.CheckUser)
+	contacts.Post("/info", handlers.ContactHandler.GetUserInfo)
+	contacts.Post("/avatar", handlers.ContactHandler.GetAvatar)
+	contacts.Get("/list", handlers.ContactHandler.GetContacts)
+	contacts.Post("/sync", handlers.ContactHandler.GetContacts)
 
 	presence := sessionAPIGroup.Group("/presences")
-	presence.PUT("/set", handlers.ContactHandler.SetPresence)
-	presence.GET("/get", handlers.ContactHandler.GetUserInfo)
-	presence.POST("/contact", handlers.ContactHandler.GetUserInfo)
-	presence.POST("/subscribe", handlers.ContactHandler.CheckUser)
-	presence.POST("/typing", handlers.ChatHandler.SetPresence)
-	presence.POST("/recording", handlers.ChatHandler.SetPresence)
+	presence.Put("/set", handlers.ContactHandler.SetPresence)
+	presence.Get("/get", handlers.ContactHandler.GetUserInfo)
+	presence.Post("/contact", handlers.ContactHandler.GetUserInfo)
+	presence.Post("/subscribe", handlers.ContactHandler.CheckUser)
+	presence.Post("/typing", handlers.ChatHandler.SetPresence)
+	presence.Post("/recording", handlers.ChatHandler.SetPresence)
 
 	// 5. Groups
-	// TODO: Migrate GroupHandler to Fiber
 	group := sessionAPIGroup.Group("/group")
-	group.POST("/create", handlers.GroupHandler.CreateGroup)
-	group.GET("/list", handlers.GroupHandler.ListGroups)
-	group.POST("/info", handlers.GroupHandler.GetGroupInfo)
-	group.POST("/join", handlers.GroupHandler.JoinGroup)
-	group.POST("/join-with-invite", handlers.GroupHandler.JoinGroupWithInvite)
-	group.POST("/leave", handlers.GroupHandler.LeaveGroup)
-	group.POST("/invitelink", handlers.GroupHandler.GetInviteLink)
-	group.POST("/inviteinfo", handlers.GroupHandler.GetInviteInfo)
-	group.POST("/inviteinfo-specific", handlers.GroupHandler.GetGroupInfoFromInvite)
+	group.Post("/create", handlers.GroupHandler.CreateGroup)
+	group.Get("/list", handlers.GroupHandler.ListGroups)
+	group.Post("/info", handlers.GroupHandler.GetGroupInfo)
+	group.Post("/join", handlers.GroupHandler.JoinGroup)
+	group.Post("/join-with-invite", handlers.GroupHandler.JoinGroupWithInvite)
+	group.Post("/leave", handlers.GroupHandler.LeaveGroup)
+	group.Post("/invitelink", handlers.GroupHandler.GetInviteLink)
+	group.Post("/inviteinfo", handlers.GroupHandler.GetInviteInfo)
+	group.Post("/inviteinfo-specific", handlers.GroupHandler.GetGroupInfoFromInvite)
 
 	participants := group.Group("/participants")
-	participants.POST("/update", handlers.GroupHandler.UpdateParticipants)
+	participants.Post("/update", handlers.GroupHandler.UpdateParticipants)
 
 	settings := group.Group("/settings")
-	settings.POST("/name", handlers.GroupHandler.SetName)
-	settings.POST("/topic", handlers.GroupHandler.SetTopic)
-	settings.POST("/photo/set", handlers.GroupHandler.SetPhoto)
-	settings.POST("/photo/remove", handlers.GroupHandler.RemovePhoto)
-	settings.POST("/announce", handlers.GroupHandler.SetAnnounce)
-	settings.POST("/locked", handlers.GroupHandler.SetLocked)
-	settings.POST("/ephemeral", handlers.GroupHandler.SetEphemeral)
-	settings.POST("/join-approval", handlers.GroupHandler.SetJoinApproval)
-	settings.POST("/member-add-mode", handlers.GroupHandler.SetMemberAddMode)
+	settings.Post("/name", handlers.GroupHandler.SetName)
+	settings.Post("/topic", handlers.GroupHandler.SetTopic)
+	settings.Post("/photo/set", handlers.GroupHandler.SetPhoto)
+	settings.Post("/photo/remove", handlers.GroupHandler.RemovePhoto)
+	settings.Post("/announce", handlers.GroupHandler.SetAnnounce)
+	settings.Post("/locked", handlers.GroupHandler.SetLocked)
+	settings.Post("/ephemeral", handlers.GroupHandler.SetEphemeral)
+	settings.Post("/join-approval", handlers.GroupHandler.SetJoinApproval)
+	settings.Post("/member-add-mode", handlers.GroupHandler.SetMemberAddMode)
 
 	requests := group.Group("/requests")
-	requests.POST("/list", handlers.GroupHandler.GetGroupRequestParticipants)
-	requests.POST("/update", handlers.GroupHandler.UpdateGroupRequestParticipants)
+	requests.Post("/list", handlers.GroupHandler.GetGroupRequestParticipants)
+	requests.Post("/update", handlers.GroupHandler.UpdateGroupRequestParticipants)
 
 	// 6. Communities
-	// TODO: Migrate CommunityHandler to Fiber
 	community := sessionAPIGroup.Group("/community")
-	community.POST("/link", handlers.CommunityHandler.LinkGroup)
-	community.POST("/unlink", handlers.CommunityHandler.UnlinkGroup)
-	community.POST("/subgroups", handlers.CommunityHandler.GetSubGroups)
-	community.POST("/participants", handlers.CommunityHandler.GetLinkedGroupsParticipants)
+	community.Post("/link", handlers.CommunityHandler.LinkGroup)
+	community.Post("/unlink", handlers.CommunityHandler.UnlinkGroup)
+	community.Post("/subgroups", handlers.CommunityHandler.GetSubGroups)
+	community.Post("/participants", handlers.CommunityHandler.GetLinkedGroupsParticipants)
 
 	// 7. Newsletters
-	// TODO: Migrate NewsletterHandler to Fiber
 	newsletter := sessionAPIGroup.Group("/newsletter")
-	newsletter.POST("", handlers.NewsletterHandler.CreateNewsletter)
-	newsletter.GET("/list", handlers.NewsletterHandler.ListNewsletters)
-	newsletter.GET("/:newsletterId", handlers.NewsletterHandler.GetNewsletter)
-	newsletter.POST("/:newsletterId/subscribe", handlers.NewsletterHandler.SubscribeToNewsletter)
-	newsletter.POST("/:newsletterId/unsubscribe", handlers.NewsletterHandler.UnsubscribeFromNewsletter)
-	newsletter.POST("/:newsletterId/send", handlers.NewsletterHandler.SendNewsletterMessage)
+	newsletter.Post("", handlers.NewsletterHandler.CreateNewsletter)
+	newsletter.Get("/list", handlers.NewsletterHandler.ListNewsletters)
+	newsletter.Get("/:newsletterId", handlers.NewsletterHandler.GetNewsletter)
+	newsletter.Post("/:newsletterId/subscribe", handlers.NewsletterHandler.SubscribeToNewsletter)
+	newsletter.Post("/:newsletterId/unsubscribe", handlers.NewsletterHandler.UnsubscribeFromNewsletter)
+	newsletter.Post("/:newsletterId/send", handlers.NewsletterHandler.SendNewsletterMessage)
 
-	newsletter.GET("/:newsletterId/messages", handlers.NewsletterHandler.GetNewsletterMessages)
-	newsletter.GET("/:newsletterId/updates", handlers.NewsletterHandler.GetNewsletterMessageUpdates)
-	newsletter.POST("/:newsletterId/mark-viewed", handlers.NewsletterHandler.MarkNewsletterViewed)
+	newsletter.Get("/:newsletterId/messages", handlers.NewsletterHandler.GetNewsletterMessages)
+	newsletter.Get("/:newsletterId/updates", handlers.NewsletterHandler.GetNewsletterMessageUpdates)
+	newsletter.Post("/:newsletterId/mark-viewed", handlers.NewsletterHandler.MarkNewsletterViewed)
 
-	newsletter.POST("/:newsletterId/reaction", handlers.NewsletterHandler.SendNewsletterReaction)
-	newsletter.POST("/:newsletterId/mute", handlers.NewsletterHandler.ToggleNewsletterMute)
-	newsletter.POST("/:newsletterId/live-updates", handlers.NewsletterHandler.SubscribeLiveUpdates)
+	newsletter.Post("/:newsletterId/reaction", handlers.NewsletterHandler.SendNewsletterReaction)
+	newsletter.Post("/:newsletterId/mute", handlers.NewsletterHandler.ToggleNewsletterMute)
+	newsletter.Post("/:newsletterId/live-updates", handlers.NewsletterHandler.SubscribeLiveUpdates)
 
-	newsletter.POST("/upload", handlers.NewsletterHandler.UploadNewsletterMedia)
-	newsletter.GET("/invite/:inviteKey", handlers.NewsletterHandler.GetNewsletterByInvite)
+	newsletter.Post("/upload", handlers.NewsletterHandler.UploadNewsletterMedia)
+	newsletter.Get("/invite/:inviteKey", handlers.NewsletterHandler.GetNewsletterByInvite)
 
 	// 8. Webhooks
-	// TODO: Migrate WebhookHandler to Fiber
 	webhook := sessionAPIGroup.Group("/webhook")
-	webhook.POST("", handlers.WebhookHandler.SetWebhook)
-	webhook.GET("", handlers.WebhookHandler.GetWebhook)
+	webhook.Post("", handlers.WebhookHandler.SetWebhook)
+	webhook.Get("", handlers.WebhookHandler.GetWebhook)
 
 	webhooks := sessionAPIGroup.Group("/webhooks")
-	webhooks.GET("/events", handlers.WebhookHandler.ListEvents)
-	*/
+	webhooks.Get("/events", handlers.WebhookHandler.ListEvents)
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 }

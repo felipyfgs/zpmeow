@@ -3,11 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 
 	"zpmeow/internal/application"
 	"zpmeow/internal/infra/http/dto"
@@ -41,12 +40,12 @@ func NewPrivacyHandler(sessionService *application.SessionApp, wmeowService wmeo
 // @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
 // @Failure 500 {object} dto.PrivacySettingsResponse "Failed to set privacy settings"
 // @Router /session/{sessionId}/privacy/set [put]
-func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *PrivacyHandler) SetAllPrivacySettings(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.SetAllPrivacySettingsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.PrivacySettingsResponse{
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.PrivacySettingsResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "INVALID_REQUEST",
@@ -54,11 +53,10 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 				Details: err.Error(),
 			},
 		})
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.PrivacySettingsResponse{
+		return c.Status(fiber.StatusBadRequest).JSON( dto.PrivacySettingsResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "VALIDATION_ERROR",
@@ -66,15 +64,14 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 				Details: err.Error(),
 			},
 		})
-		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(c.Context(), 60*time.Second)
 	defer cancel()
 
 	currentSettings, err := h.wmeowService.GetPrivacySettings(ctx, sessionID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "PRIVACY_FETCH_ERROR",
@@ -82,13 +79,12 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 				Details: err.Error(),
 			},
 		})
-		return
 	}
 
 	if req.GroupsAddMe != "" {
 		err := h.wmeowService.SetPrivacySetting(ctx, sessionID, "groupadd", req.GroupsAddMe)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "PRIVACY_UPDATE_ERROR",
@@ -96,7 +92,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 					Details: err.Error(),
 				},
 			})
-			return
 		}
 		currentSettings.GroupsAddMe = req.GroupsAddMe
 	}
@@ -104,7 +99,7 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	if req.LastSeen != "" {
 		err := h.wmeowService.SetPrivacySetting(ctx, sessionID, "last", req.LastSeen)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "PRIVACY_UPDATE_ERROR",
@@ -112,7 +107,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 					Details: err.Error(),
 				},
 			})
-			return
 		}
 		currentSettings.LastSeen = req.LastSeen
 	}
@@ -120,7 +114,7 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	if req.Status != "" {
 		err := h.wmeowService.SetPrivacySetting(ctx, sessionID, "status", req.Status)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "PRIVACY_UPDATE_ERROR",
@@ -128,7 +122,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 					Details: err.Error(),
 				},
 			})
-			return
 		}
 		currentSettings.Status = req.Status
 	}
@@ -136,7 +129,7 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	if req.ProfilePhoto != "" {
 		err := h.wmeowService.SetPrivacySetting(ctx, sessionID, "profile", req.ProfilePhoto)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "PRIVACY_UPDATE_ERROR",
@@ -144,7 +137,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 					Details: err.Error(),
 				},
 			})
-			return
 		}
 		currentSettings.ProfilePhoto = req.ProfilePhoto
 	}
@@ -155,7 +147,7 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	}
 	err = h.wmeowService.SetPrivacySetting(ctx, sessionID, "readreceipts", value)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "PRIVACY_UPDATE_ERROR",
@@ -163,14 +155,13 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 				Details: err.Error(),
 			},
 		})
-		return
 	}
 	currentSettings.ReadReceipts = value == "all"
 
 	if req.CallsAddMe != "" {
 		err := h.wmeowService.SetPrivacySetting(ctx, sessionID, "calladd", req.CallsAddMe)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "PRIVACY_UPDATE_ERROR",
@@ -178,7 +169,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 					Details: err.Error(),
 				},
 			})
-			return
 		}
 		currentSettings.CallsAddMe = req.CallsAddMe
 	}
@@ -195,34 +185,33 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 		UpdatedAt:         time.Now().Format(time.RFC3339),
 	}
 
-	c.JSON(http.StatusOK, dto.PrivacySettingsResponse{
+	return c.Status(fiber.StatusOK).JSON( dto.PrivacySettingsResponse{
 		Success: true,
 		Data:    data,
 	})
 }
 
-func (h *PrivacyHandler) GetBlocklist(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *PrivacyHandler) GetBlocklist(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 	if err := validateSessionID(sessionID); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BlocklistResponse{
+		return c.Status(fiber.StatusBadRequest).JSON( dto.BlocklistResponse{
 			Success: false,
 			Error:   createValidationError("session ID", err.Error()),
 		})
-		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(c.Context(), 30*time.Second)
 	defer cancel()
 
 	blocklist, err := h.wmeowService.GetBlocklist(ctx, sessionID)
 	if err != nil {
 		if strings.Contains(err.Error(), "client not found") {
-			c.JSON(http.StatusNotFound, dto.BlocklistResponse{
+			return c.Status(fiber.StatusNotFound).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error:   createNotFoundError("Session"),
 			})
 		} else if strings.Contains(err.Error(), "not connected") {
-			c.JSON(http.StatusServiceUnavailable, dto.BlocklistResponse{
+			return c.Status(fiber.StatusServiceUnavailable).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "SESSION_NOT_CONNECTED",
@@ -231,12 +220,11 @@ func (h *PrivacyHandler) GetBlocklist(c *gin.Context) {
 				},
 			})
 		} else {
-			c.JSON(http.StatusInternalServerError, dto.BlocklistResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error:   createInternalError("fetch blocklist", err.Error()),
 			})
 		}
-		return
 	}
 
 	jids := blocklist
@@ -247,59 +235,55 @@ func (h *PrivacyHandler) GetBlocklist(c *gin.Context) {
 		Count:           len(jids),
 	}
 
-	c.JSON(http.StatusOK, dto.BlocklistResponse{
+	return c.Status(fiber.StatusOK).JSON( dto.BlocklistResponse{
 		Success: true,
 		Data:    data,
 	})
 }
 
-func (h *PrivacyHandler) UpdateBlocklist(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *PrivacyHandler) UpdateBlocklist(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 	if err := validateSessionID(sessionID); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BlocklistResponse{
+		return c.Status(fiber.StatusBadRequest).JSON( dto.BlocklistResponse{
 			Success: false,
 			Error:   createValidationError("session ID", err.Error()),
 		})
-		return
 	}
 
 	var req dto.UpdateBlocklistRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BlocklistResponse{
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.BlocklistResponse{
 			Success: false,
 			Error:   createValidationError("request body", err.Error()),
 		})
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BlocklistResponse{
+		return c.Status(fiber.StatusBadRequest).JSON( dto.BlocklistResponse{
 			Success: false,
 			Error:   createValidationError("request", err.Error()),
 		})
-		return
 	}
 
 	if err := validateBlocklistAction(req.Action); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BlocklistResponse{
+		return c.Status(fiber.StatusBadRequest).JSON( dto.BlocklistResponse{
 			Success: false,
 			Error:   createValidationError("action", err.Error()),
 		})
-		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(c.Context(), 30*time.Second)
 	defer cancel()
 
 	err := h.wmeowService.UpdateBlocklist(ctx, sessionID, req.Action, req.Contacts)
 	if err != nil {
 		if strings.Contains(err.Error(), "client not found") {
-			c.JSON(http.StatusNotFound, dto.BlocklistResponse{
+			return c.Status(fiber.StatusNotFound).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error:   createNotFoundError("Session"),
 			})
 		} else if strings.Contains(err.Error(), "not connected") {
-			c.JSON(http.StatusServiceUnavailable, dto.BlocklistResponse{
+			return c.Status(fiber.StatusServiceUnavailable).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "SESSION_NOT_CONNECTED",
@@ -308,12 +292,11 @@ func (h *PrivacyHandler) UpdateBlocklist(c *gin.Context) {
 				},
 			})
 		} else {
-			c.JSON(http.StatusInternalServerError, dto.BlocklistResponse{
+			return c.Status(fiber.StatusInternalServerError).JSON( dto.BlocklistResponse{
 				Success: false,
 				Error:   createInternalError(fmt.Sprintf("%s contact", req.Action), err.Error()),
 			})
 		}
-		return
 	}
 
 	data := &dto.BlockedContactsData{
@@ -322,7 +305,7 @@ func (h *PrivacyHandler) UpdateBlocklist(c *gin.Context) {
 		Count:           len(req.Contacts),
 	}
 
-	c.JSON(http.StatusOK, dto.BlocklistResponse{
+	return c.Status(fiber.StatusOK).JSON( dto.BlocklistResponse{
 		Success: true,
 		Data:    data,
 	})
@@ -391,20 +374,20 @@ func createNotFoundError(resource string) *dto.ErrorInfo {
 // @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
 // @Failure 500 {object} dto.PrivacySettingsResponse "Failed to get privacy settings"
 // @Router /session/{sessionId}/privacy/find [post]
-func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *PrivacyHandler) FindPrivacySettings(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.FindPrivacySettingsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		req.Settings = []string{}
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(c.Context(), 30*time.Second)
 	defer cancel()
 
 	allSettings, err := h.wmeowService.GetPrivacySettings(ctx, sessionID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.PrivacySettingsResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.PrivacySettingsResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "PRIVACY_FETCH_ERROR",
@@ -412,7 +395,6 @@ func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
 				Details: err.Error(),
 			},
 		})
-		return
 	}
 
 	if len(req.Settings) == 0 {
@@ -428,11 +410,10 @@ func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
 			UpdatedAt:         time.Now().Format(time.RFC3339),
 		}
 
-		c.JSON(http.StatusOK, dto.PrivacySettingsResponse{
+		return c.Status(fiber.StatusOK).JSON( dto.PrivacySettingsResponse{
 			Success: true,
 			Data:    data,
 		})
-		return
 	}
 
 	filteredData := &dto.PrivacySettingsData{
@@ -457,7 +438,7 @@ func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, dto.PrivacySettingsResponse{
+	return c.Status(fiber.StatusOK).JSON( dto.PrivacySettingsResponse{
 		Success: true,
 		Data:    filteredData,
 	})

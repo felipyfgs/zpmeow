@@ -3,14 +3,13 @@ package handlers
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"strconv"
 
 	"zpmeow/internal/application"
 	"zpmeow/internal/infra/http/dto"
 	"zpmeow/internal/infra/wmeow"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type MediaHandler struct {
@@ -25,51 +24,47 @@ func NewMediaHandler(sessionService *application.SessionApp, wmeowService wmeow.
 	}
 }
 
-func (h *MediaHandler) UploadMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *MediaHandler) UploadMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.UploadMediaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
 			err.Error(),
 		))
-		return
 	}
 
 	data, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_DATA",
 			"Invalid base64 data",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	mediaURL, err := h.wmeowService.UploadMedia(ctx, sessionID, data, req.MediaType)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"UPLOAD_FAILED",
 			"Failed to upload media",
 			err.Error(),
 		))
-		return
 	}
 
 	responseData := map[string]interface{}{
@@ -78,105 +73,98 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		"size":       len(data),
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "upload", "Media uploaded successfully", responseData))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "upload", "Media uploaded successfully", responseData))
 }
 
-func (h *MediaHandler) GetMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *MediaHandler) GetMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.GetMediaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	mediaInfo, err := h.wmeowService.GetMediaInfo(ctx, sessionID, req.MediaID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"GET_MEDIA_FAILED",
 			"Failed to get media info",
 			err.Error(),
 		))
-		return
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "get", "Media retrieved successfully", mediaInfo))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "get", "Media retrieved successfully", mediaInfo))
 }
 
-func (h *MediaHandler) DownloadMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) DownloadMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	if mediaID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_MEDIA_ID",
 			"Media ID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	data, mimeType, err := h.wmeowService.DownloadMedia(ctx, sessionID, mediaID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"DOWNLOAD_FAILED",
 			"Failed to download media",
 			err.Error(),
 		))
-		return
 	}
 
-	c.Header("Content-Type", mimeType)
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", mediaID))
-	c.Header("Content-Length", fmt.Sprintf("%d", len(data)))
+	c.Set("Content-Type", mimeType)
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", mediaID))
+	c.Set("Content-Length", fmt.Sprintf("%d", len(data)))
 
-	c.Data(http.StatusOK, mimeType, data)
+	return c.Status(fiber.StatusOK).Send(data)
 }
 
-func (h *MediaHandler) DeleteMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) DeleteMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	if mediaID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_MEDIA_ID",
 			"Media ID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.DeleteMedia(ctx, sessionID, mediaID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"DELETE_FAILED",
 			"Failed to delete media",
 			err.Error(),
 		))
-		return
 	}
 
 	responseData := map[string]interface{}{
@@ -184,47 +172,44 @@ func (h *MediaHandler) DeleteMedia(c *gin.Context) {
 		"deleted":  true,
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "delete", "Media deleted successfully", responseData))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "delete", "Media deleted successfully", responseData))
 }
 
-func (h *MediaHandler) ListMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *MediaHandler) ListMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
-	limitStr := c.DefaultQuery("limit", "50")
-	offsetStr := c.DefaultQuery("offset", "0")
+	limitStr := c.Query("limit", "50")
+	offsetStr := c.Query("offset", "0")
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_LIMIT",
 			"Invalid limit parameter",
 			err.Error(),
 		))
-		return
 	}
 
 	offset, err := strconv.Atoi(offsetStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_OFFSET",
 			"Invalid offset parameter",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	mediaList, err := h.wmeowService.ListMedia(ctx, sessionID, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"LIST_FAILED",
 			"Failed to list media",
 			err.Error(),
 		))
-		return
 	}
 
 	responseData := map[string]interface{}{
@@ -234,73 +219,68 @@ func (h *MediaHandler) ListMedia(c *gin.Context) {
 		"offset": offset,
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "list", "Media listed successfully", responseData))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "list", "Media listed successfully", responseData))
 }
 
-func (h *MediaHandler) GetMediaProgress(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) GetMediaProgress(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	if mediaID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_MEDIA_ID",
 			"Media ID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	progress, err := h.wmeowService.GetMediaProgress(ctx, sessionID, mediaID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"GET_PROGRESS_FAILED",
 			"Failed to get media progress",
 			err.Error(),
 		))
-		return
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "progress", "Media progress retrieved successfully", progress))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "progress", "Media progress retrieved successfully", progress))
 }
 
-func (h *MediaHandler) ConvertMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) ConvertMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	var req dto.ConvertMediaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	convertedMediaID, err := h.wmeowService.ConvertMedia(ctx, sessionID, mediaID, req.TargetFormat)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"CONVERT_FAILED",
 			"Failed to convert media",
 			err.Error(),
 		))
-		return
 	}
 
 	responseData := map[string]interface{}{
@@ -309,44 +289,41 @@ func (h *MediaHandler) ConvertMedia(c *gin.Context) {
 		"target_format":      req.TargetFormat,
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "convert", "Media converted successfully", responseData))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "convert", "Media converted successfully", responseData))
 }
 
-func (h *MediaHandler) CompressMedia(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) CompressMedia(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	var req dto.CompressMediaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if err := req.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	compressedMediaID, err := h.wmeowService.CompressMedia(ctx, sessionID, mediaID, req.Quality)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"COMPRESS_FAILED",
 			"Failed to compress media",
 			err.Error(),
 		))
-		return
 	}
 
 	responseData := map[string]interface{}{
@@ -355,34 +332,32 @@ func (h *MediaHandler) CompressMedia(c *gin.Context) {
 		"quality":             req.Quality,
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "compress", "Media compressed successfully", responseData))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "compress", "Media compressed successfully", responseData))
 }
 
-func (h *MediaHandler) GetMediaMetadata(c *gin.Context) {
-	sessionID := c.Param("sessionId")
-	mediaID := c.Param("mediaId")
+func (h *MediaHandler) GetMediaMetadata(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
+	mediaID := c.Params("mediaId")
 
 	if mediaID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewMediaErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_MEDIA_ID",
 			"Media ID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	metadata, err := h.wmeowService.GetMediaMetadata(ctx, sessionID, mediaID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewMediaErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMediaErrorResponse(
+			fiber.StatusInternalServerError,
 			"GET_METADATA_FAILED",
 			"Failed to get media metadata",
 			err.Error(),
 		))
-		return
 	}
 
-	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "metadata", "Media metadata retrieved successfully", metadata))
+	return c.Status(fiber.StatusOK).JSON( dto.NewMediaSuccessResponse(sessionID, "metadata", "Media metadata retrieved successfully", metadata))
 }
