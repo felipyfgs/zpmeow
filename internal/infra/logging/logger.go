@@ -148,6 +148,49 @@ func GetWALogger(module string) waLog.Logger {
 	return NewWALogger(module)
 }
 
+// NewWALogger creates a new WhatsApp logger adapter
+func NewWALogger(module string) waLog.Logger {
+	logger := GetLogger().Sub(module)
+	return &WALoggerAdapter{
+		logger: logger,
+		module: module,
+	}
+}
+
+// WALoggerAdapter adapts our Logger interface to WhatsApp's logger interface
+type WALoggerAdapter struct {
+	logger Logger
+	module string
+}
+
+func (w *WALoggerAdapter) Errorf(msg string, args ...interface{}) {
+	w.logger.Errorf(msg, args...)
+}
+
+func (w *WALoggerAdapter) Warnf(msg string, args ...interface{}) {
+	w.logger.Warnf(msg, args...)
+}
+
+func (w *WALoggerAdapter) Infof(msg string, args ...interface{}) {
+	w.logger.Infof(msg, args...)
+}
+
+func (w *WALoggerAdapter) Debugf(msg string, args ...interface{}) {
+	w.logger.Debugf(msg, args...)
+}
+
+func (w *WALoggerAdapter) Sub(module string) waLog.Logger {
+	return NewWALogger(w.module + "." + module)
+}
+
+// TruncateID truncates long IDs for better log readability
+func TruncateID(id string) string {
+	if len(id) <= 16 {
+		return id
+	}
+	return id[:8] + "..." + id[len(id)-8:]
+}
+
 func shouldUseColor(out io.Writer, configColor bool) bool {
 	if forceColor := os.Getenv("FORCE_COLOR"); forceColor != "" {
 		return forceColor != "0" && forceColor != "false"

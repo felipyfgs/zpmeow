@@ -2389,3 +2389,149 @@ func (m *MeowService) UpdateBlocklist(ctx context.Context, sessionID string, act
 	m.logger.Debugf("Updated blocklist with action %s for %d contacts in session %s", action, len(contacts), sessionID)
 	return nil
 }
+
+// ========================================
+// Message Helper Functions (moved from messages.go)
+// ========================================
+
+func sendMessageToJID(client *whatsmeow.Client, to string, message *waProto.Message) (*whatsmeow.SendResponse, error) {
+	jid, err := parsePhoneToJID(to)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.SendMessage(context.Background(), jid, message)
+	return &resp, err
+}
+
+func createMediaMessage(client *whatsmeow.Client, data []byte, mediaType whatsmeow.MediaType) (*whatsmeow.UploadResponse, error) {
+	return uploadMedia(client, data, mediaType)
+}
+
+func validateMessageInput(client *whatsmeow.Client, to string) error {
+	if client == nil {
+		return fmt.Errorf("client cannot be nil")
+	}
+	if to == "" {
+		return fmt.Errorf("recipient cannot be empty")
+	}
+	return nil
+}
+
+func parsePhoneToJID(phone string) (waTypes.JID, error) {
+	phone = strings.TrimSpace(phone)
+	if phone == "" {
+		return waTypes.EmptyJID, fmt.Errorf("phone number cannot be empty")
+	}
+
+	if phone[0] == '+' {
+		phone = phone[1:]
+	}
+
+	var digits strings.Builder
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			digits.WriteRune(r)
+		}
+	}
+	formattedPhone := digits.String()
+
+	if formattedPhone == "" {
+		return waTypes.EmptyJID, fmt.Errorf("phone number cannot be empty")
+	}
+
+	if len(formattedPhone) < 7 || len(formattedPhone) > 15 {
+		return waTypes.EmptyJID, fmt.Errorf("phone number must be between 7 and 15 digits")
+	}
+
+	if formattedPhone[0] == '0' {
+		return waTypes.EmptyJID, fmt.Errorf("phone number should not start with 0")
+	}
+
+	return waTypes.NewJID(formattedPhone, waTypes.DefaultUserServer), nil
+}
+
+func uploadMedia(client *whatsmeow.Client, data []byte, mediaType whatsmeow.MediaType) (*whatsmeow.UploadResponse, error) {
+	resp, err := client.Upload(context.Background(), data, mediaType)
+	return &resp, err
+}
+
+// ========================================
+// Message Sending Functions (moved from messages.go)
+// ========================================
+
+func sendTextMessage(client *whatsmeow.Client, to, text string) (*whatsmeow.SendResponse, error) {
+	if err := validateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	if text == "" {
+		return nil, fmt.Errorf("text cannot be empty")
+	}
+
+	message := &waProto.Message{
+		Conversation: &text,
+	}
+
+	return sendMessageToJID(client, to, message)
+}
+
+func sendImageMessage(client *whatsmeow.Client, to string, data []byte, caption string) (*whatsmeow.SendResponse, error) {
+	if err := validateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	if len(data) == 0 {
+		return nil, fmt.Errorf("image data cannot be empty")
+	}
+
+	uploaded, err := createMediaMessage(client, data, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
+	mimeType := "image/jpeg"
+	message := &waProto.Message{
+		ImageMessage: &waProto.ImageMessage{
+			Caption:       &caption,
+			URL:           &uploaded.URL,
+			DirectPath:    &uploaded.DirectPath,
+			MediaKey:      uploaded.MediaKey,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    &uploaded.FileLength,
+			Mimetype:      &mimeType,
+		},
+	}
+
+	return sendMessageToJID(client, to, message)
+}
+
+func sendAudioMessage(client *whatsmeow.Client, to string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
+	if err := validateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	if len(data) == 0 {
+		return nil, fmt.Errorf("audio data cannot be empty")
+	}
+
+	uploaded, err := createMediaMessage(client, data, whatsmeow.MediaAudio)
+	if err != nil {
+		return nil, err
+	}
+
+	message := &waProto.Message{
+		AudioMessage: &waProto.AudioMessage{
+			URL:           &uploaded.URL,
+			DirectPath:    &uploaded.DirectPath,
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      &mimeType,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    &uploaded.FileLength,
+		},
+	}
+
+	return sendMessageToJID(client, to, message)
+}

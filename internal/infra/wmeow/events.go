@@ -13,53 +13,53 @@ import (
 )
 
 type EventProcessor struct {
-	sessionID         string
-	webhookURL        string
-	sessionRepo       session.Repository
-	logger            logging.Logger
-	subscribedEvents  []string
+	sessionID        string
+	webhookURL       string
+	sessionRepo      session.Repository
+	logger           logging.Logger
+	subscribedEvents []string
 }
 
 // Mapping from whatsmeow event types to our system event types
 var eventTypeMapping = map[string]string{
-	"*events.Message":                      "Message",
-	"*events.UndecryptableMessage":         "UndecryptableMessage",
-	"*events.Receipt":                      "Receipt",
-	"*events.MediaRetry":                   "MediaRetry",
-	"*events.Connected":                    "Connected",
-	"*events.Disconnected":                 "Disconnected",
-	"*events.ConnectFailure":               "ConnectFailure",
-	"*events.KeepAliveRestored":            "KeepAliveRestored",
-	"*events.KeepAliveTimeout":             "KeepAliveTimeout",
-	"*events.LoggedOut":                    "LoggedOut",
-	"*events.ClientOutdated":               "ClientOutdated",
-	"*events.TemporaryBan":                 "TemporaryBan",
-	"*events.StreamError":                  "StreamError",
-	"*events.StreamReplaced":               "StreamReplaced",
-	"*events.PairSuccess":                  "PairSuccess",
-	"*events.PairError":                    "PairError",
-	"*events.QR":                           "QR",
-	"*events.QRScannedWithoutMultidevice":  "QRScannedWithoutMultidevice",
-	"*events.PrivacySettings":              "PrivacySettings",
-	"*events.PushNameSetting":              "PushNameSetting",
-	"*events.UserAbout":                    "UserAbout",
-	"*events.AppState":                     "AppState",
-	"*events.AppStateSyncComplete":         "AppStateSyncComplete",
-	"*events.HistorySync":                  "HistorySync",
-	"*events.OfflineSyncCompleted":         "OfflineSyncCompleted",
-	"*events.OfflineSyncPreview":           "OfflineSyncPreview",
-	"*events.CallOffer":                    "CallOffer",
-	"*events.CallAccept":                   "CallAccept",
-	"*events.CallTerminate":                "CallTerminate",
-	"*events.CallOfferNotice":              "CallOfferNotice",
-	"*events.CallRelayLatency":             "CallRelayLatency",
-	"*events.Presence":                     "Presence",
-	"*events.ChatPresence":                 "ChatPresence",
-	"*events.IdentityChange":               "IdentityChange",
-	"*events.NewsletterJoin":               "NewsletterJoin",
-	"*events.NewsletterLeave":              "NewsletterLeave",
-	"*events.NewsletterMuteChange":         "NewsletterMuteChange",
-	"*events.NewsletterLiveUpdate":         "NewsletterLiveUpdate",
+	"*events.Message":                     "Message",
+	"*events.UndecryptableMessage":        "UndecryptableMessage",
+	"*events.Receipt":                     "Receipt",
+	"*events.MediaRetry":                  "MediaRetry",
+	"*events.Connected":                   "Connected",
+	"*events.Disconnected":                "Disconnected",
+	"*events.ConnectFailure":              "ConnectFailure",
+	"*events.KeepAliveRestored":           "KeepAliveRestored",
+	"*events.KeepAliveTimeout":            "KeepAliveTimeout",
+	"*events.LoggedOut":                   "LoggedOut",
+	"*events.ClientOutdated":              "ClientOutdated",
+	"*events.TemporaryBan":                "TemporaryBan",
+	"*events.StreamError":                 "StreamError",
+	"*events.StreamReplaced":              "StreamReplaced",
+	"*events.PairSuccess":                 "PairSuccess",
+	"*events.PairError":                   "PairError",
+	"*events.QR":                          "QR",
+	"*events.QRScannedWithoutMultidevice": "QRScannedWithoutMultidevice",
+	"*events.PrivacySettings":             "PrivacySettings",
+	"*events.PushNameSetting":             "PushNameSetting",
+	"*events.UserAbout":                   "UserAbout",
+	"*events.AppState":                    "AppState",
+	"*events.AppStateSyncComplete":        "AppStateSyncComplete",
+	"*events.HistorySync":                 "HistorySync",
+	"*events.OfflineSyncCompleted":        "OfflineSyncCompleted",
+	"*events.OfflineSyncPreview":          "OfflineSyncPreview",
+	"*events.CallOffer":                   "CallOffer",
+	"*events.CallAccept":                  "CallAccept",
+	"*events.CallTerminate":               "CallTerminate",
+	"*events.CallOfferNotice":             "CallOfferNotice",
+	"*events.CallRelayLatency":            "CallRelayLatency",
+	"*events.Presence":                    "Presence",
+	"*events.ChatPresence":                "ChatPresence",
+	"*events.IdentityChange":              "IdentityChange",
+	"*events.NewsletterJoin":              "NewsletterJoin",
+	"*events.NewsletterLeave":             "NewsletterLeave",
+	"*events.NewsletterMuteChange":        "NewsletterMuteChange",
+	"*events.NewsletterLiveUpdate":        "NewsletterLiveUpdate",
 }
 
 var eventHandlers = map[string]func(*EventProcessor, interface{}){
@@ -169,8 +169,6 @@ func (ep *EventProcessor) HandleEvent(evt interface{}) {
 		ep.sendGenericEvent(systemEventType, evt)
 	}
 }
-
-
 
 func (ep *EventProcessor) handleMessage(evt interface{}) {
 	msg := evt.(*events.Message)
@@ -355,5 +353,3 @@ func sendWebhook(url string, data interface{}) error {
 
 	return globalWebhookService.SendWebhook(ctx, url, "whatsapp_event", "", data)
 }
-
-

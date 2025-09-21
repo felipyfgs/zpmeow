@@ -7,8 +7,9 @@ Esta camada contém os **Use Cases** da aplicação seguindo rigorosamente os pr
 ```
 internal/application/
 ├── README.md                           # Esta documentação
+├── app.go                             # Application main file
 ├── ports/                              # Interfaces (Ports) para Infrastructure
-│   ├── services.go                    # External service interfaces
+│   ├── interfaces.go                  # External service interfaces
 │   └── events.go                      # Event handling interfaces
 ├── usecases/                          # Use Cases (Application Services)
 │   ├── session/                       # Session Management (8 use cases)
@@ -17,29 +18,29 @@ internal/application/
 │   │   ├── disconnect.go              # DisconnectSessionUseCase
 │   │   ├── delete.go                  # DeleteSessionUseCase
 │   │   ├── get.go                     # GetSessionUseCase, GetAllSessionsUseCase
-│   │   ├── pair_phone.go              # PairPhoneUseCase
-│   │   └── get_status.go              # GetSessionStatusUseCase
+│   │   ├── pair.go                    # PairPhoneUseCase
+│   │   └── status.go                  # GetSessionStatusUseCase
 │   ├── messaging/                     # Message Management (8 use cases)
-│   │   ├── send_text.go               # SendTextMessageUseCase
-│   │   ├── send_media.go              # SendMediaMessageUseCase
-│   │   ├── send_location.go           # SendLocationMessageUseCase
-│   │   ├── send_contact.go            # SendContactMessageUseCase
-│   │   └── message_actions.go         # MarkAsRead, React, Edit, Delete
+│   │   ├── text.go                    # SendTextMessageUseCase
+│   │   ├── media.go                   # SendMediaMessageUseCase
+│   │   ├── location.go                # SendLocationMessageUseCase
+│   │   ├── contact.go                 # SendContactMessageUseCase
+│   │   └── actions.go                 # MarkAsRead, React, Edit, Delete
 │   ├── chat/                          # Chat Management (5 use cases)
-│   │   ├── get_chats.go               # GetChatsUseCase
-│   │   ├── manage_chat.go             # MuteChatUseCase, ArchiveChatUseCase
-│   │   └── chat_history.go            # GetChatHistoryUseCase, SetPresenceUseCase
+│   │   ├── list.go                    # GetChatsUseCase
+│   │   ├── manage.go                  # MuteChatUseCase, ArchiveChatUseCase
+│   │   └── history.go                 # GetChatHistoryUseCase, SetPresenceUseCase
 │   ├── group/                         # Group Management (7 use cases)
-│   │   ├── create_group.go            # CreateGroupUseCase
-│   │   ├── manage_group.go            # JoinGroupUseCase, LeaveGroupUseCase
-│   │   ├── list_groups.go             # ListGroupsUseCase, GetGroupInfoUseCase
-│   │   └── manage_participants.go     # ManageParticipantsUseCase, GetInviteLinkUseCase
+│   │   ├── create.go                  # CreateGroupUseCase
+│   │   ├── manage.go                  # JoinGroupUseCase, LeaveGroupUseCase
+│   │   ├── list.go                    # ListGroupsUseCase, GetGroupInfoUseCase
+│   │   └── members.go                 # ManageParticipantsUseCase, GetInviteLinkUseCase
 │   ├── contact/                       # Contact Management (3 use cases)
-│   │   └── get_contacts.go            # GetContactsUseCase, CheckContactUseCase, GetUserInfoUseCase
+│   │   └── contacts.go                # GetContactsUseCase, CheckContactUseCase, GetUserInfoUseCase
 │   ├── newsletter/                    # Newsletter Management (2 use cases)
-│   │   └── manage_newsletter.go       # CreateNewsletterUseCase, SubscribeNewsletterUseCase
+│   │   └── newsletter.go              # CreateNewsletterUseCase, SubscribeNewsletterUseCase
 │   └── webhook/                       # Webhook Management (2 use cases)
-│       └── configure_webhook.go       # ConfigureWebhookUseCase, TestWebhookUseCase
+│       └── webhook.go                 # ConfigureWebhookUseCase, TestWebhookUseCase
 └── common/                            # Common application utilities
     ├── errors.go                      # Application-specific errors
     └── commands.go                    # CQRS base types
@@ -79,7 +80,7 @@ internal/application/
 
 #### **1. Dependências Proibidas**
 - ❌ **Infrastructure**: `internal/infra/*` - Violação de dependência
-- ❌ **Interface Handlers**: `internal/interfaces/http/*` - Inversão incorreta
+- ❌ **Interface Handlers**: `*` - Inversão incorreta
 - ❌ **Detalhes de Implementação**: Banco, HTTP, filesystem diretamente
 
 #### **2. Responsabilidades Proibidas**
@@ -277,7 +278,7 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 
 ### ❌ **Dependências Proibidas**
 - [ ] Infrastructure (`internal/infra/*`)
-- [ ] Interface handlers (`internal/interfaces/http/*`)
+- [ ] Interface handlers (`*`)
 - [ ] Frameworks web diretamente
 
 ### 🏗️ **Padrões Implementados**
