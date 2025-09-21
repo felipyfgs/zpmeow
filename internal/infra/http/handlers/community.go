@@ -166,6 +166,21 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetSubGroups godoc
+// @Summary Get community sub-groups
+// @Description Retrieves the list of sub-groups in a WhatsApp community
+// @Tags Communities
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetSubGroupsRequest true "Get sub-groups request"
+// @Success 200 {object} dto.CommunityResponse "Sub-groups retrieved successfully"
+// @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 401 {object} dto.CommunityResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.CommunityResponse "Session not found"
+// @Failure 500 {object} dto.CommunityResponse "Failed to get sub-groups"
+// @Router /session/{sessionId}/community/subgroups [post]
 func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -232,6 +247,21 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetLinkedGroupsParticipants godoc
+// @Summary Get linked groups participants
+// @Description Retrieves participants from all groups linked to a WhatsApp community
+// @Tags Communities
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetLinkedGroupsParticipantsRequest true "Get linked groups participants request"
+// @Success 200 {object} dto.CommunityResponse "Linked groups participants retrieved successfully"
+// @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 401 {object} dto.CommunityResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.CommunityResponse "Session not found"
+// @Failure 500 {object} dto.CommunityResponse "Failed to get linked groups participants"
+// @Router /session/{sessionId}/community/participants [post]
 func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {

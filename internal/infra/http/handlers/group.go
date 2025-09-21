@@ -436,6 +436,21 @@ func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetInviteLink godoc
+// @Summary Get group invite link
+// @Description Retrieves the invite link for a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetInviteLinkRequest true "Get invite link request"
+// @Success 200 {object} dto.GroupResponse "Invite link retrieved successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to get invite link"
+// @Router /session/{sessionId}/group/invitelink [post]
 func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -518,6 +533,21 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 	}
 }
 
+// GetInviteInfo godoc
+// @Summary Get group invite information
+// @Description Retrieves information about a WhatsApp group from an invite link
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetInviteInfoRequest true "Get invite info request"
+// @Success 200 {object} dto.GroupResponse "Invite info retrieved successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to get invite info"
+// @Router /session/{sessionId}/group/inviteinfo [post]
 func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -565,6 +595,21 @@ func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetGroupInfoFromInvite godoc
+// @Summary Get detailed group info from invite
+// @Description Retrieves detailed information about a WhatsApp group from an invite link
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetInviteInfoRequest true "Get group info from invite request"
+// @Success 200 {object} dto.GroupResponse "Group info retrieved successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to get group info"
+// @Router /session/{sessionId}/group/inviteinfo-specific [post]
 func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -613,6 +658,21 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// UpdateParticipants godoc
+// @Summary Update group participants
+// @Description Adds, removes, promotes or demotes participants in a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.UpdateParticipantsRequest true "Update participants request"
+// @Success 200 {object} dto.GroupResponse "Participants updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to update participants"
+// @Router /session/{sessionId}/group/participants/update [post]
 func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -669,6 +729,21 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetName godoc
+// @Summary Set group name
+// @Description Sets the name of a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupNameRequest true "Set group name request"
+// @Success 200 {object} dto.GroupResponse "Group name updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set group name"
+// @Router /session/{sessionId}/group/name/set [post]
 func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -715,6 +790,21 @@ func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetTopic godoc
+// @Summary Set group topic/description
+// @Description Sets the topic/description of a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupTopicRequest true "Set group topic request"
+// @Success 200 {object} dto.GroupResponse "Group topic updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set group topic"
+// @Router /session/{sessionId}/group/topic/set [post]
 func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -761,6 +851,21 @@ func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetPhoto godoc
+// @Summary Set group photo
+// @Description Sets the profile photo of a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupPhotoRequest true "Set group photo request"
+// @Success 200 {object} dto.GroupResponse "Group photo updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set group photo"
+// @Router /session/{sessionId}/group/photo/set [post]
 func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -817,6 +922,21 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// RemovePhoto godoc
+// @Summary Remove group photo
+// @Description Removes the profile photo of a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.RemoveGroupPhotoRequest true "Remove group photo request"
+// @Success 200 {object} dto.GroupResponse "Group photo removed successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to remove group photo"
+// @Router /session/{sessionId}/group/photo/remove [post]
 func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -863,6 +983,21 @@ func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetAnnounce godoc
+// @Summary Set group announce mode
+// @Description Sets whether only admins can send messages in a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupAnnounceRequest true "Set group announce request"
+// @Success 200 {object} dto.GroupResponse "Group announce setting updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set announce mode"
+// @Router /session/{sessionId}/group/announce/set [post]
 func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -909,6 +1044,21 @@ func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetLocked godoc
+// @Summary Set group locked mode
+// @Description Sets whether only admins can edit group info in a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupLockedRequest true "Set group locked request"
+// @Success 200 {object} dto.GroupResponse "Group locked setting updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set locked mode"
+// @Router /session/{sessionId}/group/locked/set [post]
 func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -955,6 +1105,21 @@ func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetEphemeral godoc
+// @Summary Set group ephemeral mode
+// @Description Sets the disappearing messages timer for a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetGroupEphemeralRequest true "Set group ephemeral request"
+// @Success 200 {object} dto.GroupResponse "Group ephemeral setting updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set ephemeral mode"
+// @Router /session/{sessionId}/group/ephemeral/set [post]
 func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -1005,6 +1170,21 @@ func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetJoinApproval godoc
+// @Summary Set group join approval mode
+// @Description Sets whether admin approval is required for new members to join the group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GroupJoinApprovalReq true "Set group join approval request"
+// @Success 200 {object} dto.GroupResponse "Group join approval mode updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set join approval mode"
+// @Router /session/{sessionId}/group/join-approval/set [post]
 func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -1051,6 +1231,21 @@ func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetMemberAddMode godoc
+// @Summary Set group member add mode
+// @Description Sets who can add new members to the WhatsApp group (admins only or all participants)
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GroupMemberModeReq true "Set group member add mode request"
+// @Success 200 {object} dto.GroupResponse "Group member add mode updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to set member add mode"
+// @Router /session/{sessionId}/group/member-add-mode/set [post]
 func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -1097,6 +1292,21 @@ func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetGroupRequestParticipants godoc
+// @Summary Get group join requests
+// @Description Retrieves the list of participants requesting to join a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetGroupRequestsReq true "Get group request participants request"
+// @Success 200 {object} dto.GroupResponse "Group request participants retrieved successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to get request participants"
+// @Router /session/{sessionId}/group/requests/list [post]
 func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
@@ -1163,6 +1373,21 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateGroupRequestParticipants godoc
+// @Summary Update group join requests
+// @Description Approves or rejects participants requesting to join a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.UpdateGroupRequestsReq true "Update group request participants request"
+// @Success 200 {object} dto.GroupResponse "Group request participants updated successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to update request participants"
+// @Router /session/{sessionId}/group/requests/update [post]
 func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {

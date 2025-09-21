@@ -78,18 +78,78 @@ func (h *ChatHandler) SetPresence(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// DownloadImage godoc
+// @Summary Download image from chat
+// @Description Downloads an image file from a WhatsApp chat message
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.DownloadMediaRequest true "Download image request"
+// @Success 200 {object} dto.ChatResponse "Image downloaded successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to download image"
+// @Router /session/{sessionId}/chat/download/image [post]
 func (h *ChatHandler) DownloadImage(c *fiber.Ctx) error {
 	return h.downloadMedia(c, "image")
 }
 
+// DownloadVideo godoc
+// @Summary Download video from chat
+// @Description Downloads a video file from a WhatsApp chat message
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.DownloadMediaRequest true "Download video request"
+// @Success 200 {object} dto.ChatResponse "Video downloaded successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to download video"
+// @Router /session/{sessionId}/chat/download/video [post]
 func (h *ChatHandler) DownloadVideo(c *fiber.Ctx) error {
 	return h.downloadMedia(c, "video")
 }
 
+// DownloadAudio godoc
+// @Summary Download audio from chat
+// @Description Downloads an audio file from a WhatsApp chat message
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.DownloadMediaRequest true "Download audio request"
+// @Success 200 {object} dto.ChatResponse "Audio downloaded successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to download audio"
+// @Router /session/{sessionId}/chat/download/audio [post]
 func (h *ChatHandler) DownloadAudio(c *fiber.Ctx) error {
 	return h.downloadMedia(c, "audio")
 }
 
+// DownloadDocument godoc
+// @Summary Download document from chat
+// @Description Downloads a document file from a WhatsApp chat message
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.DownloadMediaRequest true "Download document request"
+// @Success 200 {object} dto.ChatResponse "Document downloaded successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to download document"
+// @Router /session/{sessionId}/chat/download/document [post]
 func (h *ChatHandler) DownloadDocument(c *fiber.Ctx) error {
 	return h.downloadMedia(c, "document")
 }
@@ -232,6 +292,21 @@ func (h *ChatHandler) GetChatHistory(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// SetDisappearingTimer godoc
+// @Summary Set disappearing message timer
+// @Description Sets the disappearing message timer for a WhatsApp chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetDisappearingTimerRequest true "Disappearing timer request"
+// @Success 200 {object} dto.ChatResponse "Timer set successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to set timer"
+// @Router /session/{sessionId}/chat/disappearing-timer [post]
 func (h *ChatHandler) SetDisappearingTimer(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 
@@ -373,6 +448,21 @@ func (h *ChatHandler) ListChats(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// GetChatInfo godoc
+// @Summary Get chat information
+// @Description Retrieves detailed information about a specific WhatsApp chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetChatInfoRequest true "Chat info request"
+// @Success 200 {object} dto.ChatResponse "Chat information"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to get chat info"
+// @Router /session/{sessionId}/chat/info [post]
 func (h *ChatHandler) GetChatInfo(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 
@@ -426,6 +516,21 @@ func (h *ChatHandler) GetChatInfo(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// PinChat godoc
+// @Summary Pin or unpin chat
+// @Description Pins or unpins a WhatsApp chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.PinChatRequest true "Pin chat request"
+// @Success 200 {object} dto.ChatResponse "Chat pinned/unpinned successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to pin/unpin chat"
+// @Router /session/{sessionId}/chat/pin [post]
 func (h *ChatHandler) PinChat(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 
@@ -468,6 +573,21 @@ func (h *ChatHandler) PinChat(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// MuteChat godoc
+// @Summary Mute or unmute chat
+// @Description Mutes or unmutes a WhatsApp chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.MuteChatRequest true "Mute chat request"
+// @Success 200 {object} dto.ChatResponse "Chat muted/unmuted successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to mute/unmute chat"
+// @Router /session/{sessionId}/chat/mute [post]
 func (h *ChatHandler) MuteChat(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 
@@ -531,6 +651,21 @@ func (h *ChatHandler) MuteChat(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// ArchiveChat godoc
+// @Summary Archive or unarchive chat
+// @Description Archives or unarchives a WhatsApp chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.ArchiveChatRequest true "Archive chat request"
+// @Success 200 {object} dto.ChatResponse "Chat archived/unarchived successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to archive/unarchive chat"
+// @Router /session/{sessionId}/chat/archive [post]
 func (h *ChatHandler) ArchiveChat(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 

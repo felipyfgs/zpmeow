@@ -19,38 +19,6 @@
 // @in header
 // @name Authorization
 // @description Enter your API key directly
-//
-// @tags.name Health,Sessions,Messages,Privacy,Chat,Contacts,Groups,Communities,Newsletters,Webhooks
-//
-// @tag.name Health
-// @tag.description Health check and monitoring endpoints
-//
-// @tag.name Sessions
-// @tag.description WhatsApp session management endpoints
-//
-// @tag.name Messages
-// @tag.description Message sending and management endpoints
-//
-// @tag.name Privacy
-// @tag.description Privacy settings and configuration endpoints
-//
-// @tag.name Chat
-// @tag.description Chat management and history endpoints
-//
-// @tag.name Contacts
-// @tag.description Contact management and presence endpoints
-//
-// @tag.name Groups
-// @tag.description WhatsApp group management endpoints
-//
-// @tag.name Communities
-// @tag.description WhatsApp community management endpoints
-//
-// @tag.name Newsletters
-// @tag.description Newsletter management and broadcasting endpoints
-//
-// @tag.name Webhooks
-// @tag.description Webhook configuration and event management endpoints
 package main
 
 import (
@@ -79,6 +47,26 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 )
 
+// @tag.name Health
+// @tag.description Health check and monitoring endpoints
+// @tag.name Sessions
+// @tag.description WhatsApp session management endpoints
+// @tag.name Messages
+// @tag.description Message sending and management endpoints
+// @tag.name Privacy
+// @tag.description Privacy settings and configuration endpoints
+// @tag.name Chat
+// @tag.description Chat management and history endpoints
+// @tag.name Contacts
+// @tag.description Contact management and presence endpoints
+// @tag.name Groups
+// @tag.description WhatsApp group management endpoints
+// @tag.name Communities
+// @tag.description WhatsApp community management endpoints
+// @tag.name Newsletters
+// @tag.description Newsletter management and broadcasting endpoints
+// @tag.name Webhooks
+// @tag.description Webhook configuration and event management endpoints
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {

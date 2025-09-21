@@ -23,11 +23,11 @@ func (r SetWebhookRequest) Validate() error {
 }
 
 type GetWebhookRequest struct {
-	SessionID string `json:"session_id,omitempty"`
+	SessionID string `json:"sessionID,omitempty"`
 }
 
 type DeleteWebhookRequest struct {
-	SessionID string `json:"session_id,omitempty"`
+	SessionID string `json:"sessionID,omitempty"`
 }
 
 type TestWebhookRequest struct {
@@ -74,7 +74,7 @@ func (r RegisterWebhookRequest) Validate() error {
 }
 
 type WebhookInfo struct {
-	SessionID string    `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	SessionID string    `json:"sessionID" example:"550e8400-e29b-41d4-a716-446655440000"`
 	URL       string    `json:"url" example:"https://example.com/webhook"`
 	Events    []string  `json:"events,omitempty" example:"[\"message\", \"status\"]"`
 	IsActive  bool      `json:"is_active" example:"true"`
@@ -83,7 +83,7 @@ type WebhookInfo struct {
 }
 
 type WebhookResponseData struct {
-	SessionID string       `json:"session_id"`
+	SessionID string       `json:"sessionID"`
 	Action    string       `json:"action,omitempty"`
 	Status    string       `json:"status"`
 	Message   string       `json:"message,omitempty"`
@@ -201,14 +201,14 @@ func NewWebhookTestErrorResponse(code int, errorCode, message, details string) *
 
 type WebhookEvent struct {
 	Type      string                 `json:"type" example:"message"`
-	SessionID string                 `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	SessionID string                 `json:"sessionID" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Timestamp time.Time              `json:"timestamp" example:"2023-01-01T12:00:00Z"`
 	Data      map[string]interface{} `json:"data"`
 }
 
 type MessageWebhookEvent struct {
 	Type      string    `json:"type" example:"message"`
-	SessionID string    `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	SessionID string    `json:"sessionID" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Timestamp time.Time `json:"timestamp" example:"2023-01-01T12:00:00Z"`
 	Data      struct {
 		MessageID string `json:"message_id" example:"msg_123"`
@@ -222,7 +222,7 @@ type MessageWebhookEvent struct {
 
 type StatusWebhookEvent struct {
 	Type      string    `json:"type" example:"status"`
-	SessionID string    `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	SessionID string    `json:"sessionID" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Timestamp time.Time `json:"timestamp" example:"2023-01-01T12:00:00Z"`
 	Data      struct {
 		Status    string `json:"status" example:"connected"`

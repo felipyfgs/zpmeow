@@ -191,6 +191,20 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *fiber.Ctx) error {
 	})
 }
 
+// GetBlocklist godoc
+// @Summary Get blocked contacts
+// @Description Retrieves the list of blocked contacts for a WhatsApp session
+// @Tags Privacy
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.BlocklistResponse "Blocked contacts list"
+// @Failure 400 {object} dto.BlocklistResponse "Invalid request data"
+// @Failure 401 {object} dto.BlocklistResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.BlocklistResponse "Session not found"
+// @Failure 500 {object} dto.BlocklistResponse "Failed to get blocklist"
+// @Router /session/{sessionId}/privacy/blocklist [get]
 func (h *PrivacyHandler) GetBlocklist(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 	if err := validateSessionID(sessionID); err != nil {
@@ -241,6 +255,21 @@ func (h *PrivacyHandler) GetBlocklist(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateBlocklist godoc
+// @Summary Update blocked contacts
+// @Description Blocks or unblocks contacts for a WhatsApp session
+// @Tags Privacy
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.UpdateBlocklistRequest true "Update blocklist request"
+// @Success 200 {object} dto.BlocklistResponse "Blocklist updated successfully"
+// @Failure 400 {object} dto.BlocklistResponse "Invalid request data"
+// @Failure 401 {object} dto.BlocklistResponse "Unauthorized - Invalid API key"
+// @Failure 404 {object} dto.BlocklistResponse "Session not found"
+// @Failure 500 {object} dto.BlocklistResponse "Failed to update blocklist"
+// @Router /session/{sessionId}/privacy/blocklist [put]
 func (h *PrivacyHandler) UpdateBlocklist(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 	if err := validateSessionID(sessionID); err != nil {

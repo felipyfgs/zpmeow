@@ -187,5 +187,21 @@ func SetupRoutes(
 	webhooks := sessionAPIGroup.Group("/webhooks")
 	webhooks.Get("/events", handlers.WebhookHandler.ListEvents)
 
-	app.Get("/swagger/*", swagger.HandlerDefault)
+	// Configuração do Swagger para desabilitar ordenação das tags
+	app.Get("/swagger/swagger-config.json", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"tagsSorter":       nil,
+			"operationsSorter": nil,
+		})
+	})
+
+	// Swagger route
+	app.Get("/swagger/*", swagger.New(swagger.Config{
+		URL:                      "/swagger/doc.json",
+		ConfigURL:                "/swagger/swagger-config.json",
+		DeepLinking:              true,
+		DocExpansion:             "list",
+		DefaultModelsExpandDepth: 1,
+		DefaultModelExpandDepth:  1,
+	}))
 }

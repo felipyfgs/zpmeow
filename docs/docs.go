@@ -65,6 +65,426 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/chat/archive": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Archives or unarchives a WhatsApp chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Archive or unarchive chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Archive chat request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ArchiveChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat archived/unarchived successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to archive/unarchive chat",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/disappearing-timer": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets the disappearing message timer for a WhatsApp chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Set disappearing message timer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Disappearing timer request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetDisappearingTimerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Timer set successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set timer",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/download/audio": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Downloads an audio file from a WhatsApp chat message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Download audio from chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Download audio request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DownloadMediaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audio downloaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to download audio",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/download/document": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Downloads a document file from a WhatsApp chat message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Download document from chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Download document request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DownloadMediaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document downloaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to download document",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/download/image": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Downloads an image file from a WhatsApp chat message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Download image from chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Download image request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DownloadMediaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image downloaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to download image",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/download/video": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Downloads a video file from a WhatsApp chat message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Download video from chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Download video request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DownloadMediaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video downloaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to download video",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/chat/history": {
             "get": {
                 "security": [
@@ -140,6 +560,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/chat/info": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed information about a specific WhatsApp chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Get chat information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Chat info request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetChatInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get chat info",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/chat/list": {
             "post": {
                 "security": [
@@ -202,6 +692,146 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to list chats",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/mute": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Mutes or unmutes a WhatsApp chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Mute or unmute chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Mute chat request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.MuteChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat muted/unmuted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to mute/unmute chat",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/chat/pin": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Pins or unpins a WhatsApp chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Pin or unpin chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pin chat request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PinChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat pinned/unpinned successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to pin/unpin chat",
                         "schema": {
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
@@ -342,6 +972,146 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to link group",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/community/participants": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves participants from all groups linked to a WhatsApp community",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Communities"
+                ],
+                "summary": "Get linked groups participants",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get linked groups participants request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetLinkedGroupsParticipantsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Linked groups participants retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get linked groups participants",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/community/subgroups": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves the list of sub-groups in a WhatsApp community",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Communities"
+                ],
+                "summary": "Get community sub-groups",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get sub-groups request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSubGroupsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sub-groups retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get sub-groups",
                         "schema": {
                             "$ref": "#/definitions/dto.CommunityResponse"
                         }
@@ -751,6 +1521,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/group/announce/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets whether only admins can send messages in a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group announce mode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group announce request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupAnnounceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group announce setting updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set announce mode",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/group/create": {
             "post": {
                 "security": [
@@ -814,6 +1654,76 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to create group",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/ephemeral/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets the disappearing messages timer for a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group ephemeral mode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group ephemeral request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupEphemeralRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group ephemeral setting updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set ephemeral mode",
                         "schema": {
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
@@ -891,6 +1801,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/group/inviteinfo": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves information about a WhatsApp group from an invite link",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group invite information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get invite info request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetInviteInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invite info retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get invite info",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/inviteinfo-specific": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed information about a WhatsApp group from an invite link",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get detailed group info from invite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get group info from invite request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetInviteInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group info retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get group info",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/invitelink": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves the invite link for a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group invite link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get invite link request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetInviteLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invite link retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get invite link",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/group/join": {
             "post": {
                 "security": [
@@ -954,6 +2074,76 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to join group",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/join-approval/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets whether admin approval is required for new members to join the group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group join approval mode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group join approval request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupJoinApprovalReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group join approval mode updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set join approval mode",
                         "schema": {
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
@@ -1155,6 +2345,636 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to list groups",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/locked/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets whether only admins can edit group info in a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group locked mode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group locked request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupLockedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group locked setting updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set locked mode",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/member-add-mode/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets who can add new members to the WhatsApp group (admins only or all participants)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group member add mode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group member add mode request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupMemberModeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group member add mode updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set member add mode",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/name/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets the name of a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group name request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupNameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group name updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set group name",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/participants/update": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Adds, removes, promotes or demotes participants in a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Update group participants",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update participants request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateParticipantsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Participants updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update participants",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/photo/remove": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Removes the profile photo of a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Remove group photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Remove group photo request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RemoveGroupPhotoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group photo removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to remove group photo",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/photo/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets the profile photo of a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group photo request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupPhotoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group photo updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set group photo",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/requests/list": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves the list of participants requesting to join a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group join requests",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Get group request participants request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetGroupRequestsReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group request participants retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get request participants",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/requests/update": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Approves or rejects participants requesting to join a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Update group join requests",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update group request participants request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateGroupRequestsReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group request participants updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update request participants",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/topic/set": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets the topic/description of a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Set group topic/description",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Set group topic request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGroupTopicRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group topic updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to set group topic",
                         "schema": {
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
@@ -2355,6 +4175,928 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/newsletter/invite/{inviteKey}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves newsletter information using an invite key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Get newsletter by invite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter invite key",
+                        "name": "inviteKey",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletter information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get newsletter",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all newsletters for a session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "List newsletters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletters list",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to list newsletters",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/media": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Uploads media content for newsletter messages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Upload newsletter media",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Upload newsletter media request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UploadNewsletterMediaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Media uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload media",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed information about a specific newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Get newsletter information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletter information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get newsletter",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NewsletterInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/live": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Subscribes to live updates for a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Subscribe to newsletter live updates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully subscribed to live updates",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to subscribe to live updates",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/messages": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves messages from a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Get newsletter messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of messages to retrieve",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletter messages",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get messages",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/mute": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Mutes or unmutes a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Toggle newsletter mute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Toggle newsletter mute request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ToggleMuteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletter muted/unmuted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to toggle mute",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/reaction": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sends a reaction to a newsletter message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Send newsletter reaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Send newsletter reaction request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendReactionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reaction sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send reaction",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/send": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sends a message to a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Send newsletter message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Send newsletter message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send message",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendNewsletterMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/subscribe": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Subscribes to a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Subscribe to newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully subscribed to newsletter",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to subscribe",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Unsubscribes from a newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Unsubscribe from newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unsubscribed from newsletter",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to unsubscribe",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/updates": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves message updates for a specific newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Get newsletter message updates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Newsletter message updates",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get message updates",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/newsletter/{newsletterId}/viewed": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Marks newsletter messages as viewed for a specific newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Mark newsletter messages as viewed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Newsletter ID",
+                        "name": "newsletterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Mark newsletter viewed request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.MarkViewedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages marked as viewed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to mark as viewed",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/presences/recording": {
             "post": {
                 "security": [
@@ -2560,6 +5302,135 @@ const docTemplate = `{
                         "description": "Failed to set presence",
                         "schema": {
                             "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/privacy/blocklist": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves the list of blocked contacts for a WhatsApp session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Privacy"
+                ],
+                "summary": "Get blocked contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Blocked contacts list",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get blocklist",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Blocks or unblocks contacts for a WhatsApp session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Privacy"
+                ],
+                "summary": "Update blocked contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update blocklist request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateBlocklistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Blocklist updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update blocklist",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlocklistResponse"
                         }
                     }
                 }
@@ -3453,6 +6324,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.ArchiveChatRequest": {
+            "type": "object",
+            "required": [
+                "jid"
+            ],
+            "properties": {
+                "archived": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                }
+            }
+        },
         "dto.AudioMessagePayload": {
             "type": "object",
             "properties": {
@@ -3463,6 +6350,40 @@ const docTemplate = `{
                 "url": {
                     "type": "string",
                     "example": "https://example.com/audio.mp3"
+                }
+            }
+        },
+        "dto.BlockedContactsData": {
+            "type": "object",
+            "properties": {
+                "blocked_contacts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BlocklistResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.BlockedContactsData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3944,6 +6865,22 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.DownloadMediaRequest": {
+            "type": "object",
+            "required": [
+                "media_url"
+            ],
+            "properties": {
+                "media_url": {
+                    "type": "string",
+                    "example": "https://example.com/media.jpg"
+                },
+                "message_id": {
+                    "type": "string",
+                    "example": "msg_123"
+                }
+            }
+        },
         "dto.EditMessageRequest": {
             "type": "object",
             "required": [
@@ -4010,6 +6947,18 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GetChatInfoRequest": {
+            "type": "object",
+            "required": [
+                "jid"
+            ],
+            "properties": {
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                }
+            }
+        },
         "dto.GetContactInfoRequest": {
             "type": "object",
             "properties": {
@@ -4036,6 +6985,74 @@ const docTemplate = `{
             ],
             "properties": {
                 "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.GetGroupRequestsReq": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.GetInviteInfoRequest": {
+            "type": "object",
+            "required": [
+                "invite_code"
+            ],
+            "properties": {
+                "invite_code": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "reset": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "dto.GetInviteLinkRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "reset": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "dto.GetLinkedGroupsParticipantsRequest": {
+            "type": "object",
+            "required": [
+                "community_jid"
+            ],
+            "properties": {
+                "community_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.GetSubGroupsRequest": {
+            "type": "object",
+            "required": [
+                "community_jid"
+            ],
+            "properties": {
+                "community_jid": {
                     "type": "string",
                     "example": "120363025246125486@g.us"
                 }
@@ -4128,6 +7145,39 @@ const docTemplate = `{
                 "topic": {
                     "type": "string",
                     "example": "Group topic"
+                }
+            }
+        },
+        "dto.GroupJoinApprovalReq": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "require_approval": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.GroupMemberModeReq": {
+            "type": "object",
+            "required": [
+                "group_jid",
+                "mode"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "mode": {
+                    "type": "string",
+                    "example": "admin_add"
                 }
             }
         },
@@ -4355,6 +7405,30 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MarkViewedRequest": {
+            "type": "object",
+            "required": [
+                "newsletter_jid",
+                "server_ids"
+            ],
+            "properties": {
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@newsletter"
+                },
+                "server_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"1\"",
+                        " \"2\"",
+                        " \"3\"]"
+                    ]
+                }
+            }
+        },
         "dto.MessageContactData": {
             "type": "object",
             "required": [
@@ -4466,6 +7540,26 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MuteChatRequest": {
+            "type": "object",
+            "required": [
+                "jid"
+            ],
+            "properties": {
+                "duration": {
+                    "type": "string",
+                    "example": "8h"
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "muted": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "dto.NewsletterErrorResponse": {
             "type": "object",
             "properties": {
@@ -4517,6 +7611,83 @@ const docTemplate = `{
                 "subscriber_count": {
                     "type": "integer",
                     "example": 100
+                }
+            }
+        },
+        "dto.NewsletterInfoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.NewsletterInfo"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.NewsletterErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.NewsletterListData": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "newsletters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.NewsletterInfo"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.NewsletterListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.NewsletterListData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.NewsletterErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.NewsletterMessageData": {
+            "type": "object",
+            "properties": {
+                "message_id": {
+                    "type": "string"
+                },
+                "newsletter_jid": {
+                    "type": "string"
+                },
+                "server_id": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
                 }
             }
         },
@@ -4572,6 +7743,22 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PinChatRequest": {
+            "type": "object",
+            "required": [
+                "jid"
+            ],
+            "properties": {
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "pinned": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -4665,6 +7852,18 @@ const docTemplate = `{
                 "url": {
                     "type": "string",
                     "example": "https://example.com/webhook"
+                }
+            }
+        },
+        "dto.RemoveGroupPhotoRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
                 }
             }
         },
@@ -4878,6 +8077,48 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SendNewsletterMessageRequest": {
+            "type": "object",
+            "required": [
+                "message",
+                "newsletter_jid"
+            ],
+            "properties": {
+                "media_data": {
+                    "type": "string",
+                    "example": "base64_encoded_media"
+                },
+                "media_type": {
+                    "type": "string",
+                    "example": "text"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Hello newsletter subscribers!"
+                },
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@newsletter"
+                }
+            }
+        },
+        "dto.SendNewsletterMessageResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.NewsletterMessageData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.NewsletterErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.SendPollMessageRequest": {
             "type": "object",
             "required": [
@@ -4908,6 +8149,33 @@ const docTemplate = `{
                 "selectable_count": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "dto.SendReactionRequest": {
+            "type": "object",
+            "required": [
+                "message_id",
+                "newsletter_jid",
+                "reaction",
+                "server_id"
+            ],
+            "properties": {
+                "message_id": {
+                    "type": "string",
+                    "example": "msg123"
+                },
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@newsletter"
+                },
+                "reaction": {
+                    "type": "string",
+                    "example": "👍"
+                },
+                "server_id": {
+                    "type": "string",
+                    "example": "1"
                 }
             }
         },
@@ -5242,6 +8510,126 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SetDisappearingTimerRequest": {
+            "type": "object",
+            "required": [
+                "jid",
+                "timer"
+            ],
+            "properties": {
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "timer": {
+                    "type": "string",
+                    "example": "24h"
+                }
+            }
+        },
+        "dto.SetGroupAnnounceRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "announce_only": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.SetGroupEphemeralRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "duration": {
+                    "type": "integer",
+                    "example": 86400
+                },
+                "ephemeral": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.SetGroupLockedRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "locked": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.SetGroupNameRequest": {
+            "type": "object",
+            "required": [
+                "group_jid",
+                "name"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "New Group Name"
+                }
+            }
+        },
+        "dto.SetGroupPhotoRequest": {
+            "type": "object",
+            "required": [
+                "group_jid",
+                "photo"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "photo": {
+                    "type": "string",
+                    "example": "base64_encoded_image_data"
+                }
+            }
+        },
+        "dto.SetGroupTopicRequest": {
+            "type": "object",
+            "required": [
+                "group_jid",
+                "topic"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "topic": {
+                    "type": "string",
+                    "example": "New group topic"
+                }
+            }
+        },
         "dto.SetPresenceRequest": {
             "type": "object",
             "required": [
@@ -5339,6 +8727,22 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ToggleMuteRequest": {
+            "type": "object",
+            "required": [
+                "newsletter_jid"
+            ],
+            "properties": {
+                "mute": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@newsletter"
+                }
+            }
+        },
         "dto.UnlinkGroupRequest": {
             "type": "object",
             "required": [
@@ -5353,6 +8757,82 @@ const docTemplate = `{
                 "group_jid": {
                     "type": "string",
                     "example": "120363025246125486@g.us"
+                }
+            }
+        },
+        "dto.UpdateBlocklistRequest": {
+            "type": "object",
+            "required": [
+                "action",
+                "contacts"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "example": "block"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999\"]"
+                    ]
+                }
+            }
+        },
+        "dto.UpdateGroupRequestsReq": {
+            "type": "object",
+            "required": [
+                "action",
+                "group_jid",
+                "participants"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "example": "approve"
+                },
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999@s.whatsapp.net\"]"
+                    ]
+                }
+            }
+        },
+        "dto.UpdateParticipantsRequest": {
+            "type": "object",
+            "required": [
+                "action",
+                "group_jid",
+                "participants"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "example": "add"
+                },
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999@s.whatsapp.net\"]"
+                    ]
                 }
             }
         },
@@ -5379,6 +8859,32 @@ const docTemplate = `{
                 "webhook_url": {
                     "type": "string",
                     "example": "https://example.com/webhook"
+                }
+            }
+        },
+        "dto.UploadNewsletterMediaRequest": {
+            "type": "object",
+            "required": [
+                "media_data",
+                "media_type",
+                "newsletter_jid"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Media caption"
+                },
+                "media_data": {
+                    "type": "string",
+                    "example": "base64_encoded_media"
+                },
+                "media_type": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@newsletter"
                 }
             }
         },
@@ -5452,7 +8958,49 @@ const docTemplate = `{
             "name": "Authorization",
             "in": "header"
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "Health check and monitoring endpoints",
+            "name": "Health"
+        },
+        {
+            "description": "WhatsApp session management endpoints",
+            "name": "Sessions"
+        },
+        {
+            "description": "Message sending and management endpoints",
+            "name": "Messages"
+        },
+        {
+            "description": "Privacy settings and configuration endpoints",
+            "name": "Privacy"
+        },
+        {
+            "description": "Chat management and history endpoints",
+            "name": "Chat"
+        },
+        {
+            "description": "Contact management and presence endpoints",
+            "name": "Contacts"
+        },
+        {
+            "description": "WhatsApp group management endpoints",
+            "name": "Groups"
+        },
+        {
+            "description": "WhatsApp community management endpoints",
+            "name": "Communities"
+        },
+        {
+            "description": "Newsletter management and broadcasting endpoints",
+            "name": "Newsletters"
+        },
+        {
+            "description": "Webhook configuration and event management endpoints",
+            "name": "Webhooks"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

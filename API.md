@@ -572,7 +572,7 @@ Configure webhooks to receive real-time events:
 ```json
 {
   "event": "message",
-  "session_id": "default",
+  "sessionID": "default",
   "data": {
     "from": "5511999999999@s.meow.net",
     "message": "Hello!",
@@ -585,7 +585,7 @@ Configure webhooks to receive real-time events:
 ```json
 {
   "event": "receipt",
-  "session_id": "default",
+  "sessionID": "default",
   "data": {
     "message_id": "3EB0123456789ABCDEF",
     "status": "read",

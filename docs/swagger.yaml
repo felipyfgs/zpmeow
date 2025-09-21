@@ -1,5 +1,16 @@
 basePath: /
 definitions:
+  dto.ArchiveChatRequest:
+    properties:
+      archived:
+        example: true
+        type: boolean
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+    required:
+    - jid
+    type: object
   dto.AudioMessagePayload:
     properties:
       ptt:
@@ -8,6 +19,28 @@ definitions:
       url:
         example: https://example.com/audio.mp3
         type: string
+    type: object
+  dto.BlockedContactsData:
+    properties:
+      blocked_contacts:
+        items:
+          type: string
+        type: array
+      count:
+        type: integer
+      session_id:
+        type: string
+    type: object
+  dto.BlocklistResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.BlockedContactsData'
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      success:
+        type: boolean
     type: object
   dto.ButtonData:
     properties:
@@ -337,6 +370,17 @@ definitions:
         example: https://example.com/document.pdf
         type: string
     type: object
+  dto.DownloadMediaRequest:
+    properties:
+      media_url:
+        example: https://example.com/media.jpg
+        type: string
+      message_id:
+        example: msg_123
+        type: string
+    required:
+    - media_url
+    type: object
   dto.EditMessageRequest:
     properties:
       message_id:
@@ -383,6 +427,14 @@ definitions:
     required:
     - phone
     type: object
+  dto.GetChatInfoRequest:
+    properties:
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+    required:
+    - jid
+    type: object
   dto.GetContactInfoRequest:
     properties:
       phone:
@@ -403,6 +455,52 @@ definitions:
         type: string
     required:
     - group_jid
+    type: object
+  dto.GetGroupRequestsReq:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
+  dto.GetInviteInfoRequest:
+    properties:
+      invite_code:
+        example: abc123def456
+        type: string
+      reset:
+        example: false
+        type: boolean
+    required:
+    - invite_code
+    type: object
+  dto.GetInviteLinkRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      reset:
+        example: false
+        type: boolean
+    required:
+    - group_jid
+    type: object
+  dto.GetLinkedGroupsParticipantsRequest:
+    properties:
+      community_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - community_jid
+    type: object
+  dto.GetSubGroupsRequest:
+    properties:
+      community_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - community_jid
     type: object
   dto.GroupErrorResponse:
     properties:
@@ -468,6 +566,29 @@ definitions:
       topic:
         example: Group topic
         type: string
+    type: object
+  dto.GroupJoinApprovalReq:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      require_approval:
+        example: true
+        type: boolean
+    required:
+    - group_jid
+    type: object
+  dto.GroupMemberModeReq:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      mode:
+        example: admin_add
+        type: string
+    required:
+    - group_jid
+    - mode
     type: object
   dto.GroupParticipant:
     properties:
@@ -623,6 +744,23 @@ definitions:
     - message_ids
     - phone
     type: object
+  dto.MarkViewedRequest:
+    properties:
+      newsletter_jid:
+        example: 120363025246125486@newsletter
+        type: string
+      server_ids:
+        example:
+        - '["1"'
+        - ' "2"'
+        - ' "3"]'
+        items:
+          type: string
+        type: array
+    required:
+    - newsletter_jid
+    - server_ids
+    type: object
   dto.MessageContactData:
     properties:
       name:
@@ -697,6 +835,20 @@ definitions:
       timestamp:
         type: integer
     type: object
+  dto.MuteChatRequest:
+    properties:
+      duration:
+        example: 8h
+        type: string
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      muted:
+        example: true
+        type: boolean
+    required:
+    - jid
+    type: object
   dto.NewsletterErrorResponse:
     properties:
       code:
@@ -736,6 +888,56 @@ definitions:
         example: 100
         type: integer
     type: object
+  dto.NewsletterInfoResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.NewsletterInfo'
+      error:
+        $ref: '#/definitions/dto.NewsletterErrorResponse'
+      success:
+        type: boolean
+    type: object
+  dto.NewsletterListData:
+    properties:
+      count:
+        type: integer
+      newsletters:
+        items:
+          $ref: '#/definitions/dto.NewsletterInfo'
+        type: array
+      session_id:
+        type: string
+      total:
+        type: integer
+    type: object
+  dto.NewsletterListResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.NewsletterListData'
+      error:
+        $ref: '#/definitions/dto.NewsletterErrorResponse'
+      success:
+        type: boolean
+    type: object
+  dto.NewsletterMessageData:
+    properties:
+      message_id:
+        type: string
+      newsletter_jid:
+        type: string
+      server_id:
+        type: string
+      session_id:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
   dto.PairPhoneRequest:
     properties:
       phone:
@@ -771,6 +973,17 @@ definitions:
         type: string
       timestamp:
         type: string
+    type: object
+  dto.PinChatRequest:
+    properties:
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      pinned:
+        example: true
+        type: boolean
+    required:
+    - jid
     type: object
   dto.PrivacySettingsData:
     properties:
@@ -834,6 +1047,14 @@ definitions:
         type: string
     required:
     - url
+    type: object
+  dto.RemoveGroupPhotoRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
     type: object
   dto.SendAudioRequest:
     properties:
@@ -986,6 +1207,35 @@ definitions:
     - media_url
     - phone
     type: object
+  dto.SendNewsletterMessageRequest:
+    properties:
+      media_data:
+        example: base64_encoded_media
+        type: string
+      media_type:
+        example: text
+        type: string
+      message:
+        example: Hello newsletter subscribers!
+        type: string
+      newsletter_jid:
+        example: 120363025246125486@newsletter
+        type: string
+    required:
+    - message
+    - newsletter_jid
+    type: object
+  dto.SendNewsletterMessageResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.NewsletterMessageData'
+      error:
+        $ref: '#/definitions/dto.NewsletterErrorResponse'
+      success:
+        type: boolean
+    type: object
   dto.SendPollMessageRequest:
     properties:
       name:
@@ -1009,6 +1259,26 @@ definitions:
     - name
     - options
     - phone
+    type: object
+  dto.SendReactionRequest:
+    properties:
+      message_id:
+        example: msg123
+        type: string
+      newsletter_jid:
+        example: 120363025246125486@newsletter
+        type: string
+      reaction:
+        example: "\U0001F44D"
+        type: string
+      server_id:
+        example: "1"
+        type: string
+    required:
+    - message_id
+    - newsletter_jid
+    - reaction
+    - server_id
     type: object
   dto.SendStickerRequest:
     properties:
@@ -1237,6 +1507,90 @@ definitions:
     - phone
     - state
     type: object
+  dto.SetDisappearingTimerRequest:
+    properties:
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      timer:
+        example: 24h
+        type: string
+    required:
+    - jid
+    - timer
+    type: object
+  dto.SetGroupAnnounceRequest:
+    properties:
+      announce_only:
+        example: true
+        type: boolean
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
+  dto.SetGroupEphemeralRequest:
+    properties:
+      duration:
+        example: 86400
+        type: integer
+      ephemeral:
+        example: true
+        type: boolean
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
+  dto.SetGroupLockedRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      locked:
+        example: true
+        type: boolean
+    required:
+    - group_jid
+    type: object
+  dto.SetGroupNameRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      name:
+        example: New Group Name
+        type: string
+    required:
+    - group_jid
+    - name
+    type: object
+  dto.SetGroupPhotoRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      photo:
+        example: base64_encoded_image_data
+        type: string
+    required:
+    - group_jid
+    - photo
+    type: object
+  dto.SetGroupTopicRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      topic:
+        example: New group topic
+        type: string
+    required:
+    - group_jid
+    - topic
+    type: object
   dto.SetPresenceRequest:
     properties:
       media:
@@ -1302,6 +1656,17 @@ definitions:
         example: Hello, World!
         type: string
     type: object
+  dto.ToggleMuteRequest:
+    properties:
+      mute:
+        example: true
+        type: boolean
+      newsletter_jid:
+        example: 120363025246125486@newsletter
+        type: string
+    required:
+    - newsletter_jid
+    type: object
   dto.UnlinkGroupRequest:
     properties:
       community_jid:
@@ -1313,6 +1678,59 @@ definitions:
     required:
     - community_jid
     - group_jid
+    type: object
+  dto.UpdateBlocklistRequest:
+    properties:
+      action:
+        example: block
+        type: string
+      contacts:
+        example:
+        - '["5511999999999"]'
+        items:
+          type: string
+        type: array
+    required:
+    - action
+    - contacts
+    type: object
+  dto.UpdateGroupRequestsReq:
+    properties:
+      action:
+        example: approve
+        type: string
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      participants:
+        example:
+        - '["5511999999999@s.whatsapp.net"]'
+        items:
+          type: string
+        type: array
+    required:
+    - action
+    - group_jid
+    - participants
+    type: object
+  dto.UpdateParticipantsRequest:
+    properties:
+      action:
+        example: add
+        type: string
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+      participants:
+        example:
+        - '["5511999999999@s.whatsapp.net"]'
+        items:
+          type: string
+        type: array
+    required:
+    - action
+    - group_jid
+    - participants
     type: object
   dto.UpdateWebhookRequest:
     properties:
@@ -1331,6 +1749,25 @@ definitions:
         type: string
     required:
     - webhook_url
+    type: object
+  dto.UploadNewsletterMediaRequest:
+    properties:
+      caption:
+        example: Media caption
+        type: string
+      media_data:
+        example: base64_encoded_media
+        type: string
+      media_type:
+        example: image/jpeg
+        type: string
+      newsletter_jid:
+        example: 120363025246125486@newsletter
+        type: string
+    required:
+    - media_data
+    - media_type
+    - newsletter_jid
     type: object
   dto.VideoMessagePayload:
     properties:
@@ -1414,6 +1851,276 @@ paths:
       summary: Health check endpoint
       tags:
       - Health
+  /session/{sessionId}/chat/archive:
+    post:
+      consumes:
+      - application/json
+      description: Archives or unarchives a WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Archive chat request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ArchiveChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat archived/unarchived successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to archive/unarchive chat
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Archive or unarchive chat
+      tags:
+      - Chat
+  /session/{sessionId}/chat/disappearing-timer:
+    post:
+      consumes:
+      - application/json
+      description: Sets the disappearing message timer for a WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Disappearing timer request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetDisappearingTimerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Timer set successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to set timer
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set disappearing message timer
+      tags:
+      - Chat
+  /session/{sessionId}/chat/download/audio:
+    post:
+      consumes:
+      - application/json
+      description: Downloads an audio file from a WhatsApp chat message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Download audio request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DownloadMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Audio downloaded successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to download audio
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Download audio from chat
+      tags:
+      - Chat
+  /session/{sessionId}/chat/download/document:
+    post:
+      consumes:
+      - application/json
+      description: Downloads a document file from a WhatsApp chat message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Download document request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DownloadMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Document downloaded successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to download document
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Download document from chat
+      tags:
+      - Chat
+  /session/{sessionId}/chat/download/image:
+    post:
+      consumes:
+      - application/json
+      description: Downloads an image file from a WhatsApp chat message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Download image request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DownloadMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Image downloaded successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to download image
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Download image from chat
+      tags:
+      - Chat
+  /session/{sessionId}/chat/download/video:
+    post:
+      consumes:
+      - application/json
+      description: Downloads a video file from a WhatsApp chat message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Download video request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DownloadMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Video downloaded successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to download video
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Download video from chat
+      tags:
+      - Chat
   /session/{sessionId}/chat/history:
     get:
       consumes:
@@ -1463,6 +2170,51 @@ paths:
       summary: Get chat history
       tags:
       - Chat
+  /session/{sessionId}/chat/info:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Chat info request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetChatInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat information
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to get chat info
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get chat information
+      tags:
+      - Chat
   /session/{sessionId}/chat/list:
     post:
       consumes:
@@ -1505,6 +2257,96 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: List chats
+      tags:
+      - Chat
+  /session/{sessionId}/chat/mute:
+    post:
+      consumes:
+      - application/json
+      description: Mutes or unmutes a WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Mute chat request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MuteChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat muted/unmuted successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to mute/unmute chat
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Mute or unmute chat
+      tags:
+      - Chat
+  /session/{sessionId}/chat/pin:
+    post:
+      consumes:
+      - application/json
+      description: Pins or unpins a WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Pin chat request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PinChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat pinned/unpinned successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to pin/unpin chat
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Pin or unpin chat
       tags:
       - Chat
   /session/{sessionId}/chat/presence:
@@ -1595,6 +2437,96 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Link group to community
+      tags:
+      - Communities
+  /session/{sessionId}/community/participants:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves participants from all groups linked to a WhatsApp community
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get linked groups participants request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetLinkedGroupsParticipantsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Linked groups participants retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "500":
+          description: Failed to get linked groups participants
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get linked groups participants
+      tags:
+      - Communities
+  /session/{sessionId}/community/subgroups:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves the list of sub-groups in a WhatsApp community
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get sub-groups request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetSubGroupsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sub-groups retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "500":
+          description: Failed to get sub-groups
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get community sub-groups
       tags:
       - Communities
   /session/{sessionId}/community/unlink:
@@ -1855,6 +2787,51 @@ paths:
       summary: Get contacts list
       tags:
       - Contacts
+  /session/{sessionId}/group/announce/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets whether only admins can send messages in a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group announce request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupAnnounceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group announce setting updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set announce mode
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group announce mode
+      tags:
+      - Groups
   /session/{sessionId}/group/create:
     post:
       consumes:
@@ -1898,6 +2875,51 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create a new WhatsApp group
+      tags:
+      - Groups
+  /session/{sessionId}/group/ephemeral/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets the disappearing messages timer for a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group ephemeral request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupEphemeralRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group ephemeral setting updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set ephemeral mode
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group ephemeral mode
       tags:
       - Groups
   /session/{sessionId}/group/info:
@@ -1945,6 +2967,142 @@ paths:
       summary: Get group information
       tags:
       - Groups
+  /session/{sessionId}/group/inviteinfo:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves information about a WhatsApp group from an invite link
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get invite info request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetInviteInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Invite info retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to get invite info
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group invite information
+      tags:
+      - Groups
+  /session/{sessionId}/group/inviteinfo-specific:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a WhatsApp group from an invite
+        link
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get group info from invite request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetInviteInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group info retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to get group info
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get detailed group info from invite
+      tags:
+      - Groups
+  /session/{sessionId}/group/invitelink:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves the invite link for a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get invite link request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetInviteLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Invite link retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to get invite link
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group invite link
+      tags:
+      - Groups
   /session/{sessionId}/group/join:
     post:
       consumes:
@@ -1988,6 +3146,52 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Join a WhatsApp group
+      tags:
+      - Groups
+  /session/{sessionId}/group/join-approval/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets whether admin approval is required for new members to join
+        the group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group join approval request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GroupJoinApprovalReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group join approval mode updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set join approval mode
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group join approval mode
       tags:
       - Groups
   /session/{sessionId}/group/join-with-invite:
@@ -2117,6 +3321,414 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: List WhatsApp groups
+      tags:
+      - Groups
+  /session/{sessionId}/group/locked/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets whether only admins can edit group info in a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group locked request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupLockedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group locked setting updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set locked mode
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group locked mode
+      tags:
+      - Groups
+  /session/{sessionId}/group/member-add-mode/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets who can add new members to the WhatsApp group (admins only
+        or all participants)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group member add mode request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GroupMemberModeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group member add mode updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set member add mode
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group member add mode
+      tags:
+      - Groups
+  /session/{sessionId}/group/name/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets the name of a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group name request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group name updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set group name
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group name
+      tags:
+      - Groups
+  /session/{sessionId}/group/participants/update:
+    post:
+      consumes:
+      - application/json
+      description: Adds, removes, promotes or demotes participants in a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Update participants request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateParticipantsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Participants updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to update participants
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update group participants
+      tags:
+      - Groups
+  /session/{sessionId}/group/photo/remove:
+    post:
+      consumes:
+      - application/json
+      description: Removes the profile photo of a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Remove group photo request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RemoveGroupPhotoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group photo removed successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to remove group photo
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Remove group photo
+      tags:
+      - Groups
+  /session/{sessionId}/group/photo/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets the profile photo of a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group photo request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupPhotoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group photo updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set group photo
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group photo
+      tags:
+      - Groups
+  /session/{sessionId}/group/requests/list:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves the list of participants requesting to join a WhatsApp
+        group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Get group request participants request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetGroupRequestsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group request participants retrieved successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to get request participants
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group join requests
+      tags:
+      - Groups
+  /session/{sessionId}/group/requests/update:
+    post:
+      consumes:
+      - application/json
+      description: Approves or rejects participants requesting to join a WhatsApp
+        group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Update group request participants request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateGroupRequestsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group request participants updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to update request participants
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update group join requests
+      tags:
+      - Groups
+  /session/{sessionId}/group/topic/set:
+    post:
+      consumes:
+      - application/json
+      description: Sets the topic/description of a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Set group topic request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetGroupTopicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group topic updated successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to set group topic
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group topic/description
       tags:
       - Groups
   /session/{sessionId}/message/delete:
@@ -2884,6 +4496,603 @@ paths:
       summary: Create newsletter
       tags:
       - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletter information
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "500":
+          description: Failed to get newsletter
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get newsletter information
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/live:
+    post:
+      consumes:
+      - application/json
+      description: Subscribes to live updates for a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully subscribed to live updates
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to subscribe to live updates
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Subscribe to newsletter live updates
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/messages:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves messages from a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      - default: 50
+        description: Number of messages to retrieve
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletter messages
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to get messages
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get newsletter messages
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/mute:
+    post:
+      consumes:
+      - application/json
+      description: Mutes or unmutes a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      - description: Toggle newsletter mute request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ToggleMuteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletter muted/unmuted successfully
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to toggle mute
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Toggle newsletter mute
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/reaction:
+    post:
+      consumes:
+      - application/json
+      description: Sends a reaction to a newsletter message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      - description: Send newsletter reaction request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendReactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reaction sent successfully
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to send reaction
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send newsletter reaction
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/send:
+    post:
+      consumes:
+      - application/json
+      description: Sends a message to a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      - description: Send newsletter message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendNewsletterMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message sent successfully
+          schema:
+            $ref: '#/definitions/dto.SendNewsletterMessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.SendNewsletterMessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SendNewsletterMessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.SendNewsletterMessageResponse'
+        "500":
+          description: Failed to send message
+          schema:
+            $ref: '#/definitions/dto.SendNewsletterMessageResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send newsletter message
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Subscribes to a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully subscribed to newsletter
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to subscribe
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Subscribe to newsletter
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/unsubscribe:
+    post:
+      consumes:
+      - application/json
+      description: Unsubscribes from a newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully unsubscribed from newsletter
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to unsubscribe
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Unsubscribe from newsletter
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/updates:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves message updates for a specific newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletter message updates
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to get message updates
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get newsletter message updates
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/{newsletterId}/viewed:
+    post:
+      consumes:
+      - application/json
+      description: Marks newsletter messages as viewed for a specific newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter ID
+        in: path
+        name: newsletterId
+        required: true
+        type: string
+      - description: Mark newsletter viewed request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MarkViewedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Messages marked as viewed successfully
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to mark as viewed
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Mark newsletter messages as viewed
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/invite/{inviteKey}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves newsletter information using an invite key
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter invite key
+        in: path
+        name: inviteKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletter information
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+        "500":
+          description: Failed to get newsletter
+          schema:
+            $ref: '#/definitions/dto.NewsletterInfoResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get newsletter by invite
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all newsletters for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Newsletters list
+          schema:
+            $ref: '#/definitions/dto.NewsletterListResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.NewsletterListResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.NewsletterListResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.NewsletterListResponse'
+        "500":
+          description: Failed to list newsletters
+          schema:
+            $ref: '#/definitions/dto.NewsletterListResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List newsletters
+      tags:
+      - Newsletters
+  /session/{sessionId}/newsletter/media:
+    post:
+      consumes:
+      - application/json
+      description: Uploads media content for newsletter messages
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Upload newsletter media request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UploadNewsletterMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Media uploaded successfully
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "500":
+          description: Failed to upload media
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload newsletter media
+      tags:
+      - Newsletters
   /session/{sessionId}/presences/recording:
     post:
       consumes:
@@ -3020,6 +5229,89 @@ paths:
       summary: Set chat presence
       tags:
       - Chat
+  /session/{sessionId}/privacy/blocklist:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the list of blocked contacts for a WhatsApp session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Blocked contacts list
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "500":
+          description: Failed to get blocklist
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get blocked contacts
+      tags:
+      - Privacy
+    put:
+      consumes:
+      - application/json
+      description: Blocks or unblocks contacts for a WhatsApp session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Update blocklist request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateBlocklistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Blocklist updated successfully
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+        "500":
+          description: Failed to update blocklist
+          schema:
+            $ref: '#/definitions/dto.BlocklistResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update blocked contacts
+      tags:
+      - Privacy
   /session/{sessionId}/privacy/find:
     post:
       consumes:
@@ -3585,3 +5877,24 @@ securityDefinitions:
     name: Authorization
     type: apiKey
 swagger: "2.0"
+tags:
+- description: Health check and monitoring endpoints
+  name: Health
+- description: WhatsApp session management endpoints
+  name: Sessions
+- description: Message sending and management endpoints
+  name: Messages
+- description: Privacy settings and configuration endpoints
+  name: Privacy
+- description: Chat management and history endpoints
+  name: Chat
+- description: Contact management and presence endpoints
+  name: Contacts
+- description: WhatsApp group management endpoints
+  name: Groups
+- description: WhatsApp community management endpoints
+  name: Communities
+- description: Newsletter management and broadcasting endpoints
+  name: Newsletters
+- description: Webhook configuration and event management endpoints
+  name: Webhooks

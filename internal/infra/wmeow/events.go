@@ -166,10 +166,10 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 	ep.logger.Infof("Message received from %s in session %s", msg.Info.Sender, ep.sessionID)
 
 	webhookPayload := map[string]interface{}{
-		"event":      "Message",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       msg,
+		"event":     "Message",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      msg,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -179,10 +179,10 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 
 func (ep *EventProcessor) handleConnected(evt interface{}) {
 	webhookPayload := map[string]interface{}{
-		"event":      "Connected",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       evt,
+		"event":     "Connected",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -192,10 +192,10 @@ func (ep *EventProcessor) handleConnected(evt interface{}) {
 
 func (ep *EventProcessor) handleDisconnected(evt interface{}) {
 	webhookPayload := map[string]interface{}{
-		"event":      "Disconnected",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       evt,
+		"event":     "Disconnected",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -208,10 +208,10 @@ func (ep *EventProcessor) handleQR(evt interface{}) {
 	ep.logger.Infof("QR code generated for session %s", ep.sessionID)
 
 	webhookPayload := map[string]interface{}{
-		"event":      "QR",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       qr,
+		"event":     "QR",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      qr,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -223,10 +223,10 @@ func (ep *EventProcessor) handlePairSuccess(evt interface{}) {
 	ep.logger.Infof("Pair success for session %s", ep.sessionID)
 
 	webhookPayload := map[string]interface{}{
-		"event":      "PairSuccess",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       evt,
+		"event":     "PairSuccess",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -239,10 +239,10 @@ func (ep *EventProcessor) handlePairError(evt interface{}) {
 	ep.logger.Errorf("Pair error for session %s: %v", ep.sessionID, pairError.Error)
 
 	webhookPayload := map[string]interface{}{
-		"event":      "PairError",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       pairError,
+		"event":     "PairError",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      pairError,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -252,10 +252,10 @@ func (ep *EventProcessor) handlePairError(evt interface{}) {
 
 func (ep *EventProcessor) handleLoggedOut(evt interface{}) {
 	webhookPayload := map[string]interface{}{
-		"event":      "LoggedOut",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       evt,
+		"event":     "LoggedOut",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -281,10 +281,10 @@ func (ep *EventProcessor) handleReceipt(evt interface{}) {
 	ep.receiptMutex.Unlock()
 
 	webhookPayload := map[string]interface{}{
-		"event":      "Receipt",
-		"session_id": ep.sessionID,
-		"timestamp":  now.Unix(),
-		"data":       receipt,
+		"event":     "Receipt",
+		"sessionID": ep.sessionID,
+		"timestamp": now.Unix(),
+		"data":      receipt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -297,10 +297,10 @@ func (ep *EventProcessor) handlePresence(evt interface{}) {
 	// Removed verbose presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
-		"event":      "Presence",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       presence,
+		"event":     "Presence",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      presence,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -313,10 +313,10 @@ func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 	// Removed verbose chat presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
-		"event":      "ChatPresence",
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       chatPresence,
+		"event":     "ChatPresence",
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      chatPresence,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -332,10 +332,10 @@ func init() {
 
 func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 	webhookPayload := map[string]interface{}{
-		"event":      eventType,
-		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
-		"data":       evt,
+		"event":     eventType,
+		"sessionID": ep.sessionID,
+		"timestamp": time.Now().Unix(),
+		"data":      evt,
 	}
 
 	ep.logger.Infof("Sending generic event: %s", eventType)
