@@ -43,7 +43,7 @@ func (h *ContactHandler) CheckContact(c *fiber.Ctx) error {
 
 	var req dto.CheckContactRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -52,7 +52,7 @@ func (h *ContactHandler) CheckContact(c *fiber.Ctx) error {
 	}
 
 	if len(req.Phones) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_PHONES",
 			"At least one phone number is required",
@@ -69,7 +69,7 @@ func (h *ContactHandler) CheckContact(c *fiber.Ctx) error {
 
 	result, err := h.contactService.CheckContact(ctx, appReq)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"CHECK_CONTACT_FAILED",
 			"Failed to check contacts",
@@ -88,7 +88,7 @@ func (h *ContactHandler) CheckContact(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewCheckContactSuccessResponse(sessionID, checkResults)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // GetContactInfo godoc
@@ -111,7 +111,7 @@ func (h *ContactHandler) GetContactInfo(c *fiber.Ctx) error {
 
 	var req dto.GetContactInfoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -120,7 +120,7 @@ func (h *ContactHandler) GetContactInfo(c *fiber.Ctx) error {
 	}
 
 	if len(req.Phones) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_PHONES",
 			"At least one phone number is required",
@@ -131,7 +131,7 @@ func (h *ContactHandler) GetContactInfo(c *fiber.Ctx) error {
 	ctx := c.Context()
 	results, err := h.wmeowService.GetUserInfo(ctx, sessionID, req.Phones)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_CONTACT_INFO_FAILED",
 			"Failed to get contact information",
@@ -156,7 +156,7 @@ func (h *ContactHandler) GetContactInfo(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewContactsResponse(sessionID, contactInfos)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // GetAvatar godoc
@@ -179,7 +179,7 @@ func (h *ContactHandler) GetAvatar(c *fiber.Ctx) error {
 
 	var req dto.GetAvatarRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -188,7 +188,7 @@ func (h *ContactHandler) GetAvatar(c *fiber.Ctx) error {
 	}
 
 	if req.Phone == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_PHONE",
 			"Phone number is required",
@@ -199,7 +199,7 @@ func (h *ContactHandler) GetAvatar(c *fiber.Ctx) error {
 	ctx := c.Context()
 	result, err := h.wmeowService.GetAvatar(ctx, sessionID, req.Phone)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_AVATAR_FAILED",
 			"Failed to get contact avatar",
@@ -216,7 +216,7 @@ func (h *ContactHandler) GetAvatar(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewContactAvatarResponse(avatarInfo)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // SetPresence godoc
@@ -239,7 +239,7 @@ func (h *ContactHandler) SetPresence(c *fiber.Ctx) error {
 
 	var req dto.SetContactPresenceRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -248,7 +248,7 @@ func (h *ContactHandler) SetPresence(c *fiber.Ctx) error {
 	}
 
 	if req.State == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_STATE",
 			"State is required",
@@ -259,7 +259,7 @@ func (h *ContactHandler) SetPresence(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.SetUserPresence(ctx, sessionID, req.State)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_PRESENCE_FAILED",
 			"Failed to set contact presence",
@@ -268,7 +268,7 @@ func (h *ContactHandler) SetPresence(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewContactActionSuccessResponse(sessionID, req.Phone, "set_presence", "Presence updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // GetContacts godoc
@@ -301,7 +301,7 @@ func (h *ContactHandler) GetContacts(c *fiber.Ctx) error {
 
 	result, err := h.contactService.GetContacts(ctx, req)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_CONTACTS_FAILED",
 			"Failed to get contacts",
@@ -323,7 +323,7 @@ func (h *ContactHandler) GetContacts(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewContactsResponse(sessionID, contacts)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *ContactHandler) GetBlockedContacts(c *fiber.Ctx) error {
@@ -332,7 +332,7 @@ func (h *ContactHandler) GetBlockedContacts(c *fiber.Ctx) error {
 	ctx := c.Context()
 	blocklist, err := h.wmeowService.GetBlocklist(ctx, sessionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_BLOCKLIST_FAILED",
 			"Failed to get blocked contacts",
@@ -348,7 +348,7 @@ func (h *ContactHandler) GetBlockedContacts(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *ContactHandler) UpdateProfile(c *fiber.Ctx) error {
@@ -360,7 +360,7 @@ func (h *ContactHandler) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -369,7 +369,7 @@ func (h *ContactHandler) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	if req.Name == "" && req.About == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_DATA",
 			"At least name or about must be provided",
@@ -380,7 +380,7 @@ func (h *ContactHandler) UpdateProfile(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.UpdateProfile(ctx, sessionID, req.Name, req.About)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"UPDATE_PROFILE_FAILED",
 			"Failed to update profile",
@@ -388,7 +388,7 @@ func (h *ContactHandler) UpdateProfile(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Profile updated successfully",
 		"data": fiber.Map{
@@ -407,7 +407,7 @@ func (h *ContactHandler) SetProfilePicture(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -417,7 +417,7 @@ func (h *ContactHandler) SetProfilePicture(c *fiber.Ctx) error {
 
 	imageData, err := base64.StdEncoding.DecodeString(req.Image)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_IMAGE",
 			"Invalid base64 image data",
@@ -428,7 +428,7 @@ func (h *ContactHandler) SetProfilePicture(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetProfilePicture(ctx, sessionID, imageData)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_PROFILE_PICTURE_FAILED",
 			"Failed to set profile picture",
@@ -436,7 +436,7 @@ func (h *ContactHandler) SetProfilePicture(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Profile picture set successfully",
 		"data": fiber.Map{
@@ -451,7 +451,7 @@ func (h *ContactHandler) RemoveProfilePicture(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.RemoveProfilePicture(ctx, sessionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"REMOVE_PROFILE_PICTURE_FAILED",
 			"Failed to remove profile picture",
@@ -459,7 +459,7 @@ func (h *ContactHandler) RemoveProfilePicture(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Profile picture removed successfully",
 		"data": fiber.Map{
@@ -477,7 +477,7 @@ func (h *ContactHandler) GetUserStatus(c *fiber.Ctx) error {
 	phone := c.Query("phone")
 
 	if phone == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_PHONE",
 			"Phone number is required",
@@ -488,7 +488,7 @@ func (h *ContactHandler) GetUserStatus(c *fiber.Ctx) error {
 	ctx := c.Context()
 	status, err := h.wmeowService.GetUserStatus(ctx, sessionID, phone)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_USER_STATUS_FAILED",
 			"Failed to get user status",
@@ -496,7 +496,7 @@ func (h *ContactHandler) GetUserStatus(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data": fiber.Map{
 			"session_id": sessionID,
@@ -513,7 +513,7 @@ func (h *ContactHandler) SetStatus(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewContactErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -524,7 +524,7 @@ func (h *ContactHandler) SetStatus(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.SetStatus(ctx, sessionID, req.Status)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewContactErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewContactErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_STATUS_FAILED",
 			"Failed to set status",
@@ -532,7 +532,7 @@ func (h *ContactHandler) SetStatus(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Status set successfully",
 		"data": fiber.Map{
@@ -547,14 +547,14 @@ func (h *ContactHandler) GetPrivacySettings(c *fiber.Ctx) error {
 	ctx := c.Context()
 	settings, err := h.wmeowService.GetPrivacySettings(ctx, sessionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to get privacy settings",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data":    settings,
 	})
@@ -568,7 +568,7 @@ func (h *ContactHandler) UpdatePrivacySettings(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid request format",
 			"details": err.Error(),
@@ -578,14 +578,14 @@ func (h *ContactHandler) UpdatePrivacySettings(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.SetPrivacySetting(ctx, sessionID, req.Setting, req.Value)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to update privacy setting",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Privacy setting updated successfully",
 	})
@@ -599,7 +599,7 @@ func (h *ContactHandler) BlockUser(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid request format",
 			"details": err.Error(),
@@ -609,14 +609,14 @@ func (h *ContactHandler) BlockUser(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.UpdateBlocklist(ctx, sessionID, "block", []string{req.Phone})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to block contact",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Contact blocked successfully",
 	})
@@ -629,7 +629,7 @@ func (h *ContactHandler) UnblockUser(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid request format",
 			"details": err.Error(),
@@ -639,14 +639,14 @@ func (h *ContactHandler) UnblockUser(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err := h.wmeowService.UpdateBlocklist(ctx, sessionID, "unblock", []string{req.Phone})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to unblock contact",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Contact unblocked successfully",
 	})

@@ -46,7 +46,7 @@ func (h *GroupHandler) resolveSessionID(_ *fiber.Ctx, sessionIDOrName string) (s
 func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -56,7 +56,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -66,7 +66,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 
 	var req dto.CreateGroupRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -75,7 +75,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -86,7 +86,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 	groupInfo, err := h.wmeowService.CreateGroup(ctx, sessionID, req.Name, req.Participants)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"CREATE_GROUP_FAILED",
 			"Failed to create group",
@@ -98,7 +98,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 
 	response := dto.NewGroupSuccessResponse(sessionID, "create", "success", dtoGroupInfo)
 	response.Code = fiber.StatusCreated
-	return c.Status(fiber.StatusCreated).JSON( response)
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // GetGroupInfo godoc
@@ -119,7 +119,7 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -129,7 +129,7 @@ func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -139,7 +139,7 @@ func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 
 	var req dto.GetGroupInfoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -150,7 +150,7 @@ func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 	ctx := c.Context()
 	groupInfo, err := h.wmeowService.GetGroupInfo(ctx, sessionID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_GROUP_INFO_FAILED",
 			"Failed to get group information",
@@ -161,7 +161,7 @@ func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 	dtoGroupInfo := convertWmeowGroupInfoToDTO(groupInfo)
 
 	response := dto.NewGroupSuccessResponse(sessionID, "info", "success", dtoGroupInfo)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // ListGroups godoc
@@ -181,7 +181,7 @@ func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
 func (h *GroupHandler) ListGroups(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -191,7 +191,7 @@ func (h *GroupHandler) ListGroups(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -207,7 +207,7 @@ func (h *GroupHandler) ListGroups(c *fiber.Ctx) error {
 
 	result, err := h.groupService.ListGroups(ctx, req)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"LIST_GROUPS_FAILED",
 			"Failed to list groups",
@@ -240,7 +240,7 @@ func (h *GroupHandler) ListGroups(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupListResponse(sessionID, dtoGroups)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // JoinGroup godoc
@@ -261,7 +261,7 @@ func (h *GroupHandler) ListGroups(c *fiber.Ctx) error {
 func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -271,7 +271,7 @@ func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -281,7 +281,7 @@ func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 
 	var req dto.JoinGroupRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -292,7 +292,7 @@ func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 	_, err = h.wmeowService.JoinGroup(ctx, sessionID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"JOIN_GROUP_FAILED",
 			"Failed to join group",
@@ -304,12 +304,12 @@ func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 	if err != nil {
 		response := dto.NewGroupSuccessResponse(sessionID, "join", "success", nil)
 		response.Data.Message = "Group joined successfully"
-		return c.Status(fiber.StatusOK).JSON( response)
+		return c.Status(fiber.StatusOK).JSON(response)
 	}
 
 	dtoGroupInfo := convertWmeowGroupInfoToDTO(groupInfo)
 	response := dto.NewGroupSuccessResponse(sessionID, "join", "success", dtoGroupInfo)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // JoinGroupWithInvite godoc
@@ -330,7 +330,7 @@ func (h *GroupHandler) JoinGroup(c *fiber.Ctx) error {
 func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -340,7 +340,7 @@ func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -350,7 +350,7 @@ func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 
 	var req dto.JoinGroupWithInviteRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -361,7 +361,7 @@ func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 	ctx := c.Context()
 	groupInfo, err := h.wmeowService.JoinGroupWithInvite(ctx, sessionID, "", "", req.InviteCode, 0)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"JOIN_GROUP_WITH_INVITE_FAILED",
 			"Failed to join group with invite",
@@ -372,7 +372,7 @@ func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 	dtoGroupInfo := convertWmeowGroupInfoToDTO(groupInfo)
 
 	response := dto.NewGroupSuccessResponse(sessionID, "join_with_invite", "success", dtoGroupInfo)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // LeaveGroup godoc
@@ -393,7 +393,7 @@ func (h *GroupHandler) JoinGroupWithInvite(c *fiber.Ctx) error {
 func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -403,7 +403,7 @@ func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -413,7 +413,7 @@ func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 
 	var req dto.LeaveGroupRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -424,7 +424,7 @@ func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.LeaveGroup(ctx, sessionID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"LEAVE_GROUP_FAILED",
 			"Failed to leave group",
@@ -433,13 +433,13 @@ func (h *GroupHandler) LeaveGroup(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "leave", "Successfully left the group")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -449,7 +449,7 @@ func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -459,7 +459,7 @@ func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 
 	var req dto.GetInviteLinkRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -470,7 +470,7 @@ func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 	ctx := c.Context()
 	inviteLink, err := h.wmeowService.GetInviteLink(ctx, sessionID, req.GroupJID, req.Reset)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_INVITE_LINK_FAILED",
 			"Failed to get invite link",
@@ -479,7 +479,7 @@ func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewInviteLinkResponse(req.GroupJID, inviteLink, "")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
@@ -521,7 +521,7 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -531,7 +531,7 @@ func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -541,7 +541,7 @@ func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 
 	var req dto.GetInviteInfoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -552,7 +552,7 @@ func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 	ctx := c.Context()
 	inviteInfo, err := h.wmeowService.GetInviteInfo(ctx, sessionID, req.InviteCode)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_INVITE_INFO_FAILED",
 			"Failed to get invite info",
@@ -562,13 +562,13 @@ func (h *GroupHandler) GetInviteInfo(c *fiber.Ctx) error {
 
 	response := dto.NewGroupOperationResponse(sessionID, "invite_info", "Invite info retrieved successfully")
 	response.Data.Message = fmt.Sprintf("Group: %s, Created by: %s", inviteInfo.Name, inviteInfo.CreatedBy)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -578,7 +578,7 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -588,7 +588,7 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 
 	var req dto.GetInviteInfoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -599,7 +599,7 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 	ctx := c.Context()
 	groupInfo, err := h.wmeowService.GetGroupInfoFromInvite(ctx, sessionID, "", "", req.InviteCode, 0)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_GROUP_INFO_FROM_INVITE_FAILED",
 			"Failed to get group info from invite",
@@ -610,13 +610,13 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *fiber.Ctx) error {
 	dtoGroupInfo := convertWmeowGroupInfoToDTO(groupInfo)
 
 	response := dto.NewGroupSuccessResponse(sessionID, "invite_info_specific", "success", dtoGroupInfo)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -626,7 +626,7 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -636,7 +636,7 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 
 	var req dto.UpdateParticipantsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -645,7 +645,7 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -656,7 +656,7 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.UpdateParticipants(ctx, sessionID, req.GroupJID, req.Action, req.Participants)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"UPDATE_PARTICIPANTS_FAILED",
 			"Failed to update participants",
@@ -666,13 +666,13 @@ func (h *GroupHandler) UpdateParticipants(c *fiber.Ctx) error {
 
 	message := "Successfully " + req.Action + "ed participants"
 	response := dto.NewGroupOperationResponse(sessionID, "update_participants", message)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -682,7 +682,7 @@ func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -692,7 +692,7 @@ func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 
 	var req dto.SetGroupNameRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -703,7 +703,7 @@ func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupName(ctx, sessionID, req.GroupJID, req.Name)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_NAME_FAILED",
 			"Failed to set group name",
@@ -712,13 +712,13 @@ func (h *GroupHandler) SetName(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_name", "Group name updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -728,7 +728,7 @@ func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -738,7 +738,7 @@ func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 
 	var req dto.SetGroupTopicRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -749,7 +749,7 @@ func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupTopic(ctx, sessionID, req.GroupJID, req.Topic)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_TOPIC_FAILED",
 			"Failed to set group topic",
@@ -758,13 +758,13 @@ func (h *GroupHandler) SetTopic(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_topic", "Group topic updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -774,7 +774,7 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -784,7 +784,7 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 
 	var req dto.SetGroupPhotoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -794,7 +794,7 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 
 	photoData, err := base64.StdEncoding.DecodeString(req.Photo)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_PHOTO_DATA",
 			"Invalid base64 photo data",
@@ -805,7 +805,7 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupPhoto(ctx, sessionID, req.GroupJID, photoData)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_PHOTO_FAILED",
 			"Failed to set group photo",
@@ -814,13 +814,13 @@ func (h *GroupHandler) SetPhoto(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_photo", "Group photo updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -830,7 +830,7 @@ func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -840,7 +840,7 @@ func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 
 	var req dto.RemoveGroupPhotoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -851,7 +851,7 @@ func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.RemoveGroupPhoto(ctx, sessionID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"REMOVE_GROUP_PHOTO_FAILED",
 			"Failed to remove group photo",
@@ -860,13 +860,13 @@ func (h *GroupHandler) RemovePhoto(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "remove_photo", "Group photo removed successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -876,7 +876,7 @@ func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -886,7 +886,7 @@ func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 
 	var req dto.SetGroupAnnounceRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -897,7 +897,7 @@ func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupAnnounce(ctx, sessionID, req.GroupJID, req.AnnounceOnly)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_ANNOUNCE_FAILED",
 			"Failed to set group announce setting",
@@ -906,13 +906,13 @@ func (h *GroupHandler) SetAnnounce(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_announce", "Group announce setting updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -922,7 +922,7 @@ func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -932,7 +932,7 @@ func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 
 	var req dto.SetGroupLockedRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -943,7 +943,7 @@ func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupLocked(ctx, sessionID, req.GroupJID, req.Locked)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_LOCKED_FAILED",
 			"Failed to set group locked setting",
@@ -952,13 +952,13 @@ func (h *GroupHandler) SetLocked(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_locked", "Group locked setting updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -968,7 +968,7 @@ func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -978,7 +978,7 @@ func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 
 	var req dto.SetGroupEphemeralRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -993,7 +993,7 @@ func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 	}
 	err = h.wmeowService.SetGroupEphemeral(ctx, sessionID, req.GroupJID, req.Ephemeral, duration)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_GROUP_EPHEMERAL_FAILED",
 			"Failed to set group ephemeral setting",
@@ -1002,13 +1002,13 @@ func (h *GroupHandler) SetEphemeral(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_ephemeral", "Group ephemeral setting updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1018,7 +1018,7 @@ func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1028,7 +1028,7 @@ func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 
 	var req dto.GroupJoinApprovalReq
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1039,7 +1039,7 @@ func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupJoinApproval(ctx, sessionID, req.GroupJID, req.RequireApproval)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_JOIN_APPROVAL_FAILED",
 			"Failed to set group join approval mode",
@@ -1048,13 +1048,13 @@ func (h *GroupHandler) SetJoinApproval(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_join_approval", "Group join approval mode updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1064,7 +1064,7 @@ func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1074,7 +1074,7 @@ func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 
 	var req dto.GroupMemberModeReq
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1085,7 +1085,7 @@ func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.SetGroupMemberAddMode(ctx, sessionID, req.GroupJID, req.Mode)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"SET_MEMBER_ADD_MODE_FAILED",
 			"Failed to set group member add mode",
@@ -1094,13 +1094,13 @@ func (h *GroupHandler) SetMemberAddMode(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewGroupOperationResponse(sessionID, "set_member_add_mode", "Group member add mode updated successfully")
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1110,7 +1110,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1120,7 +1120,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 
 	var req dto.GetGroupRequestsReq
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1129,7 +1129,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1140,7 +1140,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 	ctx := c.Context()
 	participants, err := h.wmeowService.GetGroupRequestParticipants(ctx, sessionID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_GROUP_REQUEST_PARTICIPANTS_FAILED",
 			"Failed to get group request participants",
@@ -1148,7 +1148,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 		))
 	}
 
-	return c.Status(fiber.StatusOK).JSON( fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"code":    200,
 		"data": fiber.Map{
@@ -1166,7 +1166,7 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *fiber.Ctx) error {
 func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1176,7 +1176,7 @@ func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1186,7 +1186,7 @@ func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 
 	var req dto.UpdateGroupRequestsReq
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1195,7 +1195,7 @@ func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1206,7 +1206,7 @@ func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.UpdateGroupRequestParticipants(ctx, sessionID, req.GroupJID, req.Action, req.Participants)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGroupErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
 			fiber.StatusInternalServerError,
 			"UPDATE_GROUP_REQUEST_PARTICIPANTS_FAILED",
 			"Failed to update group request participants",
@@ -1216,5 +1216,5 @@ func (h *GroupHandler) UpdateGroupRequestParticipants(c *fiber.Ctx) error {
 
 	message := fmt.Sprintf("Successfully %sed %d participants", req.Action, len(req.Participants))
 	response := dto.NewGroupOperationResponse(sessionID, "update_request_participants", message)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }

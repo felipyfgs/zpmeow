@@ -62,7 +62,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusNotFound).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
@@ -75,7 +75,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 
 	var req dto.RegisterWebhookRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusBadRequest).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
@@ -89,7 +89,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 	validEvents := make([]string, 0)
 	allValidEvents, err := h.webhookApp.ListEvents(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.WebhookResponse{
 			Success: false,
 			Error: &dto.ErrorInfo{
 				Code:    "VALIDATION_ERROR",
@@ -103,7 +103,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 		if h.isValidEvent(event, allValidEvents) {
 			validEvents = append(validEvents, event)
 		} else {
-			return c.Status(fiber.StatusBadRequest).JSON( dto.WebhookResponse{
+			return c.Status(fiber.StatusBadRequest).JSON(dto.WebhookResponse{
 				Success: false,
 				Error: &dto.ErrorInfo{
 					Code:    "INVALID_EVENT",
@@ -114,7 +114,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 	}
 
 	if len(validEvents) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusBadRequest).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
@@ -127,7 +127,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 
 	err = h.webhookApp.SetWebhook(c.Context(), sessionID, req.URL, validEvents)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusBadRequest).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
@@ -143,7 +143,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 		h.logger.Warnf("Failed to update session subscriptions for %s: %v", sessionID, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON( dto.StandardWebhookCreateResponse{
+	return c.Status(fiber.StatusCreated).JSON(dto.StandardWebhookCreateResponse{
 		Success: true,
 		Code:    fiber.StatusCreated,
 		Data: &dto.StandardWebhookData{
@@ -173,7 +173,7 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusNotFound).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
@@ -186,7 +186,7 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 
 	webhookURL, events, err := h.webhookApp.GetWebhook(c.Context(), sessionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusInternalServerError,
 			Data:    &dto.WebhookResponseData{},
@@ -198,7 +198,7 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 	}
 
 	if webhookURL == "" {
-		return c.Status(fiber.StatusNotFound).JSON( dto.WebhookResponse{
+		return c.Status(fiber.StatusNotFound).JSON(dto.WebhookResponse{
 			Success: false,
 			Code:    fiber.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
@@ -209,7 +209,7 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( dto.StandardWebhookResponse{
+	return c.Status(fiber.StatusOK).JSON(dto.StandardWebhookResponse{
 		Success: true,
 		Code:    fiber.StatusOK,
 		Data: &dto.StandardWebhookData{
@@ -236,13 +236,13 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 func (h *WebhookHandler) ListEvents(c *fiber.Ctx) error {
 	events, err := h.webhookApp.ListEvents(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to get supported events",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON( dto.SupportedEventsResponse{
+	return c.Status(fiber.StatusOK).JSON(dto.SupportedEventsResponse{
 		Success: true,
 		Code:    fiber.StatusOK,
 		Status:  fiber.StatusOK,

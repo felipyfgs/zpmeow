@@ -629,7 +629,7 @@ func (h *MessageHandler) SendLocation(c *fiber.Ctx) error {
 func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -639,7 +639,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -649,7 +649,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 
 	var req dto.SendContactRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -658,7 +658,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -676,7 +676,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 
 		sendResp, err := h.wmeowService.SendContactsMessage(ctx, sessionID, req.Phone, contacts)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+			return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 				fiber.StatusInternalServerError,
 				"SEND_CONTACT_FAILED",
 				"Failed to send contact message",
@@ -701,7 +701,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 
 		sendResp, err := h.wmeowService.SendContactsMessage(ctx, sessionID, req.Phone, contacts)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+			return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 				fiber.StatusInternalServerError,
 				"SEND_CONTACTS_FAILED",
 				"Failed to send contacts message",
@@ -720,7 +720,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(messageResponse)
 	}
 
-	return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+	return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 		fiber.StatusBadRequest,
 		"INVALID_REQUEST_FORMAT",
 		"Invalid request format",
@@ -746,7 +746,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -756,7 +756,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -766,7 +766,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 
 	var req dto.SendImageRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -775,7 +775,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -785,7 +785,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 
 	imageData, err := h.decodeMediaData(req.Image)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_IMAGE_DATA",
 			"Failed to decode image data",
@@ -796,7 +796,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 	ctx := c.Context()
 	sendResp, err := h.wmeowService.SendImageMessage(ctx, sessionID, req.Phone, imageData, req.Caption, "image/jpeg")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_IMAGE_FAILED",
 			"Failed to send image message",
@@ -827,7 +827,7 @@ func (h *MessageHandler) SendImage(c *fiber.Ctx) error {
 func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -837,7 +837,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -847,7 +847,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 
 	var req dto.SendAudioRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -856,7 +856,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -866,7 +866,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 
 	audioData, err := h.decodeMediaData(req.Audio)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_AUDIO_DATA",
 			"Failed to decode audio data",
@@ -877,7 +877,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 	ctx := c.Context()
 	sendResp, err := h.wmeowService.SendAudioMessage(ctx, sessionID, req.Phone, audioData, "audio/mpeg")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_AUDIO_FAILED",
 			"Failed to send audio message",
@@ -908,7 +908,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -918,7 +918,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -928,7 +928,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 
 	var req dto.SendDocumentRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -937,7 +937,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -947,7 +947,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 
 	documentData, err := h.decodeMediaData(req.Document)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_DOCUMENT_DATA",
 			"Failed to decode document data",
@@ -968,7 +968,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 	var sendResp *whatsmeow.SendResponse
 	sendResp, err = h.wmeowService.SendDocumentMessage(ctx, sessionID, req.Phone, documentData, filename, "", mimeType)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_DOCUMENT_FAILED",
 			"Failed to send document message",
@@ -999,7 +999,7 @@ func (h *MessageHandler) SendDocument(c *fiber.Ctx) error {
 func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1009,7 +1009,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1019,7 +1019,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 
 	var req dto.SendVideoRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1028,7 +1028,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1038,7 +1038,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 
 	videoData, err := h.decodeMediaData(req.Video)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_VIDEO_DATA",
 			"Failed to decode video data",
@@ -1049,7 +1049,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 	ctx := c.Context()
 	sendResp, err := h.wmeowService.SendVideoMessage(ctx, sessionID, req.Phone, videoData, req.Caption, "video/mp4")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_VIDEO_FAILED",
 			"Failed to send video message",
@@ -1080,7 +1080,7 @@ func (h *MessageHandler) SendVideo(c *fiber.Ctx) error {
 func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -1090,7 +1090,7 @@ func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -1100,7 +1100,7 @@ func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 
 	var req dto.SendStickerRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -1109,7 +1109,7 @@ func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1119,7 +1119,7 @@ func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 
 	stickerData, err := h.decodeMediaData(req.Sticker)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_STICKER_DATA",
 			"Failed to decode sticker data",
@@ -1130,7 +1130,7 @@ func (h *MessageHandler) SendSticker(c *fiber.Ctx) error {
 	ctx := c.Context()
 	sendResp, err := h.wmeowService.SendStickerMessage(ctx, sessionID, req.Phone, stickerData, "image/webp")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_STICKER_FAILED",
 			"Failed to send sticker message",
@@ -1163,7 +1163,7 @@ func (h *MessageHandler) SendButton(c *fiber.Ctx) error {
 
 	var req dto.SendButtonMessageRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -1172,7 +1172,7 @@ func (h *MessageHandler) SendButton(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1192,7 +1192,7 @@ func (h *MessageHandler) SendButton(c *fiber.Ctx) error {
 	ctx := c.Context()
 	resp, err := h.wmeowService.SendButtonMessage(ctx, sessionID, req.Phone, req.Title, buttons)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_BUTTON_MESSAGE_FAILED",
 			"Failed to send button message",
@@ -1224,7 +1224,7 @@ func (h *MessageHandler) SendList(c *fiber.Ctx) error {
 
 	var req dto.SendListMessageRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -1233,7 +1233,7 @@ func (h *MessageHandler) SendList(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1260,7 +1260,7 @@ func (h *MessageHandler) SendList(c *fiber.Ctx) error {
 	ctx := c.Context()
 	resp, err := h.wmeowService.SendListMessage(ctx, sessionID, req.Phone, req.Title, req.Description, req.ButtonText, req.FooterText, sections)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_LIST_MESSAGE_FAILED",
 			"Failed to send list message",
@@ -1292,7 +1292,7 @@ func (h *MessageHandler) SendPoll(c *fiber.Ctx) error {
 
 	var req dto.SendPollMessageRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
@@ -1301,7 +1301,7 @@ func (h *MessageHandler) SendPoll(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -1312,7 +1312,7 @@ func (h *MessageHandler) SendPoll(c *fiber.Ctx) error {
 	ctx := c.Context()
 	resp, err := h.wmeowService.SendPollMessage(ctx, sessionID, req.Phone, req.Name, req.Options, req.SelectableCount)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewMessageErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,
 			"SEND_POLL_MESSAGE_FAILED",
 			"Failed to send poll message",

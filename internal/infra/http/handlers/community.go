@@ -44,7 +44,7 @@ func (h *CommunityHandler) resolveSessionID(_ *fiber.Ctx, sessionIDOrName string
 func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -54,7 +54,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -64,7 +64,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 
 	var req dto.LinkGroupRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -73,7 +73,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -84,7 +84,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.LinkGroup(ctx, sessionID, req.CommunityJID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusInternalServerError,
 			"LINK_GROUP_FAILED",
 			"Failed to link group to community",
@@ -93,7 +93,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewCommunitySuccessResponse(sessionID, "link_group", "Group linked to community successfully", nil)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // UnlinkGroup godoc
@@ -114,7 +114,7 @@ func (h *CommunityHandler) LinkGroup(c *fiber.Ctx) error {
 func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -124,7 +124,7 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -134,7 +134,7 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 
 	var req dto.UnlinkGroupRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -143,7 +143,7 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -154,7 +154,7 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 	err = h.wmeowService.UnlinkGroup(ctx, sessionID, req.CommunityJID, req.GroupJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusInternalServerError,
 			"UNLINK_GROUP_FAILED",
 			"Failed to unlink group from community",
@@ -163,13 +163,13 @@ func (h *CommunityHandler) UnlinkGroup(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewCommunitySuccessResponse(sessionID, "unlink_group", "Group unlinked from community successfully", nil)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -179,7 +179,7 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -189,7 +189,7 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 
 	var req dto.GetSubGroupsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -198,7 +198,7 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -209,7 +209,7 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	ctx := c.Context()
 	subGroups, err := h.wmeowService.GetSubGroups(ctx, sessionID, req.CommunityJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_SUBGROUPS_FAILED",
 			"Failed to get subgroups",
@@ -229,13 +229,13 @@ func (h *CommunityHandler) GetSubGroups(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewCommunitySubGroupsResponse(sessionID, req.CommunityJID, communityInfos)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"MISSING_SESSION_ID",
 			"Session ID is required",
@@ -245,7 +245,7 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 
 	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusNotFound,
 			"SESSION_NOT_FOUND",
 			"Session not found",
@@ -255,7 +255,7 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 
 	var req dto.GetLinkedGroupsParticipantsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -264,7 +264,7 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusBadRequest,
 			"VALIDATION_ERROR",
 			"Request validation failed",
@@ -275,7 +275,7 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 	ctx := c.Context()
 	participants, err := h.wmeowService.GetLinkedGroupsParticipants(ctx, sessionID, req.CommunityJID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewCommunityErrorResponse(
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewCommunityErrorResponse(
 			fiber.StatusInternalServerError,
 			"GET_LINKED_GROUPS_PARTICIPANTS_FAILED",
 			"Failed to get linked groups participants",
@@ -295,5 +295,5 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *fiber.Ctx) error {
 	}
 
 	response := dto.NewCommunityParticipantsResponse(sessionID, req.CommunityJID, groupParticipants)
-	return c.Status(fiber.StatusOK).JSON( response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
