@@ -85,7 +85,21 @@ func SetupRoutes(
 	privacy.Get("/blocklist", handlers.PrivacyHandler.GetBlocklist)
 	privacy.Put("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
 
-	// 3. Chat
+	// 3. Contacts
+	contacts := sessionAPIGroup.Group("/contacts")
+	contacts.Post("/check", handlers.ContactHandler.CheckUser)
+	contacts.Post("/info", handlers.ContactHandler.GetUserInfo)
+	contacts.Post("/avatar", handlers.ContactHandler.GetAvatar)
+	contacts.Get("/list", handlers.ContactHandler.GetContacts)
+	contacts.Post("/sync", handlers.ContactHandler.GetContacts)
+
+	presence := sessionAPIGroup.Group("/presences")
+	presence.Put("/set", handlers.ContactHandler.SetPresence)
+	presence.Get("/get", handlers.ContactHandler.GetUserInfo)
+	presence.Post("/contact", handlers.ContactHandler.GetUserInfo)
+	presence.Post("/subscribe", handlers.ContactHandler.CheckUser)
+
+	// 4. Chat
 	chat := sessionAPIGroup.Group("/chat")
 	chat.Post("/presence", handlers.ChatHandler.SetPresence)
 	chat.Get("/history", handlers.ChatHandler.GetChatHistory)
@@ -103,21 +117,10 @@ func SetupRoutes(
 	chat.Post("/archive", handlers.ChatHandler.ArchiveChat)
 	chat.Post("/disappearing-timer", handlers.ChatHandler.SetDisappearingTimer)
 
-	// 4. Contacts
-	contacts := sessionAPIGroup.Group("/contacts")
-	contacts.Post("/check", handlers.ContactHandler.CheckUser)
-	contacts.Post("/info", handlers.ContactHandler.GetUserInfo)
-	contacts.Post("/avatar", handlers.ContactHandler.GetAvatar)
-	contacts.Get("/list", handlers.ContactHandler.GetContacts)
-	contacts.Post("/sync", handlers.ContactHandler.GetContacts)
-
-	presence := sessionAPIGroup.Group("/presences")
-	presence.Put("/set", handlers.ContactHandler.SetPresence)
-	presence.Get("/get", handlers.ContactHandler.GetUserInfo)
-	presence.Post("/contact", handlers.ContactHandler.GetUserInfo)
-	presence.Post("/subscribe", handlers.ContactHandler.CheckUser)
-	presence.Post("/typing", handlers.ChatHandler.SetPresence)
-	presence.Post("/recording", handlers.ChatHandler.SetPresence)
+	// Chat presence endpoints
+	chatPresence := sessionAPIGroup.Group("/presences")
+	chatPresence.Post("/typing", handlers.ChatHandler.SetPresence)
+	chatPresence.Post("/recording", handlers.ChatHandler.SetPresence)
 
 	// 5. Groups
 	group := sessionAPIGroup.Group("/group")
