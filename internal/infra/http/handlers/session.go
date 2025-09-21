@@ -30,7 +30,9 @@ func NewSessionHandler(sessionService *application.SessionApp, wmeowService wmeo
 func (h *SessionHandler) validateSessionID(c *fiber.Ctx) (string, bool) {
 	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		h.sendErrorResponse(c, fiber.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", "Missing session ID or name in path")
+		if err := h.sendErrorResponse(c, fiber.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", "Missing session ID or name in path"); err != nil {
+			h.logger.Errorf("Failed to send error response: %v", err)
+		}
 		return "", false
 	}
 	return sessionIDOrName, true
@@ -39,7 +41,9 @@ func (h *SessionHandler) validateSessionID(c *fiber.Ctx) (string, bool) {
 func (h *SessionHandler) bindAndValidateRequest(c *fiber.Ctx, req interface{}) bool {
 	if err := h.BindAndValidate(c, req); err != nil {
 		h.logger.Errorf("Failed to bind or validate request: %v", err)
-		h.SendValidationErrorResponse(c, err)
+		if sendErr := h.SendValidationErrorResponse(c, err); sendErr != nil {
+			h.logger.Errorf("Failed to send validation error response: %v", sendErr)
+		}
 		return false
 	}
 	return true

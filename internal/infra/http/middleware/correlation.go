@@ -12,6 +12,11 @@ const (
 	CorrelationIDKey    = "correlation_id"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
+const correlationIDContextKey contextKey = "correlation_id"
+
 // CorrelationIDMiddleware adds a correlation ID to each request
 func CorrelationIDMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -24,7 +29,7 @@ func CorrelationIDMiddleware() fiber.Handler {
 		}
 
 		// Add to context
-		ctx := context.WithValue(c.Context(), CorrelationIDKey, correlationID)
+		ctx := context.WithValue(c.Context(), correlationIDContextKey, correlationID)
 		c.SetUserContext(ctx)
 
 		// Add to response header

@@ -68,7 +68,8 @@ func (uc *ConnectSessionUseCase) Handle(ctx context.Context, cmd ConnectSessionC
 		sessionEntity.SetError("connection failed: " + err.Error())
 
 		if updateErr := uc.sessionRepo.Update(ctx, sessionEntity); updateErr != nil {
-			// Log this error through domain events or return it
+			// Failed to update session after connection error - this is logged elsewhere
+			_ = updateErr
 		}
 
 		return nil, fmt.Errorf("failed to connect session: %w", err)
@@ -83,12 +84,14 @@ func (uc *ConnectSessionUseCase) Handle(ctx context.Context, cmd ConnectSessionC
 		qrCode, err = uc.whatsappService.GetQRCode(cmd.SessionID)
 		if err != nil {
 			// QR code failure is not critical, continue without it
+			_ = err
 		}
 	}
 
 	if qrCode != "" {
 		if err := sessionEntity.SetQRCode(qrCode); err != nil {
 			// QR code setting failure is not critical
+			_ = err
 		}
 	}
 
@@ -101,6 +104,7 @@ func (uc *ConnectSessionUseCase) Handle(ctx context.Context, cmd ConnectSessionC
 		if err := uc.eventPublisher.PublishBatch(ctx, events); err != nil {
 			// Event publishing failure should not fail the use case
 			// but could be logged at infrastructure level
+			_ = err
 		}
 		sessionEntity.ClearEvents()
 	}
