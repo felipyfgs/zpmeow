@@ -147,11 +147,15 @@ public/uploads/
 !internal/infra/media/
 !**/infrastructure/media/
 
-# Cache directories
+# Cache directories (but NOT source code)
 .cache/
-cache/
-tmp/
-temp/
+/cache/
+/tmp/
+/temp/
+
+# IMPORTANT: Do NOT ignore source code cache directories
+!internal/infra/cache/
+!**/infrastructure/cache/
 
 # Node.js (if any frontend components)
 node_modules/
