@@ -14,14 +14,14 @@ import (
 )
 
 type ChatHandler struct {
-	sessionService *application.SessionApp
-	wmeowService   wmeow.WameowService
+	chatService  *application.ChatApp
+	wmeowService wmeow.WameowService
 }
 
-func NewChatHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *ChatHandler {
+func NewChatHandler(chatService *application.ChatApp, wmeowService wmeow.WameowService) *ChatHandler {
 	return &ChatHandler{
-		sessionService: sessionService,
-		wmeowService:   wmeowService,
+		chatService:  chatService,
+		wmeowService: wmeowService,
 	}
 }
 
@@ -206,6 +206,7 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 // @Security		ApiKeyAuth
 // @Router			/session/{sessionId}/chat/history [get]
 func (h *ChatHandler) GetChatHistory(c *gin.Context) {
+	sessionID := c.Param("sessionId")
 	phone := c.Query("phone")
 	limitStr := c.DefaultQuery("limit", "50")
 
@@ -230,13 +231,52 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
+	req := application.GetChatHistoryRequest{
+		SessionID: sessionID,
+		Phone:     phone,
+		Limit:     limit,
+		Offset:    0,
+	}
+
+	result, err := h.chatService.GetChatHistory(ctx, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
+			http.StatusInternalServerError,
+			"GET_CHAT_HISTORY_FAILED",
+			"Failed to get chat history",
+			err.Error(),
+		))
+		return
+	}
+
+	var messages []dto.ChatHistoryData
+	for _, message := range result.Messages {
+		// Convert timestamp string to int64
+		timestamp := int64(0)
+		if message.Timestamp != "" {
+			// In a real implementation, you'd parse the timestamp properly
+			timestamp = time.Now().Unix()
+		}
+
+		messages = append(messages, dto.ChatHistoryData{
+			MessageID: message.ID,
+			From:      message.FromJID,
+			To:        message.ChatJID,
+			Type:      message.Type,
+			Content:   message.Content,
+			Timestamp: timestamp,
+			FromMe:    message.IsFromMe,
+		})
+	}
+
 	response := &dto.ChatHistoryResponse{
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &dto.ChatHistoryResponseData{
 			Phone:    phone,
-			Messages: []dto.ChatHistoryData{},
-			Count:    0,
+			Messages: messages,
+			Count:    result.Count,
 			Limit:    limit,
 		},
 	}

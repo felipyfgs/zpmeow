@@ -12,13 +12,13 @@ import (
 )
 
 type ContactHandler struct {
-	sessionService *application.SessionApp
+	contactService *application.ContactApp
 	wmeowService   wmeow.WameowService
 }
 
-func NewContactHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *ContactHandler {
+func NewContactHandler(contactService *application.ContactApp, wmeowService wmeow.WameowService) *ContactHandler {
 	return &ContactHandler{
-		sessionService: sessionService,
+		contactService: contactService,
 		wmeowService:   wmeowService,
 	}
 }
@@ -60,7 +60,13 @@ func (h *ContactHandler) CheckContact(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	results, err := h.wmeowService.CheckUser(ctx, sessionID, req.Phones)
+
+	appReq := application.CheckContactRequest{
+		SessionID: sessionID,
+		Phones:    req.Phones,
+	}
+
+	result, err := h.contactService.CheckContact(ctx, appReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
 			http.StatusInternalServerError,
@@ -72,12 +78,12 @@ func (h *ContactHandler) CheckContact(c *gin.Context) {
 	}
 
 	var checkResults []dto.ContactCheckResult
-	for _, result := range results {
+	for _, checkResult := range result.Results {
 		checkResults = append(checkResults, dto.ContactCheckResult{
-			Query:        result.Query,
-			IsInmeow:     result.IsInMeow,
-			JID:          result.JID,
-			VerifiedName: result.VerifiedName,
+			Query:        checkResult.Query,
+			IsInmeow:     checkResult.IsInMeow,
+			JID:          checkResult.JID,
+			VerifiedName: checkResult.VerifiedName,
 		})
 	}
 
@@ -282,7 +288,14 @@ func (h *ContactHandler) GetContacts(c *gin.Context) {
 	// Default limit and offset for backward compatibility
 	limit := 100
 	offset := 0
-	results, err := h.wmeowService.GetContacts(ctx, sessionID, limit, offset)
+
+	req := application.GetContactsRequest{
+		SessionID: sessionID,
+		Limit:     limit,
+		Offset:    offset,
+	}
+
+	result, err := h.contactService.GetContacts(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
 			http.StatusInternalServerError,
@@ -294,15 +307,15 @@ func (h *ContactHandler) GetContacts(c *gin.Context) {
 	}
 
 	var contacts []dto.ContactInfo
-	for _, result := range results {
+	for _, contact := range result.Contacts {
 		contacts = append(contacts, dto.ContactInfo{
-			JID:          result.JID,
-			Name:         result.Name,
-			Notify:       result.Notify,
-			PushName:     result.PushName,
-			BusinessName: result.BusinessName,
-			IsBlocked:    result.IsBlocked,
-			IsMuted:      result.IsMuted,
+			JID:          contact.JID,
+			Name:         contact.Name,
+			Notify:       contact.Notify,
+			PushName:     contact.PushName,
+			BusinessName: contact.BusinessName,
+			IsBlocked:    contact.IsBlocked,
+			IsMuted:      contact.IsMuted,
 		})
 	}
 

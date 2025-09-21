@@ -139,14 +139,18 @@ func main() {
 
 	authMiddleware := middleware.NewAuthMiddleware(cfg, sessionRepo, log)
 
+	// Create application services
+	appContactService := application.NewContactApp(sessionRepo, wmeowService)
+	appChatService := application.NewChatApp(sessionRepo, wmeowService)
+
 	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	healthHandler := handlers.NewHealthHandler(db)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
-	chatHandler := handlers.NewChatHandler(appSessionService, wmeowService)
+	chatHandler := handlers.NewChatHandler(appChatService, wmeowService)
 	groupHandler := handlers.NewGroupHandler(appSessionService, wmeowService)
 	communityHandler := handlers.NewCommunityHandler(appSessionService, wmeowService)
 	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
-	contactHandler := handlers.NewContactHandler(appSessionService, wmeowService)
+	contactHandler := handlers.NewContactHandler(appContactService, wmeowService)
 	newsletterHandler := handlers.NewNewsletterHandler(appSessionService, wmeowService)
 	privacyHandler := handlers.NewPrivacyHandler(appSessionService, wmeowService)
 

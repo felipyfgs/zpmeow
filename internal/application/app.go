@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"zpmeow/internal/application/ports"
 	"zpmeow/internal/domain/session"
@@ -198,6 +199,85 @@ func NewChatApp(sessionRepo session.Repository, chatManager ports.ChatManager) *
 	}
 }
 
+// GetChatHistoryRequest represents the request to get chat history
+type GetChatHistoryRequest struct {
+	SessionID string
+	Phone     string
+	Limit     int
+	Offset    int
+}
+
+// GetChatHistoryResponse represents the response with chat history
+type GetChatHistoryResponse struct {
+	SessionID string
+	Phone     string
+	Messages  []ChatMessage
+	Count     int
+	Limit     int
+	Offset    int
+}
+
+// ChatMessage represents a chat message
+type ChatMessage struct {
+	ID        string
+	ChatJID   string
+	FromJID   string
+	Content   string
+	Type      string
+	Timestamp string
+	IsFromMe  bool
+	IsRead    bool
+	MediaURL  string
+	Caption   string
+}
+
+// GetChatHistory retrieves chat history for a phone number
+func (app *ChatApp) GetChatHistory(ctx context.Context, req GetChatHistoryRequest) (*GetChatHistoryResponse, error) {
+	// Set defaults
+	if req.Limit <= 0 {
+		req.Limit = 50
+	}
+	if req.Limit > 1000 {
+		req.Limit = 1000
+	}
+
+	// Convert phone to JID (simplified - in real implementation would be more robust)
+	chatJID := req.Phone + "@s.whatsapp.net"
+	if strings.Contains(req.Phone, "@") {
+		chatJID = req.Phone
+	}
+
+	messages, err := app.chatManager.GetChatHistory(ctx, req.SessionID, chatJID, req.Limit, req.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chat history: %w", err)
+	}
+
+	chatMessages := make([]ChatMessage, len(messages))
+	for i, message := range messages {
+		chatMessages[i] = ChatMessage{
+			ID:        message.ID,
+			ChatJID:   message.ChatJID,
+			FromJID:   message.FromJID,
+			Content:   message.Content,
+			Type:      message.Type,
+			Timestamp: fmt.Sprintf("%d", message.Timestamp.Unix()),
+			IsFromMe:  false, // Default - would need more logic
+			IsRead:    false, // Default - would need more logic
+			MediaURL:  "",    // Default - would need more logic
+			Caption:   "",    // Default - would need more logic
+		}
+	}
+
+	return &GetChatHistoryResponse{
+		SessionID: req.SessionID,
+		Phone:     req.Phone,
+		Messages:  chatMessages,
+		Count:     len(chatMessages),
+		Limit:     req.Limit,
+		Offset:    req.Offset,
+	}, nil
+}
+
 type GroupApp struct {
 	sessionRepo  session.Repository
 	groupManager ports.GroupManager
@@ -220,6 +300,123 @@ func NewContactApp(sessionRepo session.Repository, contactManager ports.ContactM
 		sessionRepo:    sessionRepo,
 		contactManager: contactManager,
 	}
+}
+
+// GetContactsRequest represents the request to get contacts
+type GetContactsRequest struct {
+	SessionID string
+	Limit     int
+	Offset    int
+}
+
+// GetContactsResponse represents the response with contacts
+type GetContactsResponse struct {
+	SessionID string
+	Contacts  []ContactInfo
+	Total     int
+	Limit     int
+	Offset    int
+}
+
+// ContactInfo represents contact information
+type ContactInfo struct {
+	JID          string
+	Name         string
+	Notify       string
+	PushName     string
+	BusinessName string
+	IsBlocked    bool
+	IsMuted      bool
+	IsContact    bool
+	Avatar       string
+}
+
+// GetContacts retrieves contacts for a session
+func (app *ContactApp) GetContacts(ctx context.Context, req GetContactsRequest) (*GetContactsResponse, error) {
+	// Set defaults
+	if req.Limit <= 0 {
+		req.Limit = 100
+	}
+	if req.Limit > 1000 {
+		req.Limit = 1000
+	}
+
+	contacts, err := app.contactManager.GetContacts(ctx, req.SessionID, req.Limit, req.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get contacts: %w", err)
+	}
+
+	contactInfos := make([]ContactInfo, len(contacts))
+	for i, contact := range contacts {
+		contactInfos[i] = ContactInfo{
+			JID:          contact.JID,
+			Name:         contact.Name,
+			Notify:       contact.Notify,
+			PushName:     contact.PushName,
+			BusinessName: contact.BusinessName,
+			IsBlocked:    contact.IsBlocked,
+			IsMuted:      contact.IsMuted,
+			IsContact:    contact.IsContact,
+			Avatar:       contact.Avatar,
+		}
+	}
+
+	return &GetContactsResponse{
+		SessionID: req.SessionID,
+		Contacts:  contactInfos,
+		Total:     len(contactInfos),
+		Limit:     req.Limit,
+		Offset:    req.Offset,
+	}, nil
+}
+
+// CheckContactRequest represents the request to check contacts
+type CheckContactRequest struct {
+	SessionID string
+	Phones    []string
+}
+
+// CheckContactResponse represents the response with contact check results
+type CheckContactResponse struct {
+	SessionID string
+	Results   []ContactCheckResult
+}
+
+// ContactCheckResult represents the result of checking a contact
+type ContactCheckResult struct {
+	Query        string
+	IsInWhatsapp bool
+	IsInMeow     bool
+	JID          string
+	VerifiedName string
+}
+
+// CheckContact checks if phone numbers are registered on WhatsApp
+func (app *ContactApp) CheckContact(ctx context.Context, req CheckContactRequest) (*CheckContactResponse, error) {
+	if len(req.Phones) == 0 {
+		return nil, fmt.Errorf("at least one phone number is required")
+	}
+
+	results, err := app.contactManager.CheckUser(ctx, req.SessionID, req.Phones)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check contacts: %w", err)
+	}
+
+	checkResults := make([]ContactCheckResult, len(results))
+	for i, result := range results {
+		checkResults[i] = ContactCheckResult{
+			Query:        result.Query,
+			IsInWhatsapp: result.IsInWhatsapp,
+			IsInMeow:     result.IsInMeow,
+			JID:          result.JID,
+			VerifiedName: result.VerifiedName,
+		}
+	}
+
+	return &CheckContactResponse{
+		SessionID: req.SessionID,
+		Results:   checkResults,
+	}, nil
 }
 
 type NewsletterApp struct {
