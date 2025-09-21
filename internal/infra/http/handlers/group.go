@@ -105,6 +105,19 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// GetGroupInfo godoc
+// @Summary Get group information
+// @Description Retrieves detailed information about a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetGroupInfoRequest true "Group info request"
+// @Success 200 {object} dto.GroupResponse "Group information"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to get group info"
+// @Router /session/{sessionId}/group/info [post]
 func (h *GroupHandler) GetGroupInfo(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -157,6 +170,18 @@ func (h *GroupHandler) GetGroupInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// ListGroups godoc
+// @Summary List WhatsApp groups
+// @Description Retrieves a list of all WhatsApp groups for a session
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.GroupResponse "Groups list"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to list groups"
+// @Router /session/{sessionId}/group/list [get]
 func (h *GroupHandler) ListGroups(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -225,6 +250,19 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// JoinGroup godoc
+// @Summary Join a WhatsApp group
+// @Description Joins a WhatsApp group using group JID
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.JoinGroupRequest true "Join group request"
+// @Success 200 {object} dto.GroupResponse "Joined group successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to join group"
+// @Router /session/{sessionId}/group/join [post]
 func (h *GroupHandler) JoinGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -284,6 +322,19 @@ func (h *GroupHandler) JoinGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// JoinGroupWithInvite godoc
+// @Summary Join group with invite link
+// @Description Joins a WhatsApp group using an invite link
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.JoinGroupWithInviteRequest true "Join group with invite request"
+// @Success 200 {object} dto.GroupResponse "Joined group successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to join group"
+// @Router /session/{sessionId}/group/join-with-invite [post]
 func (h *GroupHandler) JoinGroupWithInvite(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {

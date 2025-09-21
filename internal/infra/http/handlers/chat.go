@@ -25,6 +25,21 @@ func NewChatHandler(chatService *application.ChatApp, wmeowService wmeow.WameowS
 	}
 }
 
+// SetPresence godoc
+// @Summary Set chat presence
+// @Description Sets presence status (typing, recording, etc.) for a chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetPresenceRequest true "Presence request"
+// @Success 200 {object} dto.ChatResponse "Presence set successfully"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to set presence"
+// @Router /session/{sessionId}/chat/presence [post]
+// @Router /session/{sessionId}/presences/typing [post]
+// @Router /session/{sessionId}/presences/recording [post]
 func (h *ChatHandler) SetPresence(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -132,6 +147,20 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetChatHistory godoc
+// @Summary Get chat history
+// @Description Retrieves message history for a specific chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param phone query string true "Phone number or JID"
+// @Param limit query int false "Number of messages to retrieve" default(50)
+// @Success 200 {object} dto.ChatResponse "Chat history"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to get chat history"
+// @Router /session/{sessionId}/chat/history [get]
 func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	phone := c.Query("phone")

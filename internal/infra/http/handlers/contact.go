@@ -162,6 +162,19 @@ func (h *ContactHandler) GetContactInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetAvatar godoc
+// @Summary Get contact avatar
+// @Description Retrieves the avatar/profile picture of a WhatsApp contact
+// @Tags Contacts
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.GetAvatarRequest true "Avatar request"
+// @Success 200 {object} dto.ContactResponse "Contact avatar"
+// @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 404 {object} dto.ContactResponse "Session not found"
+// @Failure 500 {object} dto.ContactResponse "Failed to get avatar"
+// @Router /session/{sessionId}/contacts/avatar [post]
 func (h *ContactHandler) GetAvatar(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -210,6 +223,19 @@ func (h *ContactHandler) GetAvatar(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// SetPresence godoc
+// @Summary Set presence status
+// @Description Sets the presence status (online, offline, typing, etc.) for a session
+// @Tags Contacts
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetContactPresenceRequest true "Presence request"
+// @Success 200 {object} dto.ContactResponse "Presence set successfully"
+// @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 404 {object} dto.ContactResponse "Session not found"
+// @Failure 500 {object} dto.ContactResponse "Failed to set presence"
+// @Router /session/{sessionId}/presences/set [put]
 func (h *ContactHandler) SetPresence(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -250,6 +276,19 @@ func (h *ContactHandler) SetPresence(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetContacts godoc
+// @Summary Get contacts list
+// @Description Retrieves the list of WhatsApp contacts for a session
+// @Tags Contacts
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.ContactResponse "Contacts list"
+// @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 404 {object} dto.ContactResponse "Session not found"
+// @Failure 500 {object} dto.ContactResponse "Failed to get contacts"
+// @Router /session/{sessionId}/contacts/list [get]
+// @Router /session/{sessionId}/contacts/sync [post]
 func (h *ContactHandler) GetContacts(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
