@@ -118,5 +118,3 @@ func (h *HealthHandler) Health(c *fiber.Ctx) error {
 		return h.SendErrorResponse(c, fiber.StatusServiceUnavailable, "UNHEALTHY", "Service is unhealthy", nil)
 	}
 }
-
-
