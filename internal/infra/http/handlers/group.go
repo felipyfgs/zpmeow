@@ -387,6 +387,19 @@ func (h *GroupHandler) JoinGroupWithInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// LeaveGroup godoc
+// @Summary Leave a WhatsApp group
+// @Description Leaves a WhatsApp group
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.LeaveGroupRequest true "Leave group request"
+// @Success 200 {object} dto.GroupResponse "Left group successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to leave group"
+// @Router /session/{sessionId}/group/leave [post]
 func (h *GroupHandler) LeaveGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {

@@ -10,17 +10,19 @@ import (
 	ginswagger "github.com/swaggo/gin-swagger"
 )
 
+// HandlerDependencies organized in the specified order:
+// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 type HandlerDependencies struct {
 	HealthHandler     *handlers.HealthHandler
 	SessionHandler    *handlers.SessionHandler
-	ContactHandler    *handlers.ContactHandler
-	ChatHandler       *handlers.ChatHandler
 	MessageHandler    *handlers.MessageHandler
+	PrivacyHandler    *handlers.PrivacyHandler
+	ChatHandler       *handlers.ChatHandler
+	ContactHandler    *handlers.ContactHandler
 	GroupHandler      *handlers.GroupHandler
 	CommunityHandler  *handlers.CommunityHandler
 	NewsletterHandler *handlers.NewsletterHandler
 	WebhookHandler    *handlers.WebhookHandler
-	PrivacyHandler    *handlers.PrivacyHandler
 }
 
 func SetupRoutes(
@@ -59,30 +61,12 @@ func SetupRoutes(
 		sessionGroup.PUT("/:sessionId/webhook", handlers.SessionHandler.UpdateSessionWebhook)
 	}
 
+	// Session API routes organized in the specified order:
+	// Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	sessionAPIGroup := router.Group("/session/:sessionId")
 	sessionAPIGroup.Use(authMiddleware.AuthenticateSession())
 	{
-		contacts := sessionAPIGroup.Group("/contacts")
-		contacts.POST("/check", handlers.ContactHandler.CheckUser)
-		contacts.POST("/info", handlers.ContactHandler.GetUserInfo)
-		contacts.POST("/avatar", handlers.ContactHandler.GetAvatar)
-		contacts.GET("/list", handlers.ContactHandler.GetContacts)
-		contacts.POST("/sync", handlers.ContactHandler.GetContacts)
-
-		presence := sessionAPIGroup.Group("/presences")
-		presence.PUT("/set", handlers.ContactHandler.SetPresence)
-		presence.GET("/get", handlers.ContactHandler.GetUserInfo)
-		presence.POST("/contact", handlers.ContactHandler.GetUserInfo)
-		presence.POST("/subscribe", handlers.ContactHandler.CheckUser)
-		presence.POST("/typing", handlers.ChatHandler.SetPresence)
-		presence.POST("/recording", handlers.ChatHandler.SetPresence)
-
-		privacy := sessionAPIGroup.Group("/privacy")
-		privacy.PUT("/set", handlers.PrivacyHandler.SetAllPrivacySettings)
-		privacy.POST("/find", handlers.PrivacyHandler.FindPrivacySettings)
-		privacy.GET("/blocklist", handlers.PrivacyHandler.GetBlocklist)
-		privacy.PUT("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
-
+		// 1. Messages
 		message := sessionAPIGroup.Group("/message")
 		send := message.Group("/send")
 		send.POST("/text", handlers.MessageHandler.SendText)
@@ -103,6 +87,14 @@ func SetupRoutes(
 		message.POST("/edit", handlers.MessageHandler.EditMessage)
 		message.POST("/delete", handlers.MessageHandler.DeleteMessage)
 
+		// 2. Privacy
+		privacy := sessionAPIGroup.Group("/privacy")
+		privacy.PUT("/set", handlers.PrivacyHandler.SetAllPrivacySettings)
+		privacy.POST("/find", handlers.PrivacyHandler.FindPrivacySettings)
+		privacy.GET("/blocklist", handlers.PrivacyHandler.GetBlocklist)
+		privacy.PUT("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
+
+		// 3. Chat
 		chat := sessionAPIGroup.Group("/chat")
 		chat.POST("/presence", handlers.ChatHandler.SetPresence)
 		chat.GET("/history", handlers.ChatHandler.GetChatHistory)
@@ -120,6 +112,23 @@ func SetupRoutes(
 		chat.POST("/archive", handlers.ChatHandler.ArchiveChat)
 		chat.POST("/disappearing-timer", handlers.ChatHandler.SetDisappearingTimer)
 
+		// 4. Contacts
+		contacts := sessionAPIGroup.Group("/contacts")
+		contacts.POST("/check", handlers.ContactHandler.CheckUser)
+		contacts.POST("/info", handlers.ContactHandler.GetUserInfo)
+		contacts.POST("/avatar", handlers.ContactHandler.GetAvatar)
+		contacts.GET("/list", handlers.ContactHandler.GetContacts)
+		contacts.POST("/sync", handlers.ContactHandler.GetContacts)
+
+		presence := sessionAPIGroup.Group("/presences")
+		presence.PUT("/set", handlers.ContactHandler.SetPresence)
+		presence.GET("/get", handlers.ContactHandler.GetUserInfo)
+		presence.POST("/contact", handlers.ContactHandler.GetUserInfo)
+		presence.POST("/subscribe", handlers.ContactHandler.CheckUser)
+		presence.POST("/typing", handlers.ChatHandler.SetPresence)
+		presence.POST("/recording", handlers.ChatHandler.SetPresence)
+
+		// 5. Groups
 		group := sessionAPIGroup.Group("/group")
 		group.POST("/create", handlers.GroupHandler.CreateGroup)
 		group.GET("/list", handlers.GroupHandler.ListGroups)
@@ -149,12 +158,14 @@ func SetupRoutes(
 		requests.POST("/list", handlers.GroupHandler.GetGroupRequestParticipants)
 		requests.POST("/update", handlers.GroupHandler.UpdateGroupRequestParticipants)
 
+		// 6. Communities
 		community := sessionAPIGroup.Group("/community")
 		community.POST("/link", handlers.CommunityHandler.LinkGroup)
 		community.POST("/unlink", handlers.CommunityHandler.UnlinkGroup)
 		community.POST("/subgroups", handlers.CommunityHandler.GetSubGroups)
 		community.POST("/participants", handlers.CommunityHandler.GetLinkedGroupsParticipants)
 
+		// 7. Newsletters
 		newsletter := sessionAPIGroup.Group("/newsletter")
 		newsletter.POST("", handlers.NewsletterHandler.CreateNewsletter)
 		newsletter.GET("/list", handlers.NewsletterHandler.ListNewsletters)
@@ -174,6 +185,7 @@ func SetupRoutes(
 		newsletter.POST("/upload", handlers.NewsletterHandler.UploadNewsletterMedia)
 		newsletter.GET("/invite/:inviteKey", handlers.NewsletterHandler.GetNewsletterByInvite)
 
+		// 8. Webhooks
 		webhook := sessionAPIGroup.Group("/webhook")
 		webhook.POST("", handlers.WebhookHandler.SetWebhook)
 		webhook.GET("", handlers.WebhookHandler.GetWebhook)

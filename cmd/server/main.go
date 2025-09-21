@@ -89,16 +89,18 @@ func main() {
 	appChatService := application.NewChatApp(sessionRepo, wmeowService)
 	appGroupService := application.NewGroupApp(sessionRepo, wmeowService)
 
-	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
+	// Initialize handlers in the specified order:
+	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	healthHandler := handlers.NewHealthHandler(db)
+	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
+	privacyHandler := handlers.NewPrivacyHandler(appSessionService, wmeowService)
 	chatHandler := handlers.NewChatHandler(appChatService, wmeowService)
+	contactHandler := handlers.NewContactHandler(appContactService, wmeowService)
 	groupHandler := handlers.NewGroupHandler(appGroupService, wmeowService)
 	communityHandler := handlers.NewCommunityHandler(appSessionService, wmeowService)
-	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
-	contactHandler := handlers.NewContactHandler(appContactService, wmeowService)
 	newsletterHandler := handlers.NewNewsletterHandler(appSessionService, wmeowService)
-	privacyHandler := handlers.NewPrivacyHandler(appSessionService, wmeowService)
+	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
 
 	gin.SetMode(cfg.GetServer().GetMode())
 
@@ -123,17 +125,19 @@ func main() {
 
 	ginRouter.Use(middleware.CORS(cfg.GetCORS()))
 
+	// Handler dependencies in the specified order:
+	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	handlerDeps := &routes.HandlerDependencies{
 		HealthHandler:     healthHandler,
 		SessionHandler:    sessionHandler,
-		ContactHandler:    contactHandler,
-		ChatHandler:       chatHandler,
 		MessageHandler:    messageHandler,
+		PrivacyHandler:    privacyHandler,
+		ChatHandler:       chatHandler,
+		ContactHandler:    contactHandler,
 		GroupHandler:      groupHandler,
 		CommunityHandler:  communityHandler,
 		NewsletterHandler: newsletterHandler,
 		WebhookHandler:    webhookHandler,
-		PrivacyHandler:    privacyHandler,
 	}
 
 	routes.SetupRoutes(ginRouter, handlerDeps, authMiddleware)

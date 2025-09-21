@@ -974,6 +974,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/session/{sessionId}/group/leave": {
+            "post": {
+                "description": "Leaves a WhatsApp group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Leave a WhatsApp group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Leave group request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LeaveGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Left group successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to leave group",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/session/{sessionId}/group/list": {
             "get": {
                 "description": "Retrieves a list of all WhatsApp groups for a session",
@@ -3727,6 +3786,18 @@ const docTemplate = `{
                 "invite_code": {
                     "type": "string",
                     "example": "abc123def456"
+                }
+            }
+        },
+        "dto.LeaveGroupRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
                 }
             }
         },

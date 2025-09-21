@@ -537,6 +537,14 @@ definitions:
     required:
     - invite_code
     type: object
+  dto.LeaveGroupRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
   dto.LinkGroupRequest:
     properties:
       community_jid:
@@ -1989,6 +1997,45 @@ paths:
           schema:
             $ref: '#/definitions/dto.GroupResponse'
       summary: Join group with invite link
+      tags:
+      - Groups
+  /session/{sessionId}/group/leave:
+    post:
+      consumes:
+      - application/json
+      description: Leaves a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Leave group request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LeaveGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Left group successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to leave group
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      summary: Leave a WhatsApp group
       tags:
       - Groups
   /session/{sessionId}/group/list:
