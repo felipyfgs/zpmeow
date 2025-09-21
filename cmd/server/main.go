@@ -142,12 +142,13 @@ func main() {
 	// Create application services
 	appContactService := application.NewContactApp(sessionRepo, wmeowService)
 	appChatService := application.NewChatApp(sessionRepo, wmeowService)
+	appGroupService := application.NewGroupApp(sessionRepo, wmeowService)
 
 	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	healthHandler := handlers.NewHealthHandler(db)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
 	chatHandler := handlers.NewChatHandler(appChatService, wmeowService)
-	groupHandler := handlers.NewGroupHandler(appSessionService, wmeowService)
+	groupHandler := handlers.NewGroupHandler(appGroupService, wmeowService)
 	communityHandler := handlers.NewCommunityHandler(appSessionService, wmeowService)
 	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
 	contactHandler := handlers.NewContactHandler(appContactService, wmeowService)

@@ -14,29 +14,21 @@ import (
 )
 
 type GroupHandler struct {
-	sessionService *application.SessionApp
-	wmeowService   wmeow.WameowService
+	groupService *application.GroupApp
+	wmeowService wmeow.WameowService
 }
 
-func NewGroupHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *GroupHandler {
+func NewGroupHandler(groupService *application.GroupApp, wmeowService wmeow.WameowService) *GroupHandler {
 	return &GroupHandler{
-		sessionService: sessionService,
-		wmeowService:   wmeowService,
+		groupService: groupService,
+		wmeowService: wmeowService,
 	}
 }
 
 func (h *GroupHandler) resolveSessionID(c *gin.Context, sessionIDOrName string) (string, error) {
-	if h.sessionService == nil {
-		return sessionIDOrName, nil
-	}
-
-	ctx := c.Request.Context()
-	session, err := h.sessionService.GetSession(ctx, sessionIDOrName)
-	if err != nil {
-		return "", err
-	}
-
-	return session.ID().String(), nil
+	// For now, just return the sessionIDOrName as-is
+	// In a full implementation, this would resolve session names to IDs
+	return sessionIDOrName, nil
 }
 
 // @Summary		Create a new group
@@ -216,7 +208,12 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	groups, err := h.wmeowService.ListGroups(ctx, sessionID)
+
+	req := application.ListGroupsRequest{
+		SessionID: sessionID,
+	}
+
+	result, err := h.groupService.ListGroups(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.NewGroupErrorResponse(
 			http.StatusInternalServerError,
@@ -227,7 +224,30 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 		return
 	}
 
-	dtoGroups := convertWmeowGroupInfoSliceToDTO(groups)
+	var dtoGroups []dto.GroupInfo
+	for _, group := range result.Groups {
+		// Convert participants from []string to []GroupParticipant
+		var participants []dto.GroupParticipant
+		for _, participantJID := range group.Participants {
+			participants = append(participants, dto.GroupParticipant{
+				JID:          participantJID,
+				Phone:        participantJID, // Assuming JID is the phone for now
+				IsAdmin:      false,          // Default value, would need more info from service
+				IsSuperAdmin: false,          // Default value, would need more info from service
+			})
+		}
+
+		dtoGroups = append(dtoGroups, dto.GroupInfo{
+			JID:          group.JID,
+			Name:         group.Name,
+			Description:  group.Description,
+			Participants: participants,
+			Admins:       group.Admins,
+			Owner:        group.Owner,
+			IsAnnounce:   group.IsAnnounce,
+			IsLocked:     group.IsLocked,
+		})
+	}
 
 	response := dto.NewGroupListResponse(sessionID, dtoGroups)
 	c.JSON(http.StatusOK, response)

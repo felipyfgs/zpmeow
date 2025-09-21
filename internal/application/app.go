@@ -290,6 +290,60 @@ func NewGroupApp(sessionRepo session.Repository, groupManager ports.GroupManager
 	}
 }
 
+// ListGroupsRequest represents the request to list groups
+type ListGroupsRequest struct {
+	SessionID string
+}
+
+// ListGroupsResponse represents the response with groups
+type ListGroupsResponse struct {
+	SessionID string
+	Groups    []GroupInfo
+	Count     int
+}
+
+// GroupInfo represents group information
+type GroupInfo struct {
+	JID          string
+	Name         string
+	Description  string
+	Participants []string
+	Admins       []string
+	Owner        string
+	IsAnnounce   bool
+	IsLocked     bool
+	CreatedAt    string
+}
+
+// ListGroups retrieves groups for a session
+func (app *GroupApp) ListGroups(ctx context.Context, req ListGroupsRequest) (*ListGroupsResponse, error) {
+	groups, err := app.groupManager.ListGroups(ctx, req.SessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list groups: %w", err)
+	}
+
+	groupInfos := make([]GroupInfo, len(groups))
+	for i, group := range groups {
+		groupInfos[i] = GroupInfo{
+			JID:          group.JID,
+			Name:         group.Name,
+			Description:  group.Description,
+			Participants: group.Participants,
+			Admins:       group.Admins,
+			Owner:        group.Owner,
+			IsAnnounce:   group.IsAnnounce,
+			IsLocked:     group.IsLocked,
+			CreatedAt:    fmt.Sprintf("%d", group.CreatedAt),
+		}
+	}
+
+	return &ListGroupsResponse{
+		SessionID: req.SessionID,
+		Groups:    groupInfos,
+		Count:     len(groupInfos),
+	}, nil
+}
+
 type ContactApp struct {
 	sessionRepo    session.Repository
 	contactManager ports.ContactManager
@@ -418,6 +472,9 @@ func (app *ContactApp) CheckContact(ctx context.Context, req CheckContactRequest
 		Results:   checkResults,
 	}, nil
 }
+
+
+
 
 type NewsletterApp struct {
 	sessionRepo       session.Repository
