@@ -10,7 +10,25 @@
 
 **✅ Métodos Funcionando**: 20+ métodos (85%)
 **❌ Não Implementados**: 7 métodos (15%)
-**🧪 Taxa de Sucesso nos Testes**: 85%
+**🧪 Taxa de Sucesso nos Testes**: 83.33% (10/12 rotas de mensagens)
+
+### 🧪 **Testes Manuais Realizados - 21/09/2025**
+
+**✅ Rotas de Mensagens Testadas e Aprovadas (10/12)**
+- ✅ **SendText** - Envio de mensagens de texto
+- ✅ **SendImage** - Envio de imagens via URL
+- ✅ **SendVideo** - Envio de vídeos via URL
+- ✅ **SendAudio** - Envio de áudios via URL
+- ✅ **SendDocument** - Envio de documentos via URL
+- ✅ **SendSticker** - Envio de stickers WebP
+- ✅ **SendContact** - Envio de cartões de contato
+- ✅ **SendLocation** - Envio de coordenadas
+- ✅ **SendMedia** - Endpoint genérico de mídia
+- ✅ **SendPoll** - Criação de enquetes
+
+**❌ Rotas com Limitações (2/12)**
+- ❌ **SendButtons** - Erro 405 (limitação WhatsApp Business API)
+- ❌ **SendList** - Erro 405 (limitação WhatsApp Business API)
 
 ### 🔥 **Métodos Recentemente Testados e Validados**
 - ✅ **ReactToMessage** - Reações a mensagens

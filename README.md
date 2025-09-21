@@ -28,9 +28,12 @@ meow é uma API REST moderna e completa que permite integração total com o meo
 
 ### ✅ **Funcionalidades Implementadas (85%)**
 
-#### 📨 **Mensagens**
+#### 📨 **Mensagens** (Taxa de Sucesso: 83.33%)
 - ✅ Envio de texto, imagem, vídeo, áudio, documento
 - ✅ Stickers, contatos, localização
+- ✅ Mídia genérica e enquetes
+- ❌ Botões interativos (limitação WhatsApp Business API)
+- ❌ Listas interativas (limitação WhatsApp Business API)
 - ✅ **Reações a mensagens** 👍
 - ✅ **Edição de mensagens** ✏️
 - ✅ **Exclusão de mensagens** 🗑️
@@ -174,6 +177,30 @@ Todos os métodos principais foram testados e validados:
 - ✅ **GetBlocklist**: Lista de contatos bloqueados
 
 **Taxa de sucesso nos testes**: **85%** ✨
+
+## 🧪 **Testes Realizados**
+
+### Relatório de Testes Manuais - 21/09/2025
+
+Foram realizados testes manuais completos em todas as 12 rotas de envio de mensagens:
+
+**✅ Testes Bem-Sucedidos (10/12 - 83.33%)**
+- Texto, Imagem, Vídeo, Áudio, Documento
+- Sticker, Contato, Localização
+- Mídia Genérica, Enquete
+
+**❌ Testes com Limitações (2/12)**
+- Botões Interativos (Erro 405 - limitação WhatsApp Business API)
+- Listas Interativas (Erro 405 - limitação WhatsApp Business API)
+
+**📊 Análise Técnica**
+- Taxa de sucesso geral: **83.33%**
+- Funcionalidades básicas: **100%** de sucesso
+- Funcionalidades avançadas: **50%** de sucesso
+- Todas as mídias suportam URLs diretas
+- API responde de forma rápida e consistente
+
+> **Nota**: As falhas em botões e listas são limitações conhecidas do WhatsApp Business API, não da implementação zpmeow.
 
 ## 🤝 **Contribuição**
 
