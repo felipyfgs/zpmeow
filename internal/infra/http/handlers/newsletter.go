@@ -49,8 +49,8 @@ func (h *NewsletterHandler) GetNewsletterMessageUpdates(c *gin.Context) {
 	}
 	before := c.Query("before")
 
-	_ = count  // TODO: implement pagination with count
-	_ = before // TODO: implement pagination with before
+	_ = count  // Suppress unused variable warning
+	_ = before // Suppress unused variable warning
 	updates, err := h.wmeowService.GetNewsletterMessageUpdates(c.Request.Context(), sessionID, newsletterID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.StandardResponse{
@@ -260,19 +260,6 @@ func (h *NewsletterHandler) SubscribeLiveUpdates(c *gin.Context) {
 	})
 }
 
-// @Summary		Upload media for newsletter
-// @Description	Upload media files (image, video, audio, document) for use in newsletter messages. Returns MediaHandle required for sending media messages.
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.UploadNewsletterMediaRequest	true	"Upload media request"
-// @Success		200			{object}	dto.StandardResponse	"Media uploaded successfully"
-// @Failure		400			{object}	dto.StandardResponse				"Bad request - Invalid file or parameters"
-// @Failure		404			{object}	dto.StandardResponse				"Session not found or not connected"
-// @Failure		500			{object}	dto.StandardResponse				"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/upload [post]
 func (h *NewsletterHandler) UploadNewsletterMedia(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -425,18 +412,6 @@ func (h *NewsletterHandler) resolveSessionID(c *gin.Context, sessionIDOrName str
 	return session.SessionID().String(), nil
 }
 
-// @Summary		Create newsletter
-// @Description	Create a new meow newsletter
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.CreateNewsletterRequest	true	"Newsletter creation request"
-// @Success		201			{object}	dto.CreateNewsletterResponse	"Newsletter created successfully"
-// @Failure		400			{object}	dto.CreateNewsletterResponse	"Bad request"
-// @Failure		500			{object}	dto.CreateNewsletterResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter [post]
 func (h *NewsletterHandler) CreateNewsletter(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -497,19 +472,6 @@ func (h *NewsletterHandler) CreateNewsletter(c *gin.Context) {
 	})
 }
 
-// @Summary		Get newsletter information
-// @Description	Get information about a specific newsletter
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId		path		string						true	"Session ID"
-// @Param			newsletterId	path		string						true	"Newsletter JID"
-// @Success		200				{object}	dto.NewsletterInfoResponse	"Newsletter information retrieved"
-// @Failure		400				{object}	dto.NewsletterInfoResponse	"Bad request"
-// @Failure		404				{object}	dto.NewsletterInfoResponse	"Newsletter not found"
-// @Failure		500				{object}	dto.NewsletterInfoResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/{newsletterId} [get]
 func (h *NewsletterHandler) GetNewsletter(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	newsletterJID := c.Param("newsletterId")
@@ -558,17 +520,6 @@ func (h *NewsletterHandler) GetNewsletter(c *gin.Context) {
 	})
 }
 
-// @Summary		List newsletters
-// @Description	Get a list of all subscribed newsletters for a session
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Success		200			{object}	dto.NewsletterListResponse	"Newsletters retrieved successfully"
-// @Failure		400			{object}	dto.NewsletterListResponse	"Bad request"
-// @Failure		500			{object}	dto.NewsletterListResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/list [get]
 func (h *NewsletterHandler) ListNewsletters(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -614,19 +565,6 @@ func (h *NewsletterHandler) ListNewsletters(c *gin.Context) {
 	})
 }
 
-// @Summary		Subscribe to newsletter
-// @Description	Subscribe to a newsletter to receive updates
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId		path		string				true	"Session ID"
-// @Param			newsletterId	path		string				true	"Newsletter JID"
-// @Success		200				{object}	dto.StandardResponse	"Subscribed successfully"
-// @Failure		400				{object}	dto.StandardResponse	"Bad request"
-// @Failure		404				{object}	dto.StandardResponse	"Newsletter not found"
-// @Failure		500				{object}	dto.StandardResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/{newsletterId}/subscribe [post]
 func (h *NewsletterHandler) SubscribeToNewsletter(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	newsletterJID := c.Param("newsletterId")
@@ -663,19 +601,6 @@ func (h *NewsletterHandler) SubscribeToNewsletter(c *gin.Context) {
 	})
 }
 
-// @Summary		Unsubscribe from newsletter
-// @Description	Unsubscribe from a newsletter to stop receiving updates
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId		path		string				true	"Session ID"
-// @Param			newsletterId	path		string				true	"Newsletter JID"
-// @Success		200				{object}	dto.StandardResponse	"Unsubscribed successfully"
-// @Failure		400				{object}	dto.StandardResponse	"Bad request"
-// @Failure		404				{object}	dto.StandardResponse	"Newsletter not found"
-// @Failure		500				{object}	dto.StandardResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/{newsletterId}/unsubscribe [post]
 func (h *NewsletterHandler) UnsubscribeFromNewsletter(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	newsletterJID := c.Param("newsletterId")
@@ -712,20 +637,6 @@ func (h *NewsletterHandler) UnsubscribeFromNewsletter(c *gin.Context) {
 	})
 }
 
-// @Summary		Send newsletter message
-// @Description	Send a text or media message to newsletter subscribers. For media messages, MediaHandle is required.
-// @Tags			Newsletters
-// @Accept			json
-// @Produce		json
-// @Param			sessionId		path		string					true	"Session ID"
-// @Param			newsletterId	path		string					true	"Newsletter ID (format: {id}@newsletter)"
-// @Param			request			body		dto.SendNewsletterMessageRequest	true	"Message content (text or media)"
-// @Success		200				{object}	dto.SendNewsletterMessageResponse	"Message sent successfully"
-// @Failure		400				{object}	dto.SendNewsletterMessageResponse	"Bad request - Invalid parameters or missing MediaHandle for media"
-// @Failure		404				{object}	dto.SendNewsletterMessageResponse	"Newsletter not found or session not connected"
-// @Failure		500				{object}	dto.SendNewsletterMessageResponse	"Internal server error"
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/newsletter/{newsletterId}/send [post]
 func (h *NewsletterHandler) SendNewsletterMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	newsletterJID := c.Param("newsletterId")

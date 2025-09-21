@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// Chat request DTOs
 
 type SetPresenceRequest struct {
 	Phone string `json:"phone" binding:"required" example:"5511999999999"`
@@ -57,7 +56,6 @@ type ListChatsRequest struct {
 
 func (r ListChatsRequest) Validate() error {
 	if r.Type == "" {
-		// Default type is "all" - this should be handled by the caller
 		return nil
 	}
 	validTypes := []string{"all", "groups", "contacts"}
@@ -126,7 +124,6 @@ func (r ArchiveChatRequest) Validate() error {
 	return nil
 }
 
-// Chat response DTOs
 
 type ChatErrorResponse struct {
 	Code    string `json:"code" example:"INVALID_JID"`
@@ -180,7 +177,6 @@ type GetChatInfoResponse struct {
 	Error   *ChatErrorResponse `json:"error,omitempty"`
 }
 
-// Chat history DTOs
 
 type ChatHistoryData struct {
 	MessageID string `json:"message_id" example:"msg_123"`
@@ -206,7 +202,6 @@ type ChatHistoryResponse struct {
 	Error   *ChatErrorResponse       `json:"error,omitempty"`
 }
 
-// Constructor functions
 
 func NewChatErrorResponse(code int, errorCode, message, details string) *ChatResponse {
 	return &ChatResponse{

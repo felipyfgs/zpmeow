@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Privacy request DTOs
 
 type UpdatePrivacySettingsRequest struct {
 	LastSeen     string `json:"last_seen,omitempty" example:"everyone"`
@@ -84,7 +83,6 @@ func (r UnblockContactsRequest) Validate() error {
 	return nil
 }
 
-// Privacy response DTOs
 
 type PrivacyErrorResponse struct {
 	Code    string `json:"code" example:"PRIVACY_UPDATE_FAILED"`
@@ -148,7 +146,6 @@ type BlockActionData struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// Constructor functions
 
 func NewPrivacyErrorResponse(code int, errorCode, message, details string) *PrivacyResponse {
 	return &PrivacyResponse{

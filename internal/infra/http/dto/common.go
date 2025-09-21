@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// HTTP Status codes
 const (
 	StatusOK                  = http.StatusOK
 	StatusCreated             = http.StatusCreated
@@ -17,7 +16,6 @@ const (
 	StatusInternalServerError = http.StatusInternalServerError
 )
 
-// Error codes
 const (
 	ErrorCodeValidationFailed = "VALIDATION_FAILED"
 	ErrorCodeInternalError    = "INTERNAL_ERROR"
@@ -27,7 +25,6 @@ const (
 	ErrorCodeConflict         = "CONFLICT"
 )
 
-// Common response structures
 
 type BaseResponse struct {
 	Success   bool        `json:"success"`
@@ -48,7 +45,6 @@ type ActionResponse struct {
 	Timestamp time.Time   `json:"timestamp"`
 }
 
-// Common constructor functions
 
 func NewSuccessResponse(code int, data interface{}) *BaseResponse {
 	return &BaseResponse{
@@ -96,12 +92,10 @@ func NewActionErrorResponse(code int, action, errorCode, message, details string
 	}
 }
 
-// Validation interface
 type Validator interface {
 	Validate() error
 }
 
-// Health check response
 type HealthResponse struct {
 	Status    string            `json:"status" example:"healthy"`
 	Timestamp time.Time         `json:"timestamp" example:"2023-01-01T12:00:00Z"`
@@ -118,7 +112,6 @@ func NewHealthResponse(status, version string, services map[string]string) *Heal
 	}
 }
 
-// Standard error response structure
 type StandardErrorResponse struct {
 	Success   bool      `json:"success"`
 	Code      int       `json:"code"`
@@ -126,7 +119,6 @@ type StandardErrorResponse struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// Standard error response constructors
 func NewValidationErrorResponse(details string) *StandardErrorResponse {
 	return &StandardErrorResponse{
 		Success: false,
@@ -205,5 +197,4 @@ func NewNotImplementedErrorResponse(feature string) *StandardErrorResponse {
 	}
 }
 
-// Alias for backward compatibility
 type StandardResponse = BaseResponse

@@ -84,18 +84,6 @@ func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
 	return data, nil
 }
 
-// @Summary		Send text message
-// @Description	Send a text message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string				true	"Session ID"
-// @Param			request		body		dto.SendTextRequest	true	"Text message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/text [post]
 func (h *MessageHandler) SendText(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -157,18 +145,6 @@ func (h *MessageHandler) SendText(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Send media message
-// @Description	Send a media message (image, video, audio, document) to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendMediaRequest	true	"Media message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/media [post]
 func (h *MessageHandler) SendMedia(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -278,18 +254,6 @@ func (h *MessageHandler) SendMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Mark messages as read
-// @Description	Mark one or more messages as read in a chat
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.MarkAsReadRequest	true	"Mark as read request"
-// @Success		200			{object}	dto.MessageActionResponse
-// @Failure		400			{object}	dto.MessageActionResponse
-// @Failure		500			{object}	dto.MessageActionResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/markread [post]
 func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -339,19 +303,6 @@ func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		React to message
-// @Description	Add or remove reaction to a message
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			messageId	path		string						true	"Message ID"
-// @Param			request		body		dto.ReactToMessageRequest	true	"React request"
-// @Success		200			{object}	dto.MessageActionResponse
-// @Failure		400			{object}	dto.MessageActionResponse
-// @Failure		500			{object}	dto.MessageActionResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/react [post]
 func (h *MessageHandler) ReactToMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -412,19 +363,6 @@ func (h *MessageHandler) ReactToMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Delete message
-// @Description	Delete a message for everyone or just for me
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			messageId	path		string						true	"Message ID"
-// @Param			request		body		dto.DeleteMessageRequest	true	"Delete request"
-// @Success		200			{object}	dto.MessageActionResponse
-// @Failure		400			{object}	dto.MessageActionResponse
-// @Failure		500			{object}	dto.MessageActionResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/delete [post]
 func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -475,18 +413,6 @@ func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Edit message
-// @Description	Edit the text content of a message
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.EditMessageRequest	true	"Edit request"
-// @Success		200			{object}	dto.MessageActionResponse
-// @Failure		400			{object}	dto.MessageActionResponse
-// @Failure		500			{object}	dto.MessageActionResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/edit [post]
 func (h *MessageHandler) EditMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -548,18 +474,6 @@ func (h *MessageHandler) EditMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Send location message
-// @Description	Send a location message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendLocationRequest	true	"Location message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/location [post]
 func (h *MessageHandler) SendLocation(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -621,18 +535,6 @@ func (h *MessageHandler) SendLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send contact message(s)
-// @Description	Send a single contact or multiple contacts to a meow contact. Supports both legacy single contact format and new multiple contacts format.
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendContactRequest	true	"Contact message request (supports single or multiple contacts)"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/contact [post]
 func (h *MessageHandler) SendContact(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -679,7 +581,6 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	// Handle single contact format (legacy) - convert to contacts array
 	if req.IsSingleContact() {
 		contacts := []wmeow.ContactData{{
 			Name:  req.ContactName,
@@ -704,9 +605,7 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 		return
 	}
 
-	// Handle multiple contacts format
 	if req.IsMultipleContacts() {
-		// Convert DTO contacts to service contacts
 		var contacts []wmeow.ContactData
 		for _, contact := range req.Contacts {
 			contacts = append(contacts, wmeow.ContactData{
@@ -726,7 +625,6 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 			return
 		}
 
-		// Create VCards for response
 		var vcards []string
 		for _, contact := range req.Contacts {
 			vcard := fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", contact.Name, contact.Phone)
@@ -739,7 +637,6 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 		return
 	}
 
-	// This should never happen due to validation, but just in case
 	c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
 		http.StatusBadRequest,
 		"INVALID_REQUEST_FORMAT",
@@ -748,18 +645,6 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 	))
 }
 
-// @Summary		Send image message
-// @Description	Send an image message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendImageRequest	true	"Image message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/image [post]
 func (h *MessageHandler) SendImage(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -832,18 +717,6 @@ func (h *MessageHandler) SendImage(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send audio message
-// @Description	Send an audio message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendAudioRequest	true	"Audio message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/audio [post]
 func (h *MessageHandler) SendAudio(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -916,18 +789,6 @@ func (h *MessageHandler) SendAudio(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send document message
-// @Description	Send a document message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendDocumentRequest	true	"Document message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/document [post]
 func (h *MessageHandler) SendDocument(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1010,18 +871,6 @@ func (h *MessageHandler) SendDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send video message
-// @Description	Send a video message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendVideoRequest	true	"Video message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/video [post]
 func (h *MessageHandler) SendVideo(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1094,18 +943,6 @@ func (h *MessageHandler) SendVideo(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send sticker message
-// @Description	Send a sticker message to a meow contact
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SendStickerRequest	true	"Sticker message request"
-// @Success		200			{object}	dto.MessageResponse
-// @Failure		400			{object}	dto.MessageResponse
-// @Failure		500			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/sticker [post]
 func (h *MessageHandler) SendSticker(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1178,56 +1015,147 @@ func (h *MessageHandler) SendSticker(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
-// @Summary		Send button message
-// @Description	Send a button message to a meow contact (not yet implemented)
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		501			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/buttons [post]
 func (h *MessageHandler) SendButton(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, dto.NewMessageErrorResponse(
-		http.StatusNotImplemented,
-		"NOT_IMPLEMENTED",
-		"Button messages not yet implemented",
-		"This endpoint requires button message structure implementation",
-	))
+	sessionID := c.Param("sessionId")
+
+	var req dto.SendButtonMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"VALIDATION_ERROR",
+			"Request validation failed",
+			err.Error(),
+		))
+		return
+	}
+
+	var buttons []wmeow.ButtonData
+	for _, btn := range req.Buttons {
+		buttons = append(buttons, wmeow.ButtonData{
+			ID:   btn.ID,
+			Text: btn.Text,
+			Type: btn.Type,
+		})
+	}
+
+	ctx := c.Request.Context()
+	resp, err := h.wmeowService.SendButtonMessage(ctx, sessionID, req.Phone, req.Title, buttons)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewMessageErrorResponse(
+			http.StatusInternalServerError,
+			"SEND_BUTTON_MESSAGE_FAILED",
+			"Failed to send button message",
+			err.Error(),
+		))
+		return
+	}
+
+	response := dto.NewMessageSuccessResponse(sessionID, req.Phone, "button_message_sent", resp.ID, resp.Timestamp.Unix())
+	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Send list message
-// @Description	Send a list message to a meow contact (not yet implemented)
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		501			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/list [post]
 func (h *MessageHandler) SendList(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, dto.NewMessageErrorResponse(
-		http.StatusNotImplemented,
-		"NOT_IMPLEMENTED",
-		"List messages not yet implemented",
-		"This endpoint requires list message structure implementation",
-	))
+	sessionID := c.Param("sessionId")
+
+	var req dto.SendListMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"VALIDATION_ERROR",
+			"Request validation failed",
+			err.Error(),
+		))
+		return
+	}
+
+	var sections []wmeow.ListSection
+	for _, section := range req.Sections {
+		var rows []wmeow.ListRow
+		for _, row := range section.Rows {
+			rows = append(rows, wmeow.ListRow{
+				ID:          row.ID,
+				Title:       row.Title,
+				Description: row.Description,
+			})
+		}
+		sections = append(sections, wmeow.ListSection{
+			Title: section.Title,
+			Rows:  rows,
+		})
+	}
+
+	ctx := c.Request.Context()
+	resp, err := h.wmeowService.SendListMessage(ctx, sessionID, req.Phone, req.Title, req.Description, req.ButtonText, req.FooterText, sections)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewMessageErrorResponse(
+			http.StatusInternalServerError,
+			"SEND_LIST_MESSAGE_FAILED",
+			"Failed to send list message",
+			err.Error(),
+		))
+		return
+	}
+
+	response := dto.NewMessageSuccessResponse(sessionID, req.Phone, "list_message_sent", resp.ID, resp.Timestamp.Unix())
+	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Send poll message
-// @Description	Send a poll message to a meow contact (not yet implemented)
-// @Tags			Messages
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		501			{object}	dto.MessageResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/message/send/poll [post]
 func (h *MessageHandler) SendPoll(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, dto.NewMessageErrorResponse(
-		http.StatusNotImplemented,
-		"NOT_IMPLEMENTED",
-		"Poll messages not yet implemented",
-		"This endpoint requires poll message structure implementation",
-	))
+	sessionID := c.Param("sessionId")
+
+	var req dto.SendPollMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewMessageErrorResponse(
+			http.StatusBadRequest,
+			"VALIDATION_ERROR",
+			"Request validation failed",
+			err.Error(),
+		))
+		return
+	}
+
+	ctx := c.Request.Context()
+	resp, err := h.wmeowService.SendPollMessage(ctx, sessionID, req.Phone, req.Name, req.Options, req.SelectableCount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewMessageErrorResponse(
+			http.StatusInternalServerError,
+			"SEND_POLL_MESSAGE_FAILED",
+			"Failed to send poll message",
+			err.Error(),
+		))
+		return
+	}
+
+	response := dto.NewMessageSuccessResponse(sessionID, req.Phone, "poll_message_sent", resp.ID, resp.Timestamp.Unix())
+	c.JSON(http.StatusOK, response)
 }

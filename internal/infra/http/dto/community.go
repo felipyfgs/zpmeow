@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Community request DTOs
 
 type CreateCommunityRequest struct {
 	Name        string `json:"name" binding:"required" example:"My Community"`
@@ -116,7 +115,6 @@ func (r GetLinkedGroupsParticipantsRequest) Validate() error {
 	return nil
 }
 
-// Community response DTOs
 
 type CommunityErrorResponse struct {
 	Code    string `json:"code" example:"COMMUNITY_NOT_FOUND"`
@@ -209,7 +207,6 @@ type CommunityParticipantsData struct {
 	Count        int                `json:"count"`
 }
 
-// Constructor functions
 
 func NewCommunityErrorResponse(code int, errorCode, message, details string) *CommunityResponse {
 	return &CommunityResponse{

@@ -27,18 +27,6 @@ func (h *CommunityHandler) resolveSessionID(_ *gin.Context, sessionIDOrName stri
 	return sessionIDOrName, nil
 }
 
-// @Summary		Link group to community
-// @Description	Link a group to a community
-// @Tags			Community
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.LinkGroupRequest	true	"Link group request"
-// @Success		200			{object}	dto.CommunityResponse
-// @Failure		400			{object}	dto.CommunityResponse
-// @Failure		500			{object}	dto.CommunityResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/community/link [post]
 func (h *CommunityHandler) LinkGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -99,18 +87,6 @@ func (h *CommunityHandler) LinkGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Unlink group from community
-// @Description	Unlink a group from a community
-// @Tags			Community
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.UnlinkGroupRequest	true	"Unlink group request"
-// @Success		200			{object}	dto.CommunityResponse
-// @Failure		400			{object}	dto.CommunityResponse
-// @Failure		500			{object}	dto.CommunityResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/community/unlink [post]
 func (h *CommunityHandler) UnlinkGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -171,18 +147,6 @@ func (h *CommunityHandler) UnlinkGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get community subgroups
-// @Description	Get all subgroups of a community
-// @Tags			Community
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.GetSubGroupsRequest	true	"Get subgroups request"
-// @Success		200			{object}	dto.CommunitySubGroupsResponse
-// @Failure		400			{object}	dto.CommunityResponse
-// @Failure		500			{object}	dto.CommunityResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/community/subgroups [post]
 func (h *CommunityHandler) GetSubGroups(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -239,7 +203,6 @@ func (h *CommunityHandler) GetSubGroups(c *gin.Context) {
 		return
 	}
 
-	// Convert subgroup JIDs to CommunityInfo
 	var communityInfos []dto.CommunityInfo
 	for _, groupJID := range subGroups {
 		communityInfos = append(communityInfos, dto.CommunityInfo{
@@ -255,18 +218,6 @@ func (h *CommunityHandler) GetSubGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get community participants
-// @Description	Get all participants of linked groups in a community
-// @Tags			Community
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string									true	"Session ID"
-// @Param			request		body		dto.GetLinkedGroupsParticipantsRequest	true	"Get participants request"
-// @Success		200			{object}	dto.CommunityParticipantsResponse
-// @Failure		400			{object}	dto.CommunityResponse
-// @Failure		500			{object}	dto.CommunityResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/community/participants [post]
 func (h *CommunityHandler) GetLinkedGroupsParticipants(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -323,7 +274,6 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *gin.Context) {
 		return
 	}
 
-	// Convert participant JIDs to GroupParticipant
 	var groupParticipants []dto.GroupParticipant
 	for _, participantJID := range participants {
 		groupParticipants = append(groupParticipants, dto.GroupParticipant{

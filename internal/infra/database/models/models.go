@@ -4,8 +4,6 @@ import (
 	"time"
 )
 
-// SessionModel represents the sessions table in the database.
-// This is the only table currently implemented in the database schema.
 type SessionModel struct {
 	ID         string    `db:"id" json:"id"`                         // Primary key (UUID)
 	Name       string    `db:"name" json:"name"`                     // Unique session name
@@ -21,7 +19,6 @@ type SessionModel struct {
 	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`         // Record last update timestamp
 }
 
-// TableName returns the database table name for SessionModel.
 func (SessionModel) TableName() string {
 	return "sessions"
 }

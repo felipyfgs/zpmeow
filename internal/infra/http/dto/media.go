@@ -7,11 +7,10 @@ import (
 	"time"
 )
 
-// Media request DTOs
 
 type UploadMediaRequest struct {
 	MediaType string `json:"media_type" binding:"required" example:"image"`
-	MediaData string `json:"media_data" binding:"required" example:"data:image/jpeg;base64,/9j/4AAQ..."`
+	Data      string `json:"data" binding:"required" example:"base64_encoded_data"`
 	FileName  string `json:"filename,omitempty" example:"image.jpg"`
 	Caption   string `json:"caption,omitempty" example:"Check this out!"`
 }
@@ -20,8 +19,8 @@ func (r UploadMediaRequest) Validate() error {
 	if strings.TrimSpace(r.MediaType) == "" {
 		return fmt.Errorf("media_type is required")
 	}
-	if strings.TrimSpace(r.MediaData) == "" {
-		return fmt.Errorf("media_data is required")
+	if strings.TrimSpace(r.Data) == "" {
+		return fmt.Errorf("data is required")
 	}
 
 	validTypes := []string{"image", "audio", "video", "document", "sticker"}
@@ -49,21 +48,13 @@ func (r DownloadMediaRequest) Validate() error {
 }
 
 type ConvertMediaRequest struct {
-	MediaURL   string `json:"media_url" binding:"required" example:"https://example.com/media/image.jpg"`
-	FromFormat string `json:"from_format" binding:"required" example:"png"`
-	ToFormat   string `json:"to_format" binding:"required" example:"jpeg"`
-	Quality    int    `json:"quality,omitempty" example:"80"`
+	TargetFormat string `json:"target_format" binding:"required" example:"jpeg"`
+	Quality      int    `json:"quality,omitempty" example:"80"`
 }
 
 func (r ConvertMediaRequest) Validate() error {
-	if strings.TrimSpace(r.MediaURL) == "" {
-		return fmt.Errorf("media_url is required")
-	}
-	if strings.TrimSpace(r.FromFormat) == "" {
-		return fmt.Errorf("from_format is required")
-	}
-	if strings.TrimSpace(r.ToFormat) == "" {
-		return fmt.Errorf("to_format is required")
+	if strings.TrimSpace(r.TargetFormat) == "" {
+		return fmt.Errorf("target_format is required")
 	}
 	if r.Quality < 0 || r.Quality > 100 {
 		return fmt.Errorf("quality must be between 0 and 100")
@@ -71,7 +62,17 @@ func (r ConvertMediaRequest) Validate() error {
 	return nil
 }
 
-// Media response DTOs
+type CompressMediaRequest struct {
+	Quality int `json:"quality" binding:"required" example:"80"`
+}
+
+func (r CompressMediaRequest) Validate() error {
+	if r.Quality < 1 || r.Quality > 100 {
+		return fmt.Errorf("quality must be between 1 and 100")
+	}
+	return nil
+}
+
 
 type MediaErrorResponse struct {
 	Code    string `json:"code" example:"MEDIA_UPLOAD_FAILED"`
@@ -101,12 +102,13 @@ type MediaResponse struct {
 }
 
 type MediaResponseData struct {
-	SessionID string     `json:"session_id,omitempty"`
-	Action    string     `json:"action"`
-	Status    string     `json:"status"`
-	Message   string     `json:"message,omitempty"`
-	Media     *MediaInfo `json:"media,omitempty"`
-	Timestamp time.Time  `json:"timestamp"`
+	SessionID string      `json:"session_id,omitempty"`
+	Action    string      `json:"action"`
+	Status    string      `json:"status"`
+	Message   string      `json:"message,omitempty"`
+	Media     *MediaInfo  `json:"media,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
+	Timestamp time.Time   `json:"timestamp"`
 }
 
 type MediaListResponse struct {
@@ -161,7 +163,6 @@ type MediaConvertData struct {
 	Timestamp     time.Time `json:"timestamp"`
 }
 
-// Constructor functions
 
 func NewMediaErrorResponse(code int, errorCode, message, details string) *MediaResponse {
 	return &MediaResponse{
@@ -175,18 +176,24 @@ func NewMediaErrorResponse(code int, errorCode, message, details string) *MediaR
 	}
 }
 
-func NewMediaSuccessResponse(sessionID, action, message string, media *MediaInfo) *MediaResponse {
+func NewMediaSuccessResponse(sessionID, action, message string, data interface{}) *MediaResponse {
+	responseData := &MediaResponseData{
+		SessionID: sessionID,
+		Action:    action,
+		Status:    "success",
+		Message:   message,
+		Data:      data,
+		Timestamp: time.Now(),
+	}
+
+	if mediaInfo, ok := data.(*MediaInfo); ok {
+		responseData.Media = mediaInfo
+	}
+
 	return &MediaResponse{
 		Success: true,
 		Code:    http.StatusOK,
-		Data: &MediaResponseData{
-			SessionID: sessionID,
-			Action:    action,
-			Status:    "success",
-			Message:   message,
-			Media:     media,
-			Timestamp: time.Now(),
-		},
+		Data:    responseData,
 	}
 }
 

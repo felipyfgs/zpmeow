@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// Request DTOs for sending messages
 
 type SendTextRequest struct {
 	Phone string `json:"phone" binding:"required" example:"5511999999999"`
@@ -171,7 +170,6 @@ func (r SendContactRequest) Validate() error {
 		return fmt.Errorf("phone is required")
 	}
 
-	// Check if it's single contact format
 	if r.IsSingleContact() {
 		if strings.TrimSpace(r.ContactName) == "" {
 			return fmt.Errorf("contact_name is required")
@@ -182,7 +180,6 @@ func (r SendContactRequest) Validate() error {
 		return nil
 	}
 
-	// Check if it's multiple contacts format
 	if r.IsMultipleContacts() {
 		if len(r.Contacts) == 0 {
 			return fmt.Errorf("at least one contact is required")
@@ -212,7 +209,6 @@ func (r SendContactRequest) IsMultipleContacts() bool {
 	return len(r.Contacts) > 0
 }
 
-// Message action DTOs
 
 type MarkAsReadRequest struct {
 	Phone      string   `json:"phone" binding:"required" example:"5511999999999"`
@@ -236,14 +232,140 @@ type EditMessageRequest struct {
 	NewText   string `json:"new_text" binding:"required" example:"Updated message text"`
 }
 
-// Download media request for messages
+
+type ButtonData struct {
+	ID   string `json:"id" binding:"required" example:"btn_1"`
+	Text string `json:"text" binding:"required" example:"Click me"`
+	Type string `json:"type,omitempty" example:"reply"`
+}
+
+type SendButtonMessageRequest struct {
+	Phone   string       `json:"phone" binding:"required" example:"5511999999999"`
+	Title   string       `json:"title" binding:"required" example:"Choose an option"`
+	Buttons []ButtonData `json:"buttons" binding:"required"`
+}
+
+func (r SendButtonMessageRequest) Validate() error {
+	if strings.TrimSpace(r.Phone) == "" {
+		return fmt.Errorf("phone is required")
+	}
+	if strings.TrimSpace(r.Title) == "" {
+		return fmt.Errorf("title is required")
+	}
+	if len(r.Buttons) == 0 {
+		return fmt.Errorf("at least one button is required")
+	}
+	if len(r.Buttons) > 3 {
+		return fmt.Errorf("maximum 3 buttons allowed")
+	}
+	for i, btn := range r.Buttons {
+		if strings.TrimSpace(btn.ID) == "" {
+			return fmt.Errorf("button %d id is required", i)
+		}
+		if strings.TrimSpace(btn.Text) == "" {
+			return fmt.Errorf("button %d text is required", i)
+		}
+	}
+	return nil
+}
+
+type ListRow struct {
+	ID          string `json:"id" binding:"required" example:"row_1"`
+	Title       string `json:"title" binding:"required" example:"Option 1"`
+	Description string `json:"description,omitempty" example:"Description for option 1"`
+}
+
+type ListSection struct {
+	Title string    `json:"title" binding:"required" example:"Section 1"`
+	Rows  []ListRow `json:"rows" binding:"required"`
+}
+
+type SendListMessageRequest struct {
+	Phone       string        `json:"phone" binding:"required" example:"5511999999999"`
+	Title       string        `json:"title" binding:"required" example:"Choose from list"`
+	Description string        `json:"description,omitempty" example:"Please select an option"`
+	ButtonText  string        `json:"button_text" binding:"required" example:"Select"`
+	FooterText  string        `json:"footer_text,omitempty" example:"Footer text"`
+	Sections    []ListSection `json:"sections" binding:"required"`
+}
+
+func (r SendListMessageRequest) Validate() error {
+	if strings.TrimSpace(r.Phone) == "" {
+		return fmt.Errorf("phone is required")
+	}
+	if strings.TrimSpace(r.Title) == "" {
+		return fmt.Errorf("title is required")
+	}
+	if strings.TrimSpace(r.ButtonText) == "" {
+		return fmt.Errorf("button_text is required")
+	}
+	if len(r.Sections) == 0 {
+		return fmt.Errorf("at least one section is required")
+	}
+	if len(r.Sections) > 10 {
+		return fmt.Errorf("maximum 10 sections allowed")
+	}
+	for i, section := range r.Sections {
+		if strings.TrimSpace(section.Title) == "" {
+			return fmt.Errorf("section %d title is required", i)
+		}
+		if len(section.Rows) == 0 {
+			return fmt.Errorf("section %d must have at least one row", i)
+		}
+		if len(section.Rows) > 10 {
+			return fmt.Errorf("section %d can have maximum 10 rows", i)
+		}
+		for j, row := range section.Rows {
+			if strings.TrimSpace(row.ID) == "" {
+				return fmt.Errorf("section %d row %d id is required", i, j)
+			}
+			if strings.TrimSpace(row.Title) == "" {
+				return fmt.Errorf("section %d row %d title is required", i, j)
+			}
+		}
+	}
+	return nil
+}
+
+type SendPollMessageRequest struct {
+	Phone           string   `json:"phone" binding:"required" example:"5511999999999"`
+	Name            string   `json:"name" binding:"required" example:"What's your favorite color?"`
+	Options         []string `json:"options" binding:"required" example:"[\"Red\", \"Blue\", \"Green\"]"`
+	SelectableCount int      `json:"selectable_count,omitempty" example:"1"`
+}
+
+func (r SendPollMessageRequest) Validate() error {
+	if strings.TrimSpace(r.Phone) == "" {
+		return fmt.Errorf("phone is required")
+	}
+	if strings.TrimSpace(r.Name) == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(r.Options) < 2 {
+		return fmt.Errorf("at least 2 options are required")
+	}
+	if len(r.Options) > 12 {
+		return fmt.Errorf("maximum 12 options allowed")
+	}
+	for i, option := range r.Options {
+		if strings.TrimSpace(option) == "" {
+			return fmt.Errorf("option %d cannot be empty", i)
+		}
+	}
+	if r.SelectableCount <= 0 {
+		r.SelectableCount = 1
+	}
+	if r.SelectableCount > len(r.Options) {
+		return fmt.Errorf("selectable_count cannot be greater than number of options")
+	}
+	return nil
+}
+
 type MessageDownloadMediaRequest struct {
 	MessageID string `json:"message_id" binding:"required" example:"msg_123"`
 }
 
-// Response DTOs
 
-// Base response structures
 type MessageErrorResponse struct {
 	Code    string `json:"code" example:"INVALID_PHONE"`
 	Message string `json:"message" example:"Invalid phone number format"`
@@ -256,7 +378,6 @@ type MessageKey struct {
 	FromMe    bool   `json:"fromMe"`
 }
 
-// Message payload structures for different message types
 type TextMessagePayload struct {
 	Text string `json:"text" example:"Hello, World!"`
 }
@@ -328,7 +449,6 @@ type MessageResponse struct {
 	Error   *MessageErrorResponse `json:"error,omitempty"`
 }
 
-// Message action response
 type MessageActionResponse struct {
 	Success bool                  `json:"success"`
 	Code    int                   `json:"code"`
@@ -342,7 +462,6 @@ type MessageActionData struct {
 	Action    string `json:"action"`
 }
 
-// Message media download response
 type MessageMediaDownloadResponse struct {
 	Success   bool   `json:"success"`
 	Code      int    `json:"code"`
@@ -353,7 +472,6 @@ type MessageMediaDownloadResponse struct {
 	Size      int    `json:"size"`
 }
 
-// Constructor functions for responses
 
 func NewMessageErrorResponse(code int, errorCode, message, details string) *MessageResponse {
 	return &MessageResponse{
@@ -577,6 +695,26 @@ func NewContactsMessageResponse(success bool, code int, phone, messageID string,
 				},
 			},
 			Timestamp: 0,
+		},
+	}
+}
+
+func NewMessageSuccessResponse(sessionID, phone, action, messageID string, timestamp int64) *MessageResponse {
+	return &MessageResponse{
+		Success: true,
+		Code:    http.StatusOK,
+		Data: &MessageResponseData{
+			Key: MessageKey{
+				ID:        messageID,
+				RemoteJID: phone + "@s.whatsapp.net",
+				FromMe:    true,
+			},
+			Message: MessagePayload{
+				Text: &TextMessagePayload{
+					Text: action + " completed successfully",
+				},
+			},
+			Timestamp: timestamp,
 		},
 	}
 }

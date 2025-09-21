@@ -100,7 +100,6 @@ func (h *HTTPHandler) SendValidationErrorResponse(c *gin.Context, err error) {
 	h.BaseHandler.SendValidationErrorResponse(c, err)
 }
 
-// Métodos de conveniência usando as novas estruturas padronizadas
 func (h *BaseHandler) SendStandardErrorResponse(c *gin.Context, errorResponse *dto.StandardErrorResponse) {
 	c.JSON(errorResponse.Code, errorResponse)
 }

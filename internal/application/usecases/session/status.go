@@ -63,7 +63,6 @@ func (uc *GetSessionStatusUseCase) Handle(ctx context.Context, query GetSessionS
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	// Use IsClientConnected to determine real-time status
 	isConnected := uc.whatsappService.IsClientConnected(query.SessionID)
 	var whatsappStatus string
 	if isConnected {

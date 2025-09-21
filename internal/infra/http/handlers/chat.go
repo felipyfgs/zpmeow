@@ -25,18 +25,6 @@ func NewChatHandler(chatService *application.ChatApp, wmeowService wmeow.WameowS
 	}
 }
 
-// @Summary		Set presence in chat
-// @Description	Set user presence state in a specific chat (composing, available, etc.)
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SetPresenceRequest	true	"Presence request"
-// @Success		200			{object}	dto.ChatResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/presence [post]
 func (h *ChatHandler) SetPresence(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -77,66 +65,18 @@ func (h *ChatHandler) SetPresence(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Download image
-// @Description	Download image media from a message
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.DownloadMediaRequest	true	"Download request"
-// @Success		200			{object}	dto.MediaDownloadResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/download/image [post]
 func (h *ChatHandler) DownloadImage(c *gin.Context) {
 	h.downloadMedia(c, "image")
 }
 
-// @Summary		Download video
-// @Description	Download video media from a message
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.DownloadMediaRequest	true	"Download request"
-// @Success		200			{object}	dto.MediaDownloadResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/download/video [post]
 func (h *ChatHandler) DownloadVideo(c *gin.Context) {
 	h.downloadMedia(c, "video")
 }
 
-// @Summary		Download audio
-// @Description	Download audio media from a message
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.DownloadMediaRequest	true	"Download request"
-// @Success		200			{object}	dto.MediaDownloadResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/download/audio [post]
 func (h *ChatHandler) DownloadAudio(c *gin.Context) {
 	h.downloadMedia(c, "audio")
 }
 
-// @Summary		Download document
-// @Description	Download document media from a message
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.DownloadMediaRequest	true	"Download request"
-// @Success		200			{object}	dto.MediaDownloadResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/download/document [post]
 func (h *ChatHandler) DownloadDocument(c *gin.Context) {
 	h.downloadMedia(c, "document")
 }
@@ -192,19 +132,6 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get chat history
-// @Description	Get chat history for a specific contact
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Param			phone		query		string	true	"Phone number"
-// @Param			limit		query		int		false	"Limit of messages (default: 50, max: 1000)"
-// @Success		200			{object}	dto.ChatHistoryResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/history [get]
 func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	phone := c.Query("phone")
@@ -252,10 +179,8 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 
 	var messages []dto.ChatHistoryData
 	for _, message := range result.Messages {
-		// Convert timestamp string to int64
 		timestamp := int64(0)
 		if message.Timestamp != "" {
-			// In a real implementation, you'd parse the timestamp properly
 			timestamp = time.Now().Unix()
 		}
 
@@ -284,18 +209,6 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set disappearing timer
-// @Description	Set disappearing timer for messages in a chat
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string								true	"Session ID"
-// @Param			request		body		dto.SetDisappearingTimerRequest		true	"Disappearing timer request"
-// @Success		200			{object}	dto.ChatResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/disappearing-timer [post]
 func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -366,18 +279,6 @@ func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		List chats
-// @Description	List all chats (groups and/or contacts) for a session
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.ListChatsRequest	false	"List chats request"
-// @Success		200			{object}	dto.ListChatsResponse
-// @Failure		400			{object}	dto.ListChatsResponse
-// @Failure		500			{object}	dto.ListChatsResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/list [post]
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -441,18 +342,6 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get chat info
-// @Description	Get detailed information about a specific chat (group or contact)
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.GetChatInfoRequest		true	"Get chat info request"
-// @Success		200			{object}	dto.GetChatInfoResponse
-// @Failure		400			{object}	dto.GetChatInfoResponse
-// @Failure		500			{object}	dto.GetChatInfoResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/info [post]
 func (h *ChatHandler) GetChatInfo(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -509,18 +398,6 @@ func (h *ChatHandler) GetChatInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Pin/unpin chat
-// @Description	Pin or unpin a chat to keep it at the top of the chat list
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.PinChatRequest		true	"Pin chat request"
-// @Success		200			{object}	dto.ChatResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/pin [post]
 func (h *ChatHandler) PinChat(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -566,18 +443,6 @@ func (h *ChatHandler) PinChat(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Mute/unmute chat
-// @Description	Mute or unmute a chat for a specified duration
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.MuteChatRequest		true	"Mute chat request"
-// @Success		200			{object}	dto.ChatResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/mute [post]
 func (h *ChatHandler) MuteChat(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -645,18 +510,6 @@ func (h *ChatHandler) MuteChat(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Archive/unarchive chat
-// @Description	Archive or unarchive a chat (archiving automatically unpins the chat)
-// @Tags			Chat
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.ArchiveChatRequest		true	"Archive chat request"
-// @Success		200			{object}	dto.ChatResponse
-// @Failure		400			{object}	dto.ChatResponse
-// @Failure		500			{object}	dto.ChatResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/chat/archive [post]
 func (h *ChatHandler) ArchiveChat(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 

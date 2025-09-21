@@ -62,14 +62,6 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 	return dependencies
 }
 
-// @Summary		Health check endpoint
-// @Description	Returns the health status of the service using standardized response format
-// @Tags			Health
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	HealthStandardResponse	"Service is healthy"
-// @Failure		503	{object}	HealthStandardResponse	"Service is unhealthy"
-// @Router			/health [get]
 func (h *HealthHandler) Health(c *gin.Context) {
 	h.logger.Infof("Health check requested")
 
@@ -92,13 +84,6 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	}
 }
 
-// @Summary		Ping endpoint
-// @Description	Simple ping endpoint that returns pong using standardized response format
-// @Tags			Health
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	HealthStandardResponse	"Pong response"
-// @Router			/ping [get]
 func (h *HealthHandler) Ping(c *gin.Context) {
 	h.logger.Infof("Ping requested")
 
@@ -106,13 +91,6 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 	h.logger.Infof("Ping completed successfully")
 }
 
-// @Summary		Metrics endpoint
-// @Description	Returns application metrics and performance data
-// @Tags			Health
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	map[string]interface{}	"Application metrics"
-// @Router			/metrics [get]
 func (h *HealthHandler) Metrics(c *gin.Context) {
 	h.logger.Infof("Metrics requested")
 
@@ -125,13 +103,6 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 	h.logger.Infof("Metrics completed successfully")
 }
 
-// @Summary		Reset metrics endpoint
-// @Description	Resets all application metrics
-// @Tags			Health
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	HealthStandardResponse	"Metrics reset successfully"
-// @Router			/metrics/reset [post]
 func (h *HealthHandler) ResetMetrics(c *gin.Context) {
 	h.logger.Infof("Metrics reset requested")
 

@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Contact request DTOs
 
 type CheckContactRequest struct {
 	Phones []string `json:"phones" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
@@ -136,7 +135,6 @@ func (r SetContactPresenceRequest) Validate() error {
 	return fmt.Errorf("invalid state, must be one of: %s", strings.Join(validStates, ", "))
 }
 
-// Contact response DTOs
 
 type ContactErrorResponse struct {
 	Code    string `json:"code" example:"CONTACT_NOT_FOUND"`
@@ -234,7 +232,6 @@ type ContactActionData struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// Avatar related DTOs
 type AvatarInfo struct {
 	Phone     string    `json:"phone" example:"5511999999999"`
 	JID       string    `json:"jid,omitempty" example:"5511999999999@s.whatsapp.net"`
@@ -251,7 +248,6 @@ type ContactAvatarResponse struct {
 	Error   *ContactErrorResponse `json:"error,omitempty"`
 }
 
-// Constructor functions
 
 func NewContactErrorResponse(code int, errorCode, message, details string) *ContactResponse {
 	return &ContactResponse{

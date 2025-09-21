@@ -120,7 +120,6 @@ func (uc *SendContactMessageUseCase) Handle(ctx context.Context, cmd SendContact
 		)
 	}
 
-	// Convert ContactInfo to ContactData
 	var contactData []ports.ContactData
 	for _, contact := range cmd.Contacts {
 		contactData = append(contactData, ports.ContactData{

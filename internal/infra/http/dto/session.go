@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Session request DTOs
 
 type CreateSessionRequest struct {
 	Name   string `json:"name" binding:"required" example:"my-session"`
@@ -52,7 +51,6 @@ func (r PairPhoneRequest) Validate() error {
 	if strings.TrimSpace(r.Phone) == "" {
 		return fmt.Errorf("phone is required")
 	}
-	// Basic phone validation - should contain only digits and be at least 10 characters
 	phone := strings.TrimSpace(r.Phone)
 	if len(phone) < 10 {
 		return fmt.Errorf("phone number must be at least 10 digits")
@@ -85,7 +83,6 @@ func (r PairCodeRequest) Validate() error {
 	return nil
 }
 
-// Session response DTOs
 
 type ErrorInfo struct {
 	Code    string `json:"code" example:"SESSION_NOT_FOUND"`
@@ -165,7 +162,6 @@ type PairData struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// Constructor functions
 
 func NewSessionErrorResponse(code int, errorCode, message, details string) *SessionResponse {
 	return &SessionResponse{
@@ -303,7 +299,6 @@ func NewSessionListErrorResponse(code int, errorCode, message, details string) *
 	}
 }
 
-// Additional DTOs for session operations
 
 type SessionCreateData struct {
 	SessionID string       `json:"session_id,omitempty"`
@@ -389,7 +384,6 @@ func (r UpdateWebhookRequest) Validate() error {
 	if strings.TrimSpace(r.WebhookURL) == "" {
 		return fmt.Errorf("webhook_url is required")
 	}
-	// Basic URL validation
 	if !strings.HasPrefix(r.WebhookURL, "http://") && !strings.HasPrefix(r.WebhookURL, "https://") {
 		return fmt.Errorf("webhook_url must be a valid HTTP or HTTPS URL")
 	}

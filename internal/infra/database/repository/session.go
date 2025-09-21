@@ -26,7 +26,6 @@ func NewPostgresRepo(db *sqlx.DB) sessiondomain.Repository {
 }
 
 func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity *sessiondomain.Session) (string, error) {
-	// Serialize webhook events to JSON
 	eventsJSON := []byte("[]")
 	if len(sessionEntity.GetWebhookEvents()) > 0 {
 		if jsonBytes, err := json.Marshal(sessionEntity.GetWebhookEvents()); err == nil {
@@ -159,7 +158,6 @@ func (r *PostgresRepo) GetAll(ctx context.Context) ([]*sessiondomain.Session, er
 }
 
 func (r *PostgresRepo) Update(ctx context.Context, session *sessiondomain.Session) error {
-	// Serialize webhook events to JSON
 	eventsJSON := []byte("[]")
 	if len(session.GetWebhookEvents()) > 0 {
 		if jsonBytes, err := json.Marshal(session.GetWebhookEvents()); err == nil {
@@ -499,7 +497,6 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 		}
 	}
 
-	// Set webhook events if they exist
 	if len(events) > 0 {
 		sessionEntity.SetWebhookEvents(events)
 	}

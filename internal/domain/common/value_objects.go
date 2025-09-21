@@ -18,10 +18,6 @@ type IDGenerator interface {
 
 var defaultGenerator IDGenerator = &counterIDGenerator{counter: 0}
 
-// SetIDGenerator foi removido por não ser utilizado
-// func SetIDGenerator(generator IDGenerator) {
-//     defaultGenerator = generator
-// }
 
 type counterIDGenerator struct {
 	counter int

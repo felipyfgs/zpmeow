@@ -43,18 +43,6 @@ func (h *WebhookHandler) resolveSessionID(c *gin.Context, sessionIDOrName string
 	return session.SessionID().Value(), nil
 }
 
-// @Summary		Set webhook
-// @Description	Set a webhook URL to receive meow events
-// @Tags			Webhooks
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.RegisterWebhookRequest	true	"Set webhook request"
-// @Success		201			{object}	dto.StandardWebhookCreateResponse
-// @Failure		400			{object}	dto.WebhookResponse
-// @Failure		500			{object}	dto.WebhookResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/webhook [post]
 func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 
@@ -142,11 +130,8 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 		return
 	}
 
-	// Update the EventProcessor with the new subscribed events
 	err = h.wmeowService.UpdateSessionSubscriptions(sessionID, validEvents)
 	if err != nil {
-		// Log the error but don't fail the webhook registration
-		// The webhook is already saved, we just couldn't update the live processor
 		h.logger.Warnf("Failed to update session subscriptions for %s: %v", sessionID, err)
 	}
 
@@ -163,18 +148,6 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	})
 }
 
-// @Summary		Get webhook information
-// @Description	Get information about registered webhooks for a session
-// @Tags			Webhooks
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		200			{object}	dto.StandardWebhookResponse
-// @Failure		400			{object}	dto.WebhookResponse
-// @Failure		404			{object}	dto.WebhookResponse
-// @Failure		500			{object}	dto.WebhookResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/webhook [get]
 func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 
@@ -232,14 +205,6 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 	})
 }
 
-// @Summary		List supported events
-// @Description	Get list of all supported webhook event types
-// @Tags			Webhooks
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	dto.SupportedEventsResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/webhooks/events [get]
 func (h *WebhookHandler) ListEvents(c *gin.Context) {
 	events, err := h.webhookApp.ListEvents(c.Request.Context())
 	if err != nil {

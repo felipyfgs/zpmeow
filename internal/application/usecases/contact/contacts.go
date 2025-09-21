@@ -298,7 +298,6 @@ func (uc *GetUserInfoUseCase) Handle(ctx context.Context, query GetUserInfoQuery
 		return nil, fmt.Errorf("user info not found for JID: %s", query.UserJID)
 	}
 
-	// Extrair telefone do JID (formato: phone@server)
 	phone := ""
 	if jidParts := strings.Split(userInfo.JID, "@"); len(jidParts) > 0 {
 		phone = jidParts[0]

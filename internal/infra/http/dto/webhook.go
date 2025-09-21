@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Webhook request DTOs
 
 type SetWebhookRequest struct {
 	URL    string   `json:"url" binding:"required" example:"https://example.com/webhook"`
@@ -18,7 +17,6 @@ func (r SetWebhookRequest) Validate() error {
 	if strings.TrimSpace(r.URL) == "" {
 		return fmt.Errorf("url is required")
 	}
-	// Basic URL validation
 	if !strings.HasPrefix(r.URL, "http://") && !strings.HasPrefix(r.URL, "https://") {
 		return fmt.Errorf("url must be a valid HTTP or HTTPS URL")
 	}
@@ -63,7 +61,6 @@ func (r RegisterWebhookRequest) Validate() error {
 	return nil
 }
 
-// Webhook response DTOs
 
 type WebhookErrorResponse struct {
 	Code    string `json:"code" example:"WEBHOOK_NOT_FOUND"`
@@ -129,7 +126,6 @@ type WebhookTestData struct {
 	Timestamp    time.Time `json:"timestamp"`
 }
 
-// Constructor functions
 
 func NewWebhookErrorResponse(code int, errorCode, message, details string) *WebhookResponse {
 	return &WebhookResponse{
@@ -208,7 +204,6 @@ func NewWebhookTestErrorResponse(code int, errorCode, message, details string) *
 	}
 }
 
-// Webhook event DTOs for sending to external webhooks
 
 type WebhookEvent struct {
 	Type      string                 `json:"type" example:"message"`
@@ -242,7 +237,6 @@ type StatusWebhookEvent struct {
 	} `json:"data"`
 }
 
-// Additional DTOs for backward compatibility
 type StandardWebhookCreateResponse = WebhookResponse
 type StandardWebhookData = WebhookResponseData
 type StandardWebhookResponse = WebhookResponse

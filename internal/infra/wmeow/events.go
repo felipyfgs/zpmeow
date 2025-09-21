@@ -20,7 +20,6 @@ type EventProcessor struct {
 	subscribedEvents []string
 }
 
-// Mapping from whatsmeow event types to our system event types
 var eventTypeMapping = map[string]string{
 	"*events.Message":                     "Message",
 	"*events.UndecryptableMessage":        "UndecryptableMessage",
@@ -87,49 +86,40 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 		subscribedEvents: []string{}, // Will be loaded from session
 	}
 
-	// Load subscribed events from session
 	ep.loadSubscribedEvents()
 
 	return ep
 }
 
-// loadSubscribedEvents loads the subscribed events from the session
 func (ep *EventProcessor) loadSubscribedEvents() {
 	sessionEntity, err := ep.sessionRepo.GetByID(context.Background(), ep.sessionID)
 	if err != nil {
 		ep.logger.Warnf("Failed to load session for events: %v", err)
-		// Default to subscribing to all events if session can't be loaded
 		ep.subscribedEvents = []string{"All"}
 		ep.logger.Infof("Loaded default subscribed events: %v", ep.subscribedEvents)
 		return
 	}
 
-	// Get webhook events from session
 	events := sessionEntity.GetWebhookEvents()
 	if len(events) > 0 {
 		ep.subscribedEvents = events
 	} else {
-		// Default to subscribing to all events if no specific events are configured
 		ep.subscribedEvents = []string{"All"}
 	}
 
 	ep.logger.Infof("Loaded subscribed events: %v", ep.subscribedEvents)
 }
 
-// UpdateSubscribedEvents updates the list of subscribed events
 func (ep *EventProcessor) UpdateSubscribedEvents(events []string) {
 	ep.subscribedEvents = events
 	ep.logger.Infof("Updated subscribed events: %v", ep.subscribedEvents)
 }
 
-// isSubscribedToEvent checks if the processor is subscribed to a specific event
 func (ep *EventProcessor) isSubscribedToEvent(eventType string) bool {
-	// If no events are subscribed, don't send anything
 	if len(ep.subscribedEvents) == 0 {
 		return false
 	}
 
-	// Check for "All" subscription
 	for _, subscribedEvent := range ep.subscribedEvents {
 		if subscribedEvent == "All" {
 			return true
@@ -147,14 +137,12 @@ func (ep *EventProcessor) HandleEvent(evt interface{}) {
 
 	ep.logger.Debugf("📨 Event received: %s", eventType)
 
-	// Map whatsmeow event type to our system event type
 	systemEventType, exists := eventTypeMapping[eventType]
 	if !exists {
 		ep.logger.Debugf("❓ Unmapped event: %s", eventType)
 		return
 	}
 
-	// Check if we're subscribed to this event
 	if !ep.isSubscribedToEvent(systemEventType) {
 		ep.logger.Debugf("🚫 Not subscribed to event: %s (system: %s)", eventType, systemEventType)
 		return
@@ -165,7 +153,6 @@ func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	if handler, exists := eventHandlers[eventType]; exists {
 		handler(ep, evt)
 	} else {
-		// Even if we don't have a specific handler, we can still send the raw event
 		ep.sendGenericEvent(systemEventType, evt)
 	}
 }
@@ -320,14 +307,12 @@ func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 	}
 }
 
-// Global webhook service instance
 var globalWebhookService *webhooks.Service
 
 func init() {
 	globalWebhookService = webhooks.NewService()
 }
 
-// sendGenericEvent sends a generic event for events that don't have specific handlers
 func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 	webhookPayload := map[string]interface{}{
 		"event":      eventType,
@@ -347,7 +332,6 @@ func sendWebhook(url string, data interface{}) error {
 		return nil // No webhook configured
 	}
 
-	// Use the webhook service to send the webhook asynchronously
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

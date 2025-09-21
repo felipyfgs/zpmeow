@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Group request DTOs
 
 type CreateGroupRequest struct {
 	Name         string   `json:"name" binding:"required" example:"My Group"`
@@ -161,7 +160,6 @@ func (r GetInviteInfoRequest) Validate() error {
 	return nil
 }
 
-// Group response DTOs
 
 type GroupErrorResponse struct {
 	Code    string `json:"code" example:"GROUP_NOT_FOUND"`
@@ -243,7 +241,6 @@ type GroupActionData struct {
 	Timestamp    time.Time `json:"timestamp"`
 }
 
-// Constructor functions
 
 func NewGroupErrorResponse(code int, errorCode, message, details string) *GroupResponse {
 	return &GroupResponse{
@@ -358,7 +355,6 @@ func NewInviteLinkResponse(groupJID, inviteLink, inviteCode string) *InviteLinkR
 	}
 }
 
-// Additional request types for group management
 
 type UpdateParticipantsRequest struct {
 	GroupJID     string   `json:"group_jid" binding:"required" example:"120363025246125486@g.us"`

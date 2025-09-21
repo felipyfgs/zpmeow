@@ -81,7 +81,6 @@ func (w *WebhookApp) SetWebhook(ctx context.Context, sessionID, webhookURL strin
 		return err
 	}
 
-	// Set webhook events
 	sess.SetWebhookEvents(events)
 
 	return w.sessionRepo.Update(ctx, sess)
@@ -101,21 +100,18 @@ func (w *WebhookApp) GetWebhook(ctx context.Context, sessionID string) (string, 
 
 func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 	events := []string{
-		// Messages and Communication
 		"Message",
 		"UndecryptableMessage",
 		"Receipt",
 		"MediaRetry",
 		"ReadReceipt",
 
-		// Groups and Contacts
 		"GroupInfo",
 		"JoinedGroup",
 		"Picture",
 		"BlocklistChange",
 		"Blocklist",
 
-		// Connection and Session
 		"Connected",
 		"Disconnected",
 		"ConnectFailure",
@@ -131,45 +127,36 @@ func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 		"QR",
 		"QRScannedWithoutMultidevice",
 
-		// Privacy and Settings
 		"PrivacySettings",
 		"PushNameSetting",
 		"UserAbout",
 
-		// Synchronization and State
 		"AppState",
 		"AppStateSyncComplete",
 		"HistorySync",
 		"OfflineSyncCompleted",
 		"OfflineSyncPreview",
 
-		// Calls
 		"CallOffer",
 		"CallAccept",
 		"CallTerminate",
 		"CallOfferNotice",
 		"CallRelayLatency",
 
-		// Presence and Activity
 		"Presence",
 		"ChatPresence",
 
-		// Identity
 		"IdentityChange",
 
-		// Errors
 		"CATRefreshError",
 
-		// Newsletter (WhatsApp Channels)
 		"NewsletterJoin",
 		"NewsletterLeave",
 		"NewsletterMuteChange",
 		"NewsletterLiveUpdate",
 
-		// Facebook/Meta Bridge
 		"FBMessage",
 
-		// Special - receives all events
 		"All",
 	}
 	return events, nil
@@ -199,7 +186,6 @@ func NewChatApp(sessionRepo session.Repository, chatManager ports.ChatManager) *
 	}
 }
 
-// GetChatHistoryRequest represents the request to get chat history
 type GetChatHistoryRequest struct {
 	SessionID string
 	Phone     string
@@ -207,7 +193,6 @@ type GetChatHistoryRequest struct {
 	Offset    int
 }
 
-// GetChatHistoryResponse represents the response with chat history
 type GetChatHistoryResponse struct {
 	SessionID string
 	Phone     string
@@ -217,7 +202,6 @@ type GetChatHistoryResponse struct {
 	Offset    int
 }
 
-// ChatMessage represents a chat message
 type ChatMessage struct {
 	ID        string
 	ChatJID   string
@@ -231,9 +215,7 @@ type ChatMessage struct {
 	Caption   string
 }
 
-// GetChatHistory retrieves chat history for a phone number
 func (app *ChatApp) GetChatHistory(ctx context.Context, req GetChatHistoryRequest) (*GetChatHistoryResponse, error) {
-	// Set defaults
 	if req.Limit <= 0 {
 		req.Limit = 50
 	}
@@ -241,7 +223,6 @@ func (app *ChatApp) GetChatHistory(ctx context.Context, req GetChatHistoryReques
 		req.Limit = 1000
 	}
 
-	// Convert phone to JID (simplified - in real implementation would be more robust)
 	chatJID := req.Phone + "@s.whatsapp.net"
 	if strings.Contains(req.Phone, "@") {
 		chatJID = req.Phone
@@ -290,19 +271,16 @@ func NewGroupApp(sessionRepo session.Repository, groupManager ports.GroupManager
 	}
 }
 
-// ListGroupsRequest represents the request to list groups
 type ListGroupsRequest struct {
 	SessionID string
 }
 
-// ListGroupsResponse represents the response with groups
 type ListGroupsResponse struct {
 	SessionID string
 	Groups    []GroupInfo
 	Count     int
 }
 
-// GroupInfo represents group information
 type GroupInfo struct {
 	JID          string
 	Name         string
@@ -315,7 +293,6 @@ type GroupInfo struct {
 	CreatedAt    string
 }
 
-// ListGroups retrieves groups for a session
 func (app *GroupApp) ListGroups(ctx context.Context, req ListGroupsRequest) (*ListGroupsResponse, error) {
 	groups, err := app.groupManager.ListGroups(ctx, req.SessionID)
 	if err != nil {
@@ -356,14 +333,12 @@ func NewContactApp(sessionRepo session.Repository, contactManager ports.ContactM
 	}
 }
 
-// GetContactsRequest represents the request to get contacts
 type GetContactsRequest struct {
 	SessionID string
 	Limit     int
 	Offset    int
 }
 
-// GetContactsResponse represents the response with contacts
 type GetContactsResponse struct {
 	SessionID string
 	Contacts  []ContactInfo
@@ -372,7 +347,6 @@ type GetContactsResponse struct {
 	Offset    int
 }
 
-// ContactInfo represents contact information
 type ContactInfo struct {
 	JID          string
 	Name         string
@@ -385,9 +359,7 @@ type ContactInfo struct {
 	Avatar       string
 }
 
-// GetContacts retrieves contacts for a session
 func (app *ContactApp) GetContacts(ctx context.Context, req GetContactsRequest) (*GetContactsResponse, error) {
-	// Set defaults
 	if req.Limit <= 0 {
 		req.Limit = 100
 	}
@@ -424,19 +396,16 @@ func (app *ContactApp) GetContacts(ctx context.Context, req GetContactsRequest) 
 	}, nil
 }
 
-// CheckContactRequest represents the request to check contacts
 type CheckContactRequest struct {
 	SessionID string
 	Phones    []string
 }
 
-// CheckContactResponse represents the response with contact check results
 type CheckContactResponse struct {
 	SessionID string
 	Results   []ContactCheckResult
 }
 
-// ContactCheckResult represents the result of checking a contact
 type ContactCheckResult struct {
 	Query        string
 	IsInWhatsapp bool
@@ -445,7 +414,6 @@ type ContactCheckResult struct {
 	VerifiedName string
 }
 
-// CheckContact checks if phone numbers are registered on WhatsApp
 func (app *ContactApp) CheckContact(ctx context.Context, req CheckContactRequest) (*CheckContactResponse, error) {
 	if len(req.Phones) == 0 {
 		return nil, fmt.Errorf("at least one phone number is required")
@@ -472,9 +440,6 @@ func (app *ContactApp) CheckContact(ctx context.Context, req CheckContactRequest
 		Results:   checkResults,
 	}, nil
 }
-
-
-
 
 type NewsletterApp struct {
 	sessionRepo       session.Repository

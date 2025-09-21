@@ -26,18 +26,6 @@ func NewPrivacyHandler(sessionService *application.SessionApp, wmeowService wmeo
 	}
 }
 
-// @Summary		Set multiple privacy settings
-// @Description	Set multiple privacy settings in a single request
-// @Tags			Privacy
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string								true	"Session ID"
-// @Param			request		body		dto.SetAllPrivacySettingsRequest	true	"Privacy settings request"
-// @Success		200			{object}	dto.PrivacySettingsResponse
-// @Failure		400			{object}	dto.PrivacySettingsResponse
-// @Failure		404			{object}	dto.PrivacySettingsResponse
-// @Failure		500			{object}	dto.PrivacySettingsResponse
-// @Router			/session/{sessionId}/privacy/set [put]
 func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -54,7 +42,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 		return
 	}
 
-	// Validate the request
 	if err := req.Validate(); err != nil {
 		c.JSON(http.StatusBadRequest, dto.PrivacySettingsResponse{
 			Success: false,
@@ -147,7 +134,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 		currentSettings.ProfilePhoto = req.ProfilePhoto
 	}
 
-	// ReadReceipts is a boolean, so we always set it
 	value := "none"
 	if req.ReadReceipts {
 		value = "all"
@@ -182,7 +168,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 		currentSettings.CallsAddMe = req.CallsAddMe
 	}
 
-	// Online privacy setting is not supported in this implementation
 
 	data := &dto.PrivacySettingsData{
 		SessionID:         sessionID,
@@ -202,17 +187,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	})
 }
 
-// @Summary		Get blocked contacts list
-// @Description	Get the list of blocked contacts (blocklist)
-// @Tags			Privacy
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		200			{object}	dto.BlocklistResponse
-// @Failure		400			{object}	dto.BlocklistResponse
-// @Failure		404			{object}	dto.BlocklistResponse
-// @Failure		500			{object}	dto.BlocklistResponse
-// @Router			/session/{sessionId}/privacy/blocklist [get]
 func (h *PrivacyHandler) GetBlocklist(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	if err := validateSessionID(sessionID); err != nil {
@@ -265,18 +239,6 @@ func (h *PrivacyHandler) GetBlocklist(c *gin.Context) {
 	})
 }
 
-// @Summary		Update blocklist (block/unblock contact)
-// @Description	Block or unblock a contact
-// @Tags			Privacy
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.UpdateBlocklistRequest	true	"Update blocklist request"
-// @Success		200			{object}	dto.BlocklistResponse
-// @Failure		400			{object}	dto.BlocklistResponse
-// @Failure		404			{object}	dto.BlocklistResponse
-// @Failure		500			{object}	dto.BlocklistResponse
-// @Router			/session/{sessionId}/privacy/blocklist [put]
 func (h *PrivacyHandler) UpdateBlocklist(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 	if err := validateSessionID(sessionID); err != nil {
@@ -400,18 +362,6 @@ func createNotFoundError(resource string) *dto.ErrorInfo {
 	}
 }
 
-// @Summary		Find specific privacy settings
-// @Description	Get specific privacy settings or all settings if none specified
-// @Tags			Privacy
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.FindPrivacySettingsRequest	false	"Find privacy settings request (optional)"
-// @Success		200			{object}	dto.PrivacySettingsResponse
-// @Failure		400			{object}	dto.PrivacySettingsResponse
-// @Failure		404			{object}	dto.PrivacySettingsResponse
-// @Failure		500			{object}	dto.PrivacySettingsResponse
-// @Router			/session/{sessionId}/privacy/find [post]
 func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 

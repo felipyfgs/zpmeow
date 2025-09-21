@@ -227,7 +227,6 @@ func (uc *ReactToMessageUseCase) Handle(ctx context.Context, cmd ReactToMessageC
 		)
 	}
 
-	// Para remover uma reação, envie emoji vazio
 	emoji := cmd.Emoji
 	if cmd.Remove {
 		emoji = ""

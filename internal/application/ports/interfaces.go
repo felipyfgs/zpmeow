@@ -7,11 +7,7 @@ import (
 	"go.mau.fi/whatsmeow"
 )
 
-// ============================================================================
-// SESSION MANAGEMENT
-// ============================================================================
 
-// SessionManager define operações de gerenciamento de sessões WhatsApp
 type SessionManager interface {
 	StartClient(sessionID string) error
 	StopClient(sessionID string) error
@@ -25,30 +21,24 @@ type SessionManager interface {
 	DisconnectSession(ctx context.Context, sessionID string) error
 }
 
-// ============================================================================
-// MESSAGE OPERATIONS
-// ============================================================================
 
-// ButtonData representa dados de um botão para mensagens interativas
 type ButtonData struct {
 	ID   string `json:"id"`
 	Text string `json:"text"`
+	Type string `json:"type,omitempty"`
 }
 
-// ListItem representa um item de lista para mensagens de lista
 type ListItem struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 
-// ListSection representa uma seção de lista para mensagens de lista
 type ListSection struct {
 	Title string     `json:"title"`
 	Rows  []ListItem `json:"rows"`
 }
 
-// MediaMessage representa uma mensagem de mídia
 type MediaMessage struct {
 	Type     string `json:"type"`
 	Data     []byte `json:"data"`
@@ -57,13 +47,11 @@ type MediaMessage struct {
 	Filename string `json:"filename,omitempty"`
 }
 
-// ContactData representa dados de contato para envio
 type ContactData struct {
 	Name  string `json:"name"`
 	Phone string `json:"phone"`
 }
 
-// MessageSender define operações de envio de mensagens WhatsApp
 type MessageSender interface {
 	SendTextMessage(ctx context.Context, sessionID, phone, text string) (*whatsmeow.SendResponse, error)
 	SendMediaMessage(ctx context.Context, sessionID, phone string, media MediaMessage) (*whatsmeow.SendResponse, error)
@@ -80,7 +68,6 @@ type MessageSender interface {
 	SendPollMessage(ctx context.Context, sessionID, phone, name string, options []string, selectableCount int) (*whatsmeow.SendResponse, error)
 }
 
-// MessageActions define operações de ação em mensagens WhatsApp
 type MessageActions interface {
 	MarkAsRead(ctx context.Context, sessionID, phone string, messageIDs []string) error
 	SetPresence(ctx context.Context, sessionID, phone, state, media string) error
@@ -90,11 +77,7 @@ type MessageActions interface {
 	DownloadMedia(ctx context.Context, sessionID, messageID string) ([]byte, string, error)
 }
 
-// ============================================================================
-// GROUP MANAGEMENT
-// ============================================================================
 
-// GroupInfo representa informações de um grupo WhatsApp
 type GroupInfo struct {
 	JID          string   `json:"jid"`
 	Name         string   `json:"name"`
@@ -110,7 +93,6 @@ type GroupInfo struct {
 	CreatedBy    string   `json:"created_by,omitempty"`
 }
 
-// GroupManager define operações de gerenciamento de grupos WhatsApp
 type GroupManager interface {
 	CreateGroup(ctx context.Context, sessionID, name string, participants []string) (*GroupInfo, error)
 	ListGroups(ctx context.Context, sessionID string) ([]GroupInfo, error)
@@ -143,11 +125,7 @@ type GroupManager interface {
 	GetLinkedGroupsParticipants(ctx context.Context, sessionID, communityJID string) ([]string, error)
 }
 
-// ============================================================================
-// CONTACT MANAGEMENT
-// ============================================================================
 
-// UserCheckResult representa o resultado da verificação de um usuário
 type UserCheckResult struct {
 	Query        string `json:"query"`
 	IsInWhatsapp bool   `json:"is_in_whatsapp"`
@@ -156,7 +134,6 @@ type UserCheckResult struct {
 	VerifiedName string `json:"verified_name,omitempty"`
 }
 
-// UserInfoResult representa informações detalhadas de um usuário
 type UserInfoResult struct {
 	JID          string `json:"jid"`
 	Name         string `json:"name,omitempty"`
@@ -167,7 +144,6 @@ type UserInfoResult struct {
 	IsMuted      bool   `json:"is_muted"`
 }
 
-// AvatarResult representa informações do avatar de um usuário
 type AvatarResult struct {
 	Phone     string `json:"phone"`
 	JID       string `json:"jid"`
@@ -175,7 +151,6 @@ type AvatarResult struct {
 	PictureID string `json:"picture_id,omitempty"`
 }
 
-// ContactResult representa informações de um contato
 type ContactResult struct {
 	JID          string `json:"jid"`
 	Name         string `json:"name,omitempty"`
@@ -188,7 +163,6 @@ type ContactResult struct {
 	Avatar       string `json:"avatar,omitempty"`
 }
 
-// ContactManager define operações de gerenciamento de contatos WhatsApp
 type ContactManager interface {
 	CheckUser(ctx context.Context, sessionID string, phones []string) ([]UserCheckResult, error)
 	CheckContact(ctx context.Context, sessionID, phone string) (*UserCheckResult, error)
@@ -198,11 +172,7 @@ type ContactManager interface {
 	SetUserPresence(ctx context.Context, sessionID, state string) error
 }
 
-// ============================================================================
-// CHAT MANAGEMENT
-// ============================================================================
 
-// ChatInfo representa informações de um chat
 type ChatInfo struct {
 	JID           string    `json:"jid"`
 	Name          string    `json:"name,omitempty"`
@@ -218,7 +188,6 @@ type ChatInfo struct {
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 
-// ChatMessage representa uma mensagem de chat
 type ChatMessage struct {
 	ID        string    `json:"id"`
 	ChatJID   string    `json:"chat_jid"`
@@ -229,7 +198,6 @@ type ChatMessage struct {
 	Type      string    `json:"type"`
 }
 
-// ChatManager define operações de gerenciamento de chats WhatsApp
 type ChatManager interface {
 	SetDisappearingTimer(ctx context.Context, sessionID, chatJID string, duration time.Duration) error
 	ListChats(ctx context.Context, sessionID, chatType string) ([]ChatInfo, error)
@@ -241,11 +209,7 @@ type ChatManager interface {
 	GetChatHistory(ctx context.Context, sessionID, chatJID string, limit, offset int) ([]ChatMessage, error)
 }
 
-// ============================================================================
-// NEWSLETTER MANAGEMENT
-// ============================================================================
 
-// NewsletterInfo representa informações de um newsletter
 type NewsletterInfo struct {
 	ID              string `json:"id"`
 	JID             string `json:"jid"`
@@ -263,7 +227,6 @@ type NewsletterInfo struct {
 	Timestamp       int64  `json:"timestamp"`
 }
 
-// NewsletterMessage representa uma mensagem de newsletter
 type NewsletterMessage struct {
 	ID           string         `json:"id"`
 	NewsletterID string         `json:"newsletter_id"`
@@ -273,7 +236,6 @@ type NewsletterMessage struct {
 	Reactions    map[string]int `json:"reactions,omitempty"`
 }
 
-// NewsletterManager define operações de gerenciamento de newsletters WhatsApp
 type NewsletterManager interface {
 	GetNewsletterMessageUpdates(ctx context.Context, sessionID, newsletterID string) ([]NewsletterMessage, error)
 	NewsletterMarkViewed(ctx context.Context, sessionID, newsletterID string, messageIDs []string) error
@@ -291,11 +253,7 @@ type NewsletterManager interface {
 	GetNewsletterMessages(ctx context.Context, sessionID, newsletterID string) ([]NewsletterMessage, error)
 }
 
-// ============================================================================
-// PRIVACY MANAGEMENT
-// ============================================================================
 
-// PrivacySettings representa configurações de privacidade do WhatsApp
 type PrivacySettings struct {
 	LastSeen             string `json:"last_seen"`
 	ProfilePhoto         string `json:"profile_photo"`
@@ -307,7 +265,6 @@ type PrivacySettings struct {
 	DisappearingMessages string `json:"disappearing_messages"`
 }
 
-// PrivacyManager define operações de gerenciamento de privacidade WhatsApp
 type PrivacyManager interface {
 	GetPrivacySettings(ctx context.Context, sessionID string) (*PrivacySettings, error)
 	SetPrivacySetting(ctx context.Context, sessionID, setting, value string) error
@@ -315,22 +272,34 @@ type PrivacyManager interface {
 	UpdateBlocklist(ctx context.Context, sessionID string, action string, contacts []string) error
 }
 
-// ============================================================================
-// WEBHOOK MANAGEMENT
-// ============================================================================
 
-// WebhookManager define operações de gerenciamento de webhooks
 type WebhookManager interface {
 	UpdateSessionWebhook(sessionID, webhookURL string) error
 	UpdateSessionSubscriptions(sessionID string, events []string) error
 }
 
-// ============================================================================
-// COMBINED INTERFACE
-// ============================================================================
 
-// WameowService combina todas as interfaces segregadas
-// Mantém compatibilidade com código existente enquanto permite uso das interfaces específicas
+type ProfileManager interface {
+	UpdateProfile(ctx context.Context, sessionID, name, about string) error
+	SetProfilePicture(ctx context.Context, sessionID string, imageData []byte) error
+	RemoveProfilePicture(ctx context.Context, sessionID string) error
+	GetUserStatus(ctx context.Context, sessionID, phone string) (string, error)
+	SetStatus(ctx context.Context, sessionID, status string) error
+}
+
+
+type MediaManager interface {
+	UploadMedia(ctx context.Context, sessionID string, data []byte, mediaType string) (string, error)
+	GetMediaInfo(ctx context.Context, sessionID, mediaID string) (map[string]interface{}, error)
+	DeleteMedia(ctx context.Context, sessionID, mediaID string) error
+	ListMedia(ctx context.Context, sessionID string, limit, offset int) ([]map[string]interface{}, error)
+	GetMediaProgress(ctx context.Context, sessionID, mediaID string) (map[string]interface{}, error)
+	ConvertMedia(ctx context.Context, sessionID, mediaID, targetFormat string) (string, error)
+	CompressMedia(ctx context.Context, sessionID, mediaID string, quality int) (string, error)
+	GetMediaMetadata(ctx context.Context, sessionID, mediaID string) (map[string]interface{}, error)
+}
+
+
 type WameowService interface {
 	SessionManager
 	MessageSender
@@ -341,16 +310,13 @@ type WameowService interface {
 	NewsletterManager
 	PrivacyManager
 	WebhookManager
+	ProfileManager
+	MediaManager
 }
 
-// WhatsAppService é um alias para WameowService para compatibilidade
 type WhatsAppService = WameowService
 
-// ============================================================================
-// LOGGING
-// ============================================================================
 
-// Logger define operações de logging estruturado
 type Logger interface {
 	Debug(ctx context.Context, msg string, keysAndValues ...interface{})
 	Info(ctx context.Context, msg string, keysAndValues ...interface{})
@@ -359,17 +325,12 @@ type Logger interface {
 	Fatal(ctx context.Context, msg string, keysAndValues ...interface{})
 }
 
-// ============================================================================
-// UTILITIES
-// ============================================================================
 
-// IDGenerator define operações de geração de IDs
 type IDGenerator interface {
 	Generate() string
 	GenerateAPIKey() string
 }
 
-// ContactInfo representa informações de contato
 type ContactInfo struct {
 	Name         string `json:"name"`
 	Phone        string `json:"phone"`
@@ -377,7 +338,6 @@ type ContactInfo struct {
 	Organization string `json:"organization,omitempty"`
 }
 
-// NotificationService define operações de notificação
 type NotificationService interface {
 	SendNotification(ctx context.Context, message string) error
 	SendWebhook(ctx context.Context, url string, payload interface{}) error

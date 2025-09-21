@@ -25,25 +25,10 @@ func NewGroupHandler(groupService *application.GroupApp, wmeowService wmeow.Wame
 	}
 }
 
-func (h *GroupHandler) resolveSessionID(c *gin.Context, sessionIDOrName string) (string, error) {
-	// For now, just return the sessionIDOrName as-is
-	// In a full implementation, this would resolve session names to IDs
+func (h *GroupHandler) resolveSessionID(_ *gin.Context, sessionIDOrName string) (string, error) {
 	return sessionIDOrName, nil
 }
 
-// @Summary		Create a new group
-// @Description	Create a new meow group with specified name and participants
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.CreateGroupRequest	true	"Create group request"
-// @Success		201			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/create [post]
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -107,19 +92,6 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
-// @Summary		Get group information
-// @Description	Get detailed information about a specific group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.GetGroupInfoRequest	true	"Get group info request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/info [post]
 func (h *GroupHandler) GetGroupInfo(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -172,18 +144,6 @@ func (h *GroupHandler) GetGroupInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		List all groups
-// @Description	Get a list of all groups the user is a member of
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/list [get]
 func (h *GroupHandler) ListGroups(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -226,7 +186,6 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 
 	var dtoGroups []dto.GroupInfo
 	for _, group := range result.Groups {
-		// Convert participants from []string to []GroupParticipant
 		var participants []dto.GroupParticipant
 		for _, participantJID := range group.Participants {
 			participants = append(participants, dto.GroupParticipant{
@@ -253,19 +212,6 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Join group via invite link
-// @Description	Join a meow group using an invite link
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.JoinGroupRequest	true	"Join group request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/join [post]
 func (h *GroupHandler) JoinGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -325,19 +271,6 @@ func (h *GroupHandler) JoinGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Join group with specific invite
-// @Description	Join a meow group using specific invite details
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.JoinGroupWithInviteRequest	true	"Join group with invite request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/join-with-invite [post]
 func (h *GroupHandler) JoinGroupWithInvite(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -390,19 +323,6 @@ func (h *GroupHandler) JoinGroupWithInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Leave group
-// @Description	Leave a meow group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.LeaveGroupRequest	true	"Leave group request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/leave [post]
 func (h *GroupHandler) LeaveGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -453,19 +373,6 @@ func (h *GroupHandler) LeaveGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get group invite link
-// @Description	Get or reset the invite link for a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.GetInviteLinkRequest	true	"Get invite link request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/invitelink [post]
 func (h *GroupHandler) GetInviteLink(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -521,7 +428,6 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 		return nil
 	}
 
-	// Convert participants from []string to []GroupParticipant
 	var participants []dto.GroupParticipant
 	for _, participantJID := range groupInfo.Participants {
 		participants = append(participants, dto.GroupParticipant{
@@ -532,7 +438,6 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 		})
 	}
 
-	// Convert timestamp from int64 to time.Time
 	createdAt := time.Unix(groupInfo.CreatedAt, 0)
 
 	return &dto.GroupInfo{
@@ -554,57 +459,6 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 	}
 }
 
-func convertWmeowGroupInfoSliceToDTO(groups []wmeow.GroupInfo) []dto.GroupInfo {
-	var dtoGroups []dto.GroupInfo
-	for _, group := range groups {
-		// Convert participants from []string to []GroupParticipant
-		var participants []dto.GroupParticipant
-		for _, participantJID := range group.Participants {
-			participants = append(participants, dto.GroupParticipant{
-				JID:          participantJID,
-				Phone:        participantJID, // Assuming JID is the phone for now
-				IsAdmin:      false,          // Default value, would need more info from wmeow service
-				IsSuperAdmin: false,          // Default value, would need more info from wmeow service
-			})
-		}
-
-		// Convert timestamp from int64 to time.Time
-		createdAt := time.Unix(group.CreatedAt, 0)
-
-		dtoGroups = append(dtoGroups, dto.GroupInfo{
-			JID:              group.JID,
-			Name:             group.Name,
-			Topic:            group.Topic,
-			Participants:     participants,
-			Admins:           []string{}, // Campo removido da estrutura simplificada
-			Owner:            group.CreatedBy,
-			CreatedAt:        createdAt,
-			Size:             len(group.Participants),
-			ParticipantCount: len(group.Participants),
-			Announce:         group.IsAnnounce,
-			IsAnnounce:       group.IsAnnounce,
-			Locked:           group.IsLocked,
-			IsLocked:         group.IsLocked,
-			Ephemeral:        group.IsEphemeral,
-			IsEphemeral:      group.IsEphemeral,
-		})
-	}
-	return dtoGroups
-}
-
-// @Summary		Get group info from invite link
-// @Description	Get group information from an invite link without joining
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.GetInviteInfoRequest	true	"Get invite info request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/inviteinfo [post]
 func (h *GroupHandler) GetInviteInfo(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -656,19 +510,6 @@ func (h *GroupHandler) GetInviteInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get group info from specific invite
-// @Description	Get group information from specific invite details
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string								true	"Session ID"
-// @Param			request		body		dto.GetInviteInfoRequest	true	"Get group info from invite request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/inviteinfo-specific [post]
 func (h *GroupHandler) GetGroupInfoFromInvite(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -721,19 +562,6 @@ func (h *GroupHandler) GetGroupInfoFromInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Update group participants
-// @Description	Add or remove participants from a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.UpdateParticipantsRequest	true	"Update participants request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/participants/update [post]
 func (h *GroupHandler) UpdateParticipants(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -795,19 +623,6 @@ func (h *GroupHandler) UpdateParticipants(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group name
-// @Description	Update the name of a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.SetGroupNameRequest	true	"Set group name request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/name [post]
 func (h *GroupHandler) SetName(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -858,19 +673,6 @@ func (h *GroupHandler) SetName(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group topic
-// @Description	Update the topic/description of a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.SetGroupTopicRequest	true	"Set group topic request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/topic [post]
 func (h *GroupHandler) SetTopic(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -921,19 +723,6 @@ func (h *GroupHandler) SetTopic(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group photo
-// @Description	Update the photo/avatar of a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.SetGroupPhotoRequest	true	"Set group photo request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/photo/set [post]
 func (h *GroupHandler) SetPhoto(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -995,19 +784,6 @@ func (h *GroupHandler) SetPhoto(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Remove group photo
-// @Description	Remove the photo/avatar of a group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.RemoveGroupPhotoRequest	true	"Remove group photo request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/photo/remove [post]
 func (h *GroupHandler) RemovePhoto(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1058,19 +834,6 @@ func (h *GroupHandler) RemovePhoto(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group announce mode
-// @Description	Set whether only admins can send messages to the group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.SetGroupAnnounceRequest	true	"Set group announce request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/announce [post]
 func (h *GroupHandler) SetAnnounce(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1121,19 +884,6 @@ func (h *GroupHandler) SetAnnounce(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group locked mode
-// @Description	Set whether only admins can edit group info
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.SetGroupLockedRequest	true	"Set group locked request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/locked [post]
 func (h *GroupHandler) SetLocked(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1184,19 +934,6 @@ func (h *GroupHandler) SetLocked(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group ephemeral mode
-// @Description	Set disappearing messages for the group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.SetGroupEphemeralRequest	true	"Set group ephemeral request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/ephemeral [post]
 func (h *GroupHandler) SetEphemeral(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1251,19 +988,6 @@ func (h *GroupHandler) SetEphemeral(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group join approval mode
-// @Description	Set whether admin approval is required to join the group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string							true	"Session ID"
-// @Param			request		body		dto.GroupJoinApprovalReq	true	"Set group join approval request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/join-approval [post]
 func (h *GroupHandler) SetJoinApproval(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1314,19 +1038,6 @@ func (h *GroupHandler) SetJoinApproval(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set group member add mode
-// @Description	Set who can add members to the group (all or admin only)
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string								true	"Session ID"
-// @Param			request		body		dto.GroupMemberModeReq	true	"Set group member add mode request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/settings/member-add-mode [post]
 func (h *GroupHandler) SetMemberAddMode(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1377,19 +1088,6 @@ func (h *GroupHandler) SetMemberAddMode(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get group request participants
-// @Description	Get list of users requesting to join the group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string									true	"Session ID"
-// @Param			request		body		dto.GetGroupRequestsReq	true	"Get group request participants request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/requests/list [post]
 func (h *GroupHandler) GetGroupRequestParticipants(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1461,19 +1159,6 @@ func (h *GroupHandler) GetGroupRequestParticipants(c *gin.Context) {
 	})
 }
 
-// @Summary		Update group request participants
-// @Description	Approve or reject users requesting to join the group
-// @Tags			Groups
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string										true	"Session ID"
-// @Param			request		body		dto.UpdateGroupRequestsReq	true	"Update group request participants request"
-// @Success		200			{object}	dto.GroupResponse
-// @Failure		400			{object}	dto.GroupResponse
-// @Failure		404			{object}	dto.GroupResponse
-// @Failure		500			{object}	dto.GroupResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/group/requests/update [post]
 func (h *GroupHandler) UpdateGroupRequestParticipants(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {

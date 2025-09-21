@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -23,18 +24,6 @@ func NewContactHandler(contactService *application.ContactApp, wmeowService wmeo
 	}
 }
 
-// @Summary		Check contacts on meow
-// @Description	Check if phone numbers are registered on meow
-// @Tags			Contacts
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.CheckContactRequest	true	"Check contact request"
-// @Success		200			{object}	dto.ContactResponse
-// @Failure		400			{object}	dto.ContactResponse
-// @Failure		500			{object}	dto.ContactResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/contacts/check [post]
 func (h *ContactHandler) CheckContact(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -91,18 +80,6 @@ func (h *ContactHandler) CheckContact(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get contact information
-// @Description	Get detailed information about contacts
-// @Tags			Contacts
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.GetContactInfoRequest	true	"Get contact info request"
-// @Success		200			{object}	dto.ContactResponse
-// @Failure		400			{object}	dto.ContactResponse
-// @Failure		500			{object}	dto.ContactResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/contacts/info [post]
 func (h *ContactHandler) GetContactInfo(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -159,18 +136,6 @@ func (h *ContactHandler) GetContactInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get contact avatar
-// @Description	Get contact's profile picture/avatar
-// @Tags			Contacts
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"
-// @Param			request		body		dto.GetAvatarRequest	true	"Get avatar request"
-// @Success		200			{object}	dto.ContactResponse
-// @Failure		400			{object}	dto.ContactResponse
-// @Failure		500			{object}	dto.ContactResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/contacts/avatar [post]
 func (h *ContactHandler) GetAvatar(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -219,18 +184,6 @@ func (h *ContactHandler) GetAvatar(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Set contact presence
-// @Description	Set global contact presence (available/unavailable)
-// @Tags			Contacts
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string						true	"Session ID"
-// @Param			request		body		dto.SetContactPresenceRequest	true	"Set presence request"
-// @Success		200			{object}	dto.ContactResponse
-// @Failure		400			{object}	dto.ContactResponse
-// @Failure		500			{object}	dto.ContactResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/contacts/presence [post]
 func (h *ContactHandler) SetPresence(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -271,21 +224,10 @@ func (h *ContactHandler) SetPresence(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary		Get contacts
-// @Description	Get all contacts from contact's meow
-// @Tags			Contacts
-// @Accept			json
-// @Produce		json
-// @Param			sessionId	path		string	true	"Session ID"
-// @Success		200			{object}	dto.ContactsResponse
-// @Failure		500			{object}	dto.ContactResponse
-// @Security		ApiKeyAuth
-// @Router			/session/{sessionId}/contacts/list [get]
 func (h *ContactHandler) GetContacts(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
 	ctx := c.Request.Context()
-	// Default limit and offset for backward compatibility
 	limit := 100
 	offset := 0
 
@@ -324,30 +266,152 @@ func (h *ContactHandler) GetContacts(c *gin.Context) {
 }
 
 func (h *ContactHandler) GetBlockedContacts(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Get blocked contacts endpoint - implementation pending",
-	})
+	sessionID := c.Param("sessionId")
+
+	ctx := c.Request.Context()
+	blocklist, err := h.wmeowService.GetBlocklist(ctx, sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"GET_BLOCKLIST_FAILED",
+			"Failed to get blocked contacts",
+			err.Error(),
+		))
+		return
+	}
+
+	response := dto.NewContactsResponse(sessionID, []dto.ContactInfo{})
+	for _, jid := range blocklist {
+		response.Data.Contacts = append(response.Data.Contacts, dto.ContactInfo{
+			JID:  jid,
+			Name: jid,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *ContactHandler) UpdateProfile(c *gin.Context) {
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Name  string `json:"name,omitempty"`
+		About string `json:"about,omitempty"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	if req.Name == "" && req.About == "" {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"MISSING_DATA",
+			"At least name or about must be provided",
+			"",
+		))
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.UpdateProfile(ctx, sessionID, req.Name, req.About)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"UPDATE_PROFILE_FAILED",
+			"Failed to update profile",
+			err.Error(),
+		))
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Update profile endpoint - implementation pending",
+		"message": "Profile updated successfully",
+		"data": gin.H{
+			"session_id": sessionID,
+			"name":       req.Name,
+			"about":      req.About,
+		},
 	})
 }
 
 func (h *ContactHandler) SetProfilePicture(c *gin.Context) {
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Image string `json:"image" binding:"required"` // Base64 encoded image
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	imageData, err := base64.StdEncoding.DecodeString(req.Image)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_IMAGE",
+			"Invalid base64 image data",
+			err.Error(),
+		))
+		return
+	}
+
+	ctx := c.Request.Context()
+	err = h.wmeowService.SetProfilePicture(ctx, sessionID, imageData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"SET_PROFILE_PICTURE_FAILED",
+			"Failed to set profile picture",
+			err.Error(),
+		))
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Set profile picture endpoint - implementation pending",
+		"message": "Profile picture set successfully",
+		"data": gin.H{
+			"session_id": sessionID,
+		},
 	})
 }
 
 func (h *ContactHandler) RemoveProfilePicture(c *gin.Context) {
+	sessionID := c.Param("sessionId")
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.RemoveProfilePicture(ctx, sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"REMOVE_PROFILE_PICTURE_FAILED",
+			"Failed to remove profile picture",
+			err.Error(),
+		))
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Remove profile picture endpoint - implementation pending",
+		"message": "Profile picture removed successfully",
+		"data": gin.H{
+			"session_id": sessionID,
+		},
 	})
 }
 
@@ -356,21 +420,192 @@ func (h *ContactHandler) GetUserInfo(c *gin.Context)   { h.GetContactInfo(c) }
 func (h *ContactHandler) CheckUsers(c *gin.Context)    { h.CheckContact(c) }
 func (h *ContactHandler) GetUserAvatar(c *gin.Context) { h.GetAvatar(c) }
 func (h *ContactHandler) GetUserStatus(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Get contact status - implementation pending"})
+	sessionID := c.Param("sessionId")
+	phone := c.Query("phone")
+
+	if phone == "" {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"MISSING_PHONE",
+			"Phone number is required",
+			"",
+		))
+		return
+	}
+
+	ctx := c.Request.Context()
+	status, err := h.wmeowService.GetUserStatus(ctx, sessionID, phone)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"GET_USER_STATUS_FAILED",
+			"Failed to get user status",
+			err.Error(),
+		))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"session_id": sessionID,
+			"phone":      phone,
+			"status":     status,
+		},
+	})
 }
 func (h *ContactHandler) SetStatus(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Set status - implementation pending"})
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewContactErrorResponse(
+			http.StatusBadRequest,
+			"INVALID_REQUEST",
+			"Invalid request format",
+			err.Error(),
+		))
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.SetStatus(ctx, sessionID, req.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewContactErrorResponse(
+			http.StatusInternalServerError,
+			"SET_STATUS_FAILED",
+			"Failed to set status",
+			err.Error(),
+		))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Status set successfully",
+		"data": gin.H{
+			"session_id": sessionID,
+			"status":     req.Status,
+		},
+	})
 }
 func (h *ContactHandler) GetPrivacySettings(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Get privacy settings - implementation pending"})
+	sessionID := c.Param("sessionId")
+
+	ctx := c.Request.Context()
+	settings, err := h.wmeowService.GetPrivacySettings(ctx, sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to get privacy settings",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    settings,
+	})
 }
 func (h *ContactHandler) UpdatePrivacySettings(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Update privacy settings - implementation pending"})
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Setting string `json:"setting" binding:"required"`
+		Value   string `json:"value" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.SetPrivacySetting(ctx, sessionID, req.Setting, req.Value)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to update privacy setting",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Privacy setting updated successfully",
+	})
 }
 func (h *ContactHandler) SetUserPresence(c *gin.Context) { h.SetPresence(c) }
 func (h *ContactHandler) BlockUser(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Block contact - implementation pending"})
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Phone string `json:"phone" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.UpdateBlocklist(ctx, sessionID, "block", []string{req.Phone})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to block contact",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Contact blocked successfully",
+	})
 }
 func (h *ContactHandler) UnblockUser(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Unblock contact - implementation pending"})
+	sessionID := c.Param("sessionId")
+
+	var req struct {
+		Phone string `json:"phone" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := h.wmeowService.UpdateBlocklist(ctx, sessionID, "unblock", []string{req.Phone})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to unblock contact",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Contact unblocked successfully",
+	})
 }
