@@ -62,6 +62,15 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 	return dependencies
 }
 
+// Health godoc
+// @Summary Health check endpoint
+// @Description Performs a comprehensive health check of the service and its dependencies
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.StandardResponse{data=HealthData} "Service is healthy"
+// @Failure 503 {object} dto.ErrorResponse "Service is unhealthy"
+// @Router /health [get]
 func (h *HealthHandler) Health(c *gin.Context) {
 	h.logger.Infof("Health check requested")
 
@@ -84,6 +93,14 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	}
 }
 
+// Ping godoc
+// @Summary Simple ping endpoint
+// @Description Returns a simple pong response to verify service availability
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.StandardResponse{data=HealthData} "Pong response"
+// @Router /ping [get]
 func (h *HealthHandler) Ping(c *gin.Context) {
 	h.logger.Infof("Ping requested")
 
@@ -91,6 +108,14 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 	h.logger.Infof("Ping completed successfully")
 }
 
+// Metrics godoc
+// @Summary Get service metrics
+// @Description Returns service metrics and performance data
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.StandardResponse{data=map[string]interface{}} "Service metrics"
+// @Router /metrics [get]
 func (h *HealthHandler) Metrics(c *gin.Context) {
 	h.logger.Infof("Metrics requested")
 
@@ -103,6 +128,14 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 	h.logger.Infof("Metrics completed successfully")
 }
 
+// ResetMetrics godoc
+// @Summary Reset service metrics
+// @Description Resets all service metrics and counters to zero
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.StandardResponse{data=HealthData} "Metrics reset successfully"
+// @Router /metrics/reset [post]
 func (h *HealthHandler) ResetMetrics(c *gin.Context) {
 	h.logger.Infof("Metrics reset requested")
 

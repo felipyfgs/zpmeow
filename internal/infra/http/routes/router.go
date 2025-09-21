@@ -50,13 +50,13 @@ func SetupRoutes(
 	{
 		sessionGroup.POST("/create", handlers.SessionHandler.CreateSession)
 		sessionGroup.GET("/list", handlers.SessionHandler.GetSessions)
-		sessionGroup.GET("/:id/info", handlers.SessionHandler.GetSession)
-		sessionGroup.DELETE("/:id/delete", handlers.SessionHandler.DeleteSession)
-		sessionGroup.POST("/:id/connect", handlers.SessionHandler.ConnectSession)
-		sessionGroup.POST("/:id/disconnect", handlers.SessionHandler.DisconnectSession)
-		sessionGroup.POST("/:id/pair", handlers.SessionHandler.PairPhone)
-		sessionGroup.GET("/:id/status", handlers.SessionHandler.GetSessionStatus)
-		sessionGroup.PUT("/:id/webhook", handlers.SessionHandler.UpdateSessionWebhook)
+		sessionGroup.GET("/:sessionId/info", handlers.SessionHandler.GetSession)
+		sessionGroup.DELETE("/:sessionId/delete", handlers.SessionHandler.DeleteSession)
+		sessionGroup.POST("/:sessionId/connect", handlers.SessionHandler.ConnectSession)
+		sessionGroup.POST("/:sessionId/disconnect", handlers.SessionHandler.DisconnectSession)
+		sessionGroup.POST("/:sessionId/pair", handlers.SessionHandler.PairPhone)
+		sessionGroup.GET("/:sessionId/status", handlers.SessionHandler.GetSessionStatus)
+		sessionGroup.PUT("/:sessionId/webhook", handlers.SessionHandler.UpdateSessionWebhook)
 	}
 
 	sessionAPIGroup := router.Group("/session/:sessionId")

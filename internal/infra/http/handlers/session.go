@@ -29,7 +29,7 @@ func NewSessionHandler(sessionService *application.SessionApp, wmeowService wmeo
 }
 
 func (h *SessionHandler) validateSessionID(c *gin.Context) (string, bool) {
-	sessionIDOrName := c.Param("id")
+	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
 		h.sendErrorResponse(c, http.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", "Missing session ID or name in path")
 		return "", false
@@ -127,6 +127,15 @@ func (h *SessionHandler) logError(operation string, err error) {
 	h.logger.Errorf("Failed to %s: %v", operation, err)
 }
 
+// GetSessions godoc
+// @Summary List all sessions
+// @Description Retrieves a list of all WhatsApp sessions
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.SessionResponse{data=dto.SessionData{sessions=[]dto.SessionInfo}} "List of sessions"
+// @Failure 500 {object} dto.SessionResponse "Failed to get sessions"
+// @Router /sessions/list [get]
 func (h *SessionHandler) GetSessions(c *gin.Context) {
 	h.logOperation("Getting all sessions", "")
 
@@ -146,6 +155,17 @@ func (h *SessionHandler) GetSessions(c *gin.Context) {
 	h.logSuccess("Get all sessions", fmt.Sprintf("retrieved %d sessions", len(sessions)))
 }
 
+// GetSession godoc
+// @Summary Get session information
+// @Description Retrieves detailed information about a specific WhatsApp session
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.SessionResponse{data=dto.SessionData{session=dto.SessionInfo}} "Session information"
+// @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Router /sessions/{sessionId}/info [get]
 func (h *SessionHandler) GetSession(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
@@ -166,6 +186,17 @@ func (h *SessionHandler) GetSession(c *gin.Context) {
 	h.logSuccess("Get session", sessionID)
 }
 
+// CreateSession godoc
+// @Summary Create a new WhatsApp session
+// @Description Creates a new WhatsApp session with the specified name
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateSessionRequest true "Session creation request"
+// @Success 201 {object} dto.CreateSessionResponse "Session created successfully"
+// @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 500 {object} dto.SessionResponse "Failed to create session"
+// @Router /sessions/create [post]
 func (h *SessionHandler) CreateSession(c *gin.Context) {
 	var req dto.CreateSessionRequest
 	if !h.bindAndValidateRequest(c, &req) {
@@ -202,6 +233,18 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 	h.logSuccess("Create session", session.SessionID().Value())
 }
 
+// DeleteSession godoc
+// @Summary Delete a WhatsApp session
+// @Description Permanently deletes a WhatsApp session and stops its client
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.SessionResponse "Session deleted successfully"
+// @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Failure 500 {object} dto.SessionResponse "Failed to delete session"
+// @Router /sessions/{sessionId}/delete [delete]
 func (h *SessionHandler) DeleteSession(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
@@ -231,6 +274,19 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 	h.logSuccess("Delete session", sessionID)
 }
 
+// ConnectSession godoc
+// @Summary Connect a WhatsApp session
+// @Description Starts the WhatsApp client for a session and generates QR code if needed
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.ConnectSessionResponse "Session connection initiated"
+// @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Failure 409 {object} dto.SessionResponse "Device already in use"
+// @Failure 500 {object} dto.SessionResponse "Failed to start client"
+// @Router /sessions/{sessionId}/connect [post]
 func (h *SessionHandler) ConnectSession(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
@@ -295,6 +351,18 @@ func (h *SessionHandler) ConnectSession(c *gin.Context) {
 	h.logSuccess("Connect session", sessionID)
 }
 
+// DisconnectSession godoc
+// @Summary Disconnect a WhatsApp session
+// @Description Stops the WhatsApp client for a session and disconnects it
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.SessionResponse "Session disconnected successfully"
+// @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Failure 500 {object} dto.SessionResponse "Failed to disconnect session"
+// @Router /sessions/{sessionId}/disconnect [post]
 func (h *SessionHandler) DisconnectSession(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
@@ -328,6 +396,19 @@ func (h *SessionHandler) DisconnectSession(c *gin.Context) {
 	h.logger.Debugf("DisconnectSession: Completed successfully for session %s", sessionID)
 }
 
+// PairPhone godoc
+// @Summary Pair phone with session
+// @Description Pairs a phone number with a WhatsApp session using pairing code
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.PairPhoneRequest true "Phone pairing request"
+// @Success 200 {object} dto.PairPhoneResponse "Phone paired successfully"
+// @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Failure 500 {object} dto.SessionResponse "Failed to pair phone"
+// @Router /sessions/{sessionId}/pair [post]
 func (h *SessionHandler) PairPhone(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
