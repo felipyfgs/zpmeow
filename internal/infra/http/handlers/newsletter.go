@@ -412,6 +412,19 @@ func (h *NewsletterHandler) resolveSessionID(c *gin.Context, sessionIDOrName str
 	return session.SessionID().String(), nil
 }
 
+// CreateNewsletter godoc
+// @Summary Create newsletter
+// @Description Creates a new WhatsApp newsletter
+// @Tags Newsletters
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.CreateNewsletterRequest true "Newsletter creation request"
+// @Success 201 {object} dto.CreateNewsletterResponse "Newsletter created successfully"
+// @Failure 400 {object} dto.CreateNewsletterResponse "Invalid request data"
+// @Failure 404 {object} dto.CreateNewsletterResponse "Session not found"
+// @Failure 500 {object} dto.CreateNewsletterResponse "Failed to create newsletter"
+// @Router /session/{sessionId}/newsletter [post]
 func (h *NewsletterHandler) CreateNewsletter(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 

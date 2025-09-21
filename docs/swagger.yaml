@@ -23,6 +23,40 @@ definitions:
     - id
     - text
     type: object
+  dto.ChatData:
+    properties:
+      action:
+        type: string
+      jid:
+        type: string
+      message:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.ChatErrorResponse:
+    properties:
+      code:
+        example: INVALID_JID
+        type: string
+      details:
+        example: JID must include domain
+        type: string
+      message:
+        example: Invalid JID format
+        type: string
+    type: object
+  dto.ChatResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.ChatData'
+      error:
+        $ref: '#/definitions/dto.ChatErrorResponse'
+      success:
+        type: boolean
+    type: object
   dto.CheckContactRequest:
     properties:
       phones:
@@ -34,6 +68,71 @@ definitions:
         type: array
     required:
     - phones
+    type: object
+  dto.CommunityErrorResponse:
+    properties:
+      code:
+        example: COMMUNITY_NOT_FOUND
+        type: string
+      details:
+        example: Community with JID '120363025246125486@g.us' not found
+        type: string
+      message:
+        example: Community not found
+        type: string
+    type: object
+  dto.CommunityInfo:
+    properties:
+      created_at:
+        example: "2023-01-01T12:00:00Z"
+        type: string
+      description:
+        example: This is my community
+        type: string
+      is_admin:
+        example: false
+        type: boolean
+      is_member:
+        example: true
+        type: boolean
+      jid:
+        example: 120363025246125486@g.us
+        type: string
+      member_count:
+        example: 50
+        type: integer
+      name:
+        example: My Community
+        type: string
+      owner:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+    type: object
+  dto.CommunityResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.CommunityResponseData'
+      error:
+        $ref: '#/definitions/dto.CommunityErrorResponse'
+      success:
+        type: boolean
+    type: object
+  dto.CommunityResponseData:
+    properties:
+      action:
+        type: string
+      community:
+        $ref: '#/definitions/dto.CommunityInfo'
+      message:
+        type: string
+      session_id:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
     type: object
   dto.ConnectSessionResponse:
     properties:
@@ -169,6 +268,28 @@ definitions:
     required:
     - name
     type: object
+  dto.CreateNewsletterRequest:
+    properties:
+      description:
+        example: This is my newsletter
+        type: string
+      name:
+        example: My Newsletter
+        type: string
+    required:
+    - name
+    type: object
+  dto.CreateNewsletterResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.NewsletterInfo'
+      error:
+        $ref: '#/definitions/dto.NewsletterErrorResponse'
+      success:
+        type: boolean
+    type: object
   dto.CreateSessionRequest:
     properties:
       api_key:
@@ -191,6 +312,18 @@ definitions:
       success:
         type: boolean
     type: object
+  dto.DeleteMessageRequest:
+    properties:
+      message_id:
+        example: msg_123
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - message_id
+    - phone
+    type: object
   dto.DocumentMessagePayload:
     properties:
       filename:
@@ -202,6 +335,22 @@ definitions:
       url:
         example: https://example.com/document.pdf
         type: string
+    type: object
+  dto.EditMessageRequest:
+    properties:
+      message_id:
+        example: msg_123
+        type: string
+      new_text:
+        example: Updated message text
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - message_id
+    - new_text
+    - phone
     type: object
   dto.ErrorInfo:
     properties:
@@ -215,6 +364,24 @@ definitions:
         example: Session not found
         type: string
     type: object
+  dto.FindPrivacySettingsRequest:
+    properties:
+      settings:
+        example:
+        - '["last_seen"'
+        - ' "profile_photo"]'
+        items:
+          type: string
+        type: array
+    type: object
+  dto.GetAvatarRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - phone
+    type: object
   dto.GetContactInfoRequest:
     properties:
       phone:
@@ -227,6 +394,14 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  dto.GetGroupInfoRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
     type: object
   dto.GroupErrorResponse:
     properties:
@@ -346,6 +521,40 @@ definitions:
         example: https://example.com/image.jpg
         type: string
     type: object
+  dto.JoinGroupRequest:
+    properties:
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
+  dto.JoinGroupWithInviteRequest:
+    properties:
+      invite_code:
+        example: abc123def456
+        type: string
+    required:
+    - invite_code
+    type: object
+  dto.LinkGroupRequest:
+    properties:
+      community_jid:
+        example: 120363025246125486@g.us
+        type: string
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - community_jid
+    - group_jid
+    type: object
+  dto.ListChatsRequest:
+    properties:
+      type:
+        example: all
+        type: string
+    type: object
   dto.ListRow:
     properties:
       description:
@@ -388,6 +597,34 @@ definitions:
       name:
         example: Sao Paulo
         type: string
+    type: object
+  dto.MarkAsReadRequest:
+    properties:
+      message_ids:
+        example:
+        - '["msg_123"'
+        - ' "msg_456"]'
+        items:
+          type: string
+        type: array
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - message_ids
+    - phone
+    type: object
+  dto.MessageContactData:
+    properties:
+      name:
+        example: John Doe
+        type: string
+      phone:
+        example: "5511888888888"
+        type: string
+    required:
+    - name
+    - phone
     type: object
   dto.MessageErrorResponse:
     properties:
@@ -451,6 +688,45 @@ definitions:
       timestamp:
         type: integer
     type: object
+  dto.NewsletterErrorResponse:
+    properties:
+      code:
+        example: NEWSLETTER_NOT_FOUND
+        type: string
+      details:
+        example: Newsletter with JID '120363025246125486@newsletter' not found
+        type: string
+      message:
+        example: Newsletter not found
+        type: string
+    type: object
+  dto.NewsletterInfo:
+    properties:
+      created_at:
+        example: "2023-01-01T12:00:00Z"
+        type: string
+      description:
+        example: This is my newsletter
+        type: string
+      is_subscribed:
+        example: true
+        type: boolean
+      is_verified:
+        example: false
+        type: boolean
+      jid:
+        example: 120363025246125486@newsletter
+        type: string
+      name:
+        example: My Newsletter
+        type: string
+      owner:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      subscriber_count:
+        example: 100
+        type: integer
+    type: object
   dto.PairPhoneRequest:
     properties:
       phone:
@@ -487,6 +763,69 @@ definitions:
       timestamp:
         type: string
     type: object
+  dto.PrivacySettingsData:
+    properties:
+      calls_add_me:
+        type: string
+      disappearing_chats:
+        type: boolean
+      groups_add_me:
+        type: string
+      last_seen:
+        type: string
+      profile_photo:
+        type: string
+      read_receipts:
+        type: boolean
+      session_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.PrivacySettingsResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.PrivacySettingsData'
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      success:
+        type: boolean
+    type: object
+  dto.ReactToMessageRequest:
+    properties:
+      emoji:
+        example: "\U0001F44D"
+        type: string
+      message_id:
+        example: msg_123
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - emoji
+    - message_id
+    - phone
+    type: object
+  dto.RegisterWebhookRequest:
+    properties:
+      events:
+        example:
+        - '["message"'
+        - ' "status"]'
+        items:
+          type: string
+        type: array
+      url:
+        example: https://example.com/webhook
+        type: string
+    required:
+    - url
+    type: object
   dto.SendAudioRequest:
     properties:
       audio:
@@ -518,6 +857,42 @@ definitions:
     - buttons
     - phone
     - title
+    type: object
+  dto.SendContactRequest:
+    properties:
+      contact_name:
+        example: John Doe
+        type: string
+      contact_phone:
+        example: "5511888888888"
+        type: string
+      contacts:
+        items:
+          $ref: '#/definitions/dto.MessageContactData'
+        type: array
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - phone
+    type: object
+  dto.SendDocumentRequest:
+    properties:
+      document:
+        example: data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsO8
+        type: string
+      filename:
+        example: document.pdf
+        type: string
+      mime_type:
+        example: application/pdf
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - document
+    - phone
     type: object
   dto.SendImageRequest:
     properties:
@@ -561,6 +936,47 @@ definitions:
     - sections
     - title
     type: object
+  dto.SendLocationRequest:
+    properties:
+      address:
+        example: São Paulo, SP, Brazil
+        type: string
+      latitude:
+        example: -23.5505
+        type: number
+      longitude:
+        example: -46.6333
+        type: number
+      name:
+        example: São Paulo
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - latitude
+    - longitude
+    - phone
+    type: object
+  dto.SendMediaRequest:
+    properties:
+      caption:
+        example: Check this out!
+        type: string
+      media_type:
+        example: image
+        type: string
+      media_url:
+        example: data:image/jpeg;base64,/9j/4AAQ...
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - media_type
+    - media_url
+    - phone
+    type: object
   dto.SendPollMessageRequest:
     properties:
       name:
@@ -584,6 +1000,18 @@ definitions:
     - name
     - options
     - phone
+    type: object
+  dto.SendStickerRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+      sticker:
+        example: data:image/webp;base64,UklGRnoGAABXRUJQ
+        type: string
+    required:
+    - phone
+    - sticker
     type: object
   dto.SendTextRequest:
     properties:
@@ -758,6 +1186,63 @@ definitions:
       updated_at:
         type: string
     type: object
+  dto.SetAllPrivacySettingsRequest:
+    properties:
+      calls_add_me:
+        example: contacts
+        type: string
+      disappearing_chats:
+        example: false
+        type: boolean
+      groups_add_me:
+        example: contacts
+        type: string
+      last_seen:
+        example: contacts
+        type: string
+      profile_photo:
+        example: contacts
+        type: string
+      read_receipts:
+        example: true
+        type: boolean
+      status:
+        example: contacts
+        type: string
+    required:
+    - calls_add_me
+    - groups_add_me
+    - last_seen
+    - profile_photo
+    - status
+    type: object
+  dto.SetContactPresenceRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+      state:
+        example: available
+        type: string
+    required:
+    - phone
+    - state
+    type: object
+  dto.SetPresenceRequest:
+    properties:
+      media:
+        example: ""
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+      state:
+        example: available
+        type: string
+    required:
+    - phone
+    - state
+    type: object
   dto.StandardResponse:
     properties:
       code:
@@ -778,11 +1263,47 @@ definitions:
         example: https://example.com/sticker.webp
         type: string
     type: object
+  dto.SupportedEventsData:
+    properties:
+      count:
+        type: integer
+      events:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.SupportedEventsResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.SupportedEventsData'
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+    type: object
   dto.TextMessagePayload:
     properties:
       text:
         example: Hello, World!
         type: string
+    type: object
+  dto.UnlinkGroupRequest:
+    properties:
+      community_jid:
+        example: 120363025246125486@g.us
+        type: string
+      group_jid:
+        example: 120363025246125486@g.us
+        type: string
+    required:
+    - community_jid
+    - group_jid
     type: object
   dto.UpdateWebhookRequest:
     properties:
@@ -813,6 +1334,16 @@ definitions:
       url:
         example: https://example.com/video.mp4
         type: string
+    type: object
+  dto.WebhookResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      success:
+        type: boolean
     type: object
   handlers.HealthData:
     properties:
@@ -923,6 +1454,243 @@ paths:
       summary: Simple ping endpoint
       tags:
       - Health
+  /session/{sessionId}/chat/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves message history for a specific chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Phone number or JID
+        in: query
+        name: phone
+        required: true
+        type: string
+      - default: 50
+        description: Number of messages to retrieve
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat history
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to get chat history
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      summary: Get chat history
+      tags:
+      - Chat
+  /session/{sessionId}/chat/list:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves a list of chats for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: List chats request
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/dto.ListChatsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chats list
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to list chats
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      summary: List chats
+      tags:
+      - Chat
+  /session/{sessionId}/chat/presence:
+    post:
+      consumes:
+      - application/json
+      description: Sets presence status (typing, recording, etc.) for a chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Presence set successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to set presence
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      summary: Set chat presence
+      tags:
+      - Chat
+  /session/{sessionId}/community/link:
+    post:
+      consumes:
+      - application/json
+      description: Links a WhatsApp group to a community
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Link group request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LinkGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group linked successfully
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "500":
+          description: Failed to link group
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+      summary: Link group to community
+      tags:
+      - Communities
+  /session/{sessionId}/community/unlink:
+    post:
+      consumes:
+      - application/json
+      description: Unlinks a WhatsApp group from a community
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Unlink group request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UnlinkGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group unlinked successfully
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+        "500":
+          description: Failed to unlink group
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
+      summary: Unlink group from community
+      tags:
+      - Communities
+  /session/{sessionId}/contacts/avatar:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves the avatar/profile picture of a WhatsApp contact
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Avatar request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetAvatarRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact avatar
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "500":
+          description: Failed to get avatar
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+      summary: Get contact avatar
+      tags:
+      - Contacts
   /session/{sessionId}/contacts/check:
     post:
       consumes:
@@ -1001,6 +1769,72 @@ paths:
       summary: Get contact information
       tags:
       - Contacts
+  /session/{sessionId}/contacts/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the list of WhatsApp contacts for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contacts list
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "500":
+          description: Failed to get contacts
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+      summary: Get contacts list
+      tags:
+      - Contacts
+  /session/{sessionId}/contacts/sync:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves the list of WhatsApp contacts for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contacts list
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "500":
+          description: Failed to get contacts
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+      summary: Get contacts list
+      tags:
+      - Contacts
   /session/{sessionId}/group/create:
     post:
       consumes:
@@ -1040,6 +1874,312 @@ paths:
       summary: Create a new WhatsApp group
       tags:
       - Groups
+  /session/{sessionId}/group/info:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Group info request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetGroupInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group information
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to get group info
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      summary: Get group information
+      tags:
+      - Groups
+  /session/{sessionId}/group/join:
+    post:
+      consumes:
+      - application/json
+      description: Joins a WhatsApp group using group JID
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Join group request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JoinGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Joined group successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to join group
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      summary: Join a WhatsApp group
+      tags:
+      - Groups
+  /session/{sessionId}/group/join-with-invite:
+    post:
+      consumes:
+      - application/json
+      description: Joins a WhatsApp group using an invite link
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Join group with invite request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JoinGroupWithInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Joined group successfully
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to join group
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      summary: Join group with invite link
+      tags:
+      - Groups
+  /session/{sessionId}/group/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all WhatsApp groups for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Groups list
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "500":
+          description: Failed to list groups
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+      summary: List WhatsApp groups
+      tags:
+      - Groups
+  /session/{sessionId}/message/delete:
+    post:
+      consumes:
+      - application/json
+      description: Deletes a previously sent WhatsApp message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Delete message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeleteMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message deleted successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to delete message
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Delete message
+      tags:
+      - Messages
+  /session/{sessionId}/message/edit:
+    post:
+      consumes:
+      - application/json
+      description: Edits a previously sent WhatsApp message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Edit message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EditMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message edited successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to edit message
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Edit message
+      tags:
+      - Messages
+  /session/{sessionId}/message/markread:
+    post:
+      consumes:
+      - application/json
+      description: Marks a message as read in a WhatsApp chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Mark as read request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MarkAsReadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message marked as read
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to mark as read
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Mark message as read
+      tags:
+      - Messages
+  /session/{sessionId}/message/react:
+    post:
+      consumes:
+      - application/json
+      description: Adds an emoji reaction to a WhatsApp message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: React to message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReactToMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reaction added successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to add reaction
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: React to message
+      tags:
+      - Messages
   /session/{sessionId}/message/send/audio:
     post:
       consumes:
@@ -1116,6 +2256,84 @@ paths:
           schema:
             $ref: '#/definitions/dto.MessageResponse'
       summary: Send button message
+      tags:
+      - Messages
+  /session/{sessionId}/message/send/contact:
+    post:
+      consumes:
+      - application/json
+      description: Sends a contact message to a WhatsApp contact or group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Contact message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact sent successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to send contact
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Send contact message
+      tags:
+      - Messages
+  /session/{sessionId}/message/send/document:
+    post:
+      consumes:
+      - application/json
+      description: Sends a document message to a WhatsApp contact or group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Document message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Document sent successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to send document
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Send document message
       tags:
       - Messages
   /session/{sessionId}/message/send/image:
@@ -1196,6 +2414,85 @@ paths:
       summary: Send list message
       tags:
       - Messages
+  /session/{sessionId}/message/send/location:
+    post:
+      consumes:
+      - application/json
+      description: Sends a location message to a WhatsApp contact or group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Location message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Location sent successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to send location
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Send location message
+      tags:
+      - Messages
+  /session/{sessionId}/message/send/media:
+    post:
+      consumes:
+      - application/json
+      description: Sends a media message (image, video, audio, document) to a WhatsApp
+        contact or group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Media message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Media sent successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to send media
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Send media message
+      tags:
+      - Messages
   /session/{sessionId}/message/send/poll:
     post:
       consumes:
@@ -1233,6 +2530,45 @@ paths:
           schema:
             $ref: '#/definitions/dto.MessageResponse'
       summary: Send poll message
+      tags:
+      - Messages
+  /session/{sessionId}/message/send/sticker:
+    post:
+      consumes:
+      - application/json
+      description: Sends a sticker message to a WhatsApp contact or group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Sticker message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendStickerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sticker sent successfully
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Failed to send sticker
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+      summary: Send sticker message
       tags:
       - Messages
   /session/{sessionId}/message/send/text:
@@ -1313,6 +2649,332 @@ paths:
       summary: Send video message
       tags:
       - Messages
+  /session/{sessionId}/newsletter:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new WhatsApp newsletter
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Newsletter creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateNewsletterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Newsletter created successfully
+          schema:
+            $ref: '#/definitions/dto.CreateNewsletterResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CreateNewsletterResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.CreateNewsletterResponse'
+        "500":
+          description: Failed to create newsletter
+          schema:
+            $ref: '#/definitions/dto.CreateNewsletterResponse'
+      summary: Create newsletter
+      tags:
+      - Newsletters
+  /session/{sessionId}/presences/recording:
+    post:
+      consumes:
+      - application/json
+      description: Sets presence status (typing, recording, etc.) for a chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Presence set successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to set presence
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      summary: Set chat presence
+      tags:
+      - Chat
+  /session/{sessionId}/presences/set:
+    put:
+      consumes:
+      - application/json
+      description: Sets the presence status (online, offline, typing, etc.) for a
+        session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetContactPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Presence set successfully
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+        "500":
+          description: Failed to set presence
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
+      summary: Set presence status
+      tags:
+      - Contacts
+  /session/{sessionId}/presences/typing:
+    post:
+      consumes:
+      - application/json
+      description: Sets presence status (typing, recording, etc.) for a chat
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Presence set successfully
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+        "500":
+          description: Failed to set presence
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
+      summary: Set chat presence
+      tags:
+      - Chat
+  /session/{sessionId}/privacy/find:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves current privacy settings for a WhatsApp session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Privacy settings query
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/dto.FindPrivacySettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Privacy settings
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "500":
+          description: Failed to get privacy settings
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+      summary: Find privacy settings
+      tags:
+      - Privacy
+  /session/{sessionId}/privacy/set:
+    put:
+      consumes:
+      - application/json
+      description: Sets all privacy settings for a WhatsApp session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Privacy settings request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetAllPrivacySettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Privacy settings updated
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "500":
+          description: Failed to set privacy settings
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
+      summary: Set all privacy settings
+      tags:
+      - Privacy
+  /session/{sessionId}/webhook:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the current webhook URL and events for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook configuration
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+        "500":
+          description: Failed to get webhook
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+      summary: Get webhook configuration
+      tags:
+      - Webhooks
+    post:
+      consumes:
+      - application/json
+      description: Sets or updates the webhook URL and events for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Webhook configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook set successfully
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+        "500":
+          description: Failed to set webhook
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
+      summary: Set webhook URL
+      tags:
+      - Webhooks
+  /session/{sessionId}/webhooks/events:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all supported webhook events
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Supported events list
+          schema:
+            $ref: '#/definitions/dto.SupportedEventsResponse'
+        "500":
+          description: Failed to get events
+          schema:
+            $ref: '#/definitions/dto.SupportedEventsResponse'
+      summary: List supported webhook events
+      tags:
+      - Webhooks
   /sessions/{sessionId}/connect:
     post:
       consumes:

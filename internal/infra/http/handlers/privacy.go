@@ -26,6 +26,19 @@ func NewPrivacyHandler(sessionService *application.SessionApp, wmeowService wmeo
 	}
 }
 
+// SetAllPrivacySettings godoc
+// @Summary Set all privacy settings
+// @Description Sets all privacy settings for a WhatsApp session
+// @Tags Privacy
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SetAllPrivacySettingsRequest true "Privacy settings request"
+// @Success 200 {object} dto.PrivacySettingsResponse "Privacy settings updated"
+// @Failure 400 {object} dto.PrivacySettingsResponse "Invalid request data"
+// @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
+// @Failure 500 {object} dto.PrivacySettingsResponse "Failed to set privacy settings"
+// @Router /session/{sessionId}/privacy/set [put]
 func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -361,6 +374,19 @@ func createNotFoundError(resource string) *dto.ErrorInfo {
 	}
 }
 
+// FindPrivacySettings godoc
+// @Summary Find privacy settings
+// @Description Retrieves current privacy settings for a WhatsApp session
+// @Tags Privacy
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.FindPrivacySettingsRequest false "Privacy settings query"
+// @Success 200 {object} dto.PrivacySettingsResponse "Privacy settings"
+// @Failure 400 {object} dto.PrivacySettingsResponse "Invalid request data"
+// @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
+// @Failure 500 {object} dto.PrivacySettingsResponse "Failed to get privacy settings"
+// @Router /session/{sessionId}/privacy/find [post]
 func (h *PrivacyHandler) FindPrivacySettings(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 

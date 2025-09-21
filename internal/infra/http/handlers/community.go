@@ -27,6 +27,19 @@ func (h *CommunityHandler) resolveSessionID(_ *gin.Context, sessionIDOrName stri
 	return sessionIDOrName, nil
 }
 
+// LinkGroup godoc
+// @Summary Link group to community
+// @Description Links a WhatsApp group to a community
+// @Tags Communities
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.LinkGroupRequest true "Link group request"
+// @Success 200 {object} dto.CommunityResponse "Group linked successfully"
+// @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 404 {object} dto.CommunityResponse "Session not found"
+// @Failure 500 {object} dto.CommunityResponse "Failed to link group"
+// @Router /session/{sessionId}/community/link [post]
 func (h *CommunityHandler) LinkGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -87,6 +100,19 @@ func (h *CommunityHandler) LinkGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// UnlinkGroup godoc
+// @Summary Unlink group from community
+// @Description Unlinks a WhatsApp group from a community
+// @Tags Communities
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.UnlinkGroupRequest true "Unlink group request"
+// @Success 200 {object} dto.CommunityResponse "Group unlinked successfully"
+// @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 404 {object} dto.CommunityResponse "Session not found"
+// @Failure 500 {object} dto.CommunityResponse "Failed to unlink group"
+// @Router /session/{sessionId}/community/unlink [post]
 func (h *CommunityHandler) UnlinkGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
