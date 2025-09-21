@@ -52,7 +52,7 @@ func DefaultLoggingConfig() LoggingConfig {
 		Level:          "info",
 		Format:         "console",
 		ConsoleColor:   true,
-		FileEnabled:    false, // Disabled by default, enable via LOG_FILE_ENABLED=true
+		FileEnabled:    false,
 		FilePath:       "log/app.log",
 		FileMaxSize:    100,
 		FileMaxBackups: 3,
@@ -74,7 +74,7 @@ func DefaultCORSConfig() CORSConfig {
 		},
 		ExposeHeaders:    []string{},
 		AllowCredentials: false,
-		MaxAge:           86400, // 24 hours
+		MaxAge:           86400,
 	}
 }
 
@@ -103,7 +103,7 @@ func DefaultSecurityConfig() SecurityConfig {
 		RateLimitEnabled: false,
 		RateLimitRPS:     100,
 		RequestTimeout:   30 * time.Second,
-		MaxRequestSize:   10 * 1024 * 1024, // 10MB
+		MaxRequestSize:   10 * 1024 * 1024,
 	}
 }
 
@@ -127,7 +127,7 @@ func ProductionConfig() *Config {
 	cfg.Security.RateLimitEnabled = true
 	cfg.Security.RateLimitRPS = 50
 	cfg.Security.RequestTimeout = 15 * time.Second
-	cfg.Security.MaxRequestSize = 5 * 1024 * 1024 // 5MB
+	cfg.Security.MaxRequestSize = 5 * 1024 * 1024
 
 	cfg.Database.SSLMode = "require"
 	cfg.Database.MaxOpenConns = 50
@@ -141,7 +141,7 @@ func TestConfig() *Config {
 	cfg := DefaultConfig()
 
 	cfg.Server.Mode = "test"
-	cfg.Server.Port = "0" // Random port
+	cfg.Server.Port = "0"
 
 	cfg.Logging.Level = "debug"
 	cfg.Logging.Format = "console"
@@ -169,14 +169,14 @@ func DevelopmentConfig() *Config {
 	cfg.Logging.Level = "debug"
 	cfg.Logging.Format = "console"
 	cfg.Logging.ConsoleColor = true
-	cfg.Logging.FileEnabled = false // Keep simple for development
+	cfg.Logging.FileEnabled = false
 
 	cfg.CORS.AllowAllOrigins = true
 	cfg.CORS.AllowCredentials = false
 
 	cfg.Security.RateLimitEnabled = false
 	cfg.Security.RequestTimeout = 60 * time.Second
-	cfg.Security.MaxRequestSize = 50 * 1024 * 1024 // 50MB for development
+	cfg.Security.MaxRequestSize = 50 * 1024 * 1024
 
 	return cfg
 }

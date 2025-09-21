@@ -121,12 +121,12 @@ func (h *ContactHandler) GetContactInfo(c *gin.Context) {
 		contactInfos = append(contactInfos, dto.ContactInfo{
 			JID:          result.JID,
 			Name:         result.Name,
-			DisplayName:  result.Name, // Usando Name como DisplayName
-			VerifiedName: "",          // Campo removido da estrutura simplificada
+			DisplayName:  result.Name,
+			VerifiedName: "",
 			Notify:       result.Notify,
 			PushName:     result.PushName,
 			BusinessName: result.BusinessName,
-			Phone:        "", // Campo removido da estrutura simplificada
+			Phone:        "",
 			IsBlocked:    result.IsBlocked,
 			IsMuted:      result.IsMuted,
 		})
@@ -346,7 +346,7 @@ func (h *ContactHandler) SetProfilePicture(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
 	var req struct {
-		Image string `json:"image" binding:"required"` // Base64 encoded image
+		Image string `json:"image" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {

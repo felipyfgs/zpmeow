@@ -33,7 +33,7 @@ func (r UploadMediaRequest) Validate() error {
 }
 
 type DownloadMediaRequest struct {
-	MediaURL  string `json:"media_url" binding:"required" example:"https://example.com/media/image.jpg"`
+	MediaURL  string `json:"media_url" binding:"required" example:"https://example.com/media.jpg"`
 	MessageID string `json:"message_id,omitempty" example:"msg_123"`
 }
 
@@ -82,7 +82,7 @@ type MediaErrorResponse struct {
 
 type MediaInfo struct {
 	ID        string    `json:"id" example:"media_123"`
-	URL       string    `json:"url" example:"https://example.com/media/image.jpg"`
+	URL       string    `json:"url" example:"https://example.com/media.jpg"`
 	Type      string    `json:"type" example:"image"`
 	MimeType  string    `json:"mime_type" example:"image/jpeg"`
 	Size      int64     `json:"size" example:"1024000"`

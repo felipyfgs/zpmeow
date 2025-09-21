@@ -56,7 +56,7 @@ func (c SendMediaMessageCommand) Validate() error {
 		return common.NewValidationError("mediaData", "", "media data is required")
 	}
 
-	if len(c.MediaData) > 100*1024*1024 { // 100MB limit
+	if len(c.MediaData) > 100*1024*1024 {
 		return common.NewValidationError("mediaData", "", "media data exceeds 100MB limit")
 	}
 
@@ -151,7 +151,7 @@ func (uc *SendMediaMessageUseCase) Handle(ctx context.Context, cmd SendMediaMess
 		SessionID: cmd.SessionID,
 		ChatJID:   cmd.ChatJID,
 		MediaType: string(cmd.MediaType),
-		MessageID: "", // Would be provided by WhatsApp service
+		MessageID: "",
 		Sent:      true,
 	}, nil
 }

@@ -147,7 +147,7 @@ func (uc *SendContactMessageUseCase) Handle(ctx context.Context, cmd SendContact
 		SessionID:    cmd.SessionID,
 		ChatJID:      cmd.ChatJID,
 		ContactCount: len(cmd.Contacts),
-		MessageID:    "", // Would be provided by WhatsApp service
+		MessageID:    "",
 		Sent:         true,
 	}, nil
 }

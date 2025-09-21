@@ -242,10 +242,10 @@ func (app *ChatApp) GetChatHistory(ctx context.Context, req GetChatHistoryReques
 			Content:   message.Content,
 			Type:      message.Type,
 			Timestamp: fmt.Sprintf("%d", message.Timestamp.Unix()),
-			IsFromMe:  false, // Default - would need more logic
-			IsRead:    false, // Default - would need more logic
-			MediaURL:  "",    // Default - would need more logic
-			Caption:   "",    // Default - would need more logic
+			IsFromMe:  false,
+			IsRead:    false,
+			MediaURL:  "",
+			Caption:   "",
 		}
 	}
 

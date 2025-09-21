@@ -46,6 +46,19 @@ func (r TestWebhookRequest) Validate() error {
 	return nil
 }
 
+type WebhookResponse struct {
+	Success bool        `json:"success"`
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   *ErrorInfo  `json:"error,omitempty"`
+}
+
+type WebhookErrorResponse struct {
+	Success bool       `json:"success"`
+	Code    int        `json:"code"`
+	Error   *ErrorInfo `json:"error"`
+}
+
 type RegisterWebhookRequest struct {
 	URL    string   `json:"url" binding:"required" example:"https://example.com/webhook"`
 	Events []string `json:"events,omitempty" example:"[\"message\", \"status\"]"`
@@ -61,13 +74,6 @@ func (r RegisterWebhookRequest) Validate() error {
 	return nil
 }
 
-
-type WebhookErrorResponse struct {
-	Code    string `json:"code" example:"WEBHOOK_NOT_FOUND"`
-	Message string `json:"message" example:"Webhook not found"`
-	Details string `json:"details" example:"No webhook configured for this session"`
-}
-
 type WebhookInfo struct {
 	SessionID string    `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
 	URL       string    `json:"url" example:"https://example.com/webhook"`
@@ -75,15 +81,6 @@ type WebhookInfo struct {
 	IsActive  bool      `json:"is_active" example:"true"`
 	CreatedAt time.Time `json:"created_at" example:"2023-01-01T12:00:00Z"`
 	UpdatedAt time.Time `json:"updated_at" example:"2023-01-01T12:00:00Z"`
-}
-
-type WebhookResponse struct {
-	Success bool                  `json:"success"`
-	Code    int                   `json:"code"`
-	Status  int                   `json:"status,omitempty"`
-	Message string                `json:"message,omitempty"`
-	Data    *WebhookResponseData  `json:"data,omitempty"`
-	Error   *WebhookErrorResponse `json:"error,omitempty"`
 }
 
 type WebhookResponseData struct {
@@ -102,7 +99,7 @@ type WebhookListResponse struct {
 	Success bool                  `json:"success"`
 	Code    int                   `json:"code"`
 	Data    *WebhookListData      `json:"data,omitempty"`
-	Error   *WebhookErrorResponse `json:"error,omitempty"`
+	Error   *ErrorInfo `json:"error,omitempty"`
 }
 
 type WebhookListData struct {
@@ -114,7 +111,7 @@ type WebhookTestResponse struct {
 	Success bool                  `json:"success"`
 	Code    int                   `json:"code"`
 	Data    *WebhookTestData      `json:"data,omitempty"`
-	Error   *WebhookErrorResponse `json:"error,omitempty"`
+	Error   *ErrorInfo `json:"error,omitempty"`
 }
 
 type WebhookTestData struct {
@@ -131,7 +128,7 @@ func NewWebhookErrorResponse(code int, errorCode, message, details string) *Webh
 	return &WebhookResponse{
 		Success: false,
 		Code:    code,
-		Error: &WebhookErrorResponse{
+		Error: &ErrorInfo{
 			Code:    errorCode,
 			Message: message,
 			Details: details,
@@ -169,7 +166,7 @@ func NewWebhookListErrorResponse(code int, errorCode, message, details string) *
 	return &WebhookListResponse{
 		Success: false,
 		Code:    code,
-		Error: &WebhookErrorResponse{
+		Error: &ErrorInfo{
 			Code:    errorCode,
 			Message: message,
 			Details: details,
@@ -196,7 +193,7 @@ func NewWebhookTestErrorResponse(code int, errorCode, message, details string) *
 	return &WebhookTestResponse{
 		Success: false,
 		Code:    code,
-		Error: &WebhookErrorResponse{
+		Error: &ErrorInfo{
 			Code:    errorCode,
 			Message: message,
 			Details: details,
@@ -247,7 +244,7 @@ type SupportedEventsResponse struct {
 	Status  int                   `json:"status,omitempty"`
 	Message string                `json:"message,omitempty"`
 	Data    *SupportedEventsData  `json:"data,omitempty"`
-	Error   *WebhookErrorResponse `json:"error,omitempty"`
+	Error   *ErrorInfo `json:"error,omitempty"`
 }
 
 type SupportedEventsData struct {

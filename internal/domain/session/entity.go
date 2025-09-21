@@ -2,9 +2,44 @@ package session
 
 import (
 	"fmt"
+	"strings"
 
 	"zpmeow/internal/domain/common"
 )
+
+// WebhookEndpoint representa um endpoint de webhook
+type WebhookEndpoint struct {
+	url string
+}
+
+// NewWebhookEndpoint cria um novo endpoint de webhook
+func NewWebhookEndpoint(url string) (WebhookEndpoint, error) {
+	trimmed := strings.TrimSpace(url)
+	if trimmed == "" {
+		return WebhookEndpoint{}, fmt.Errorf("webhook URL cannot be empty")
+	}
+
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		return WebhookEndpoint{}, fmt.Errorf("webhook URL must start with http:// or https://")
+	}
+
+	return WebhookEndpoint{url: trimmed}, nil
+}
+
+// URL retorna a URL do webhook
+func (w WebhookEndpoint) URL() string {
+	return w.url
+}
+
+// Value retorna o valor do webhook
+func (w WebhookEndpoint) Value() string {
+	return w.url
+}
+
+// IsEmpty verifica se o endpoint está vazio
+func (w WebhookEndpoint) IsEmpty() bool {
+	return w.url == ""
+}
 
 type Status string
 
@@ -173,7 +208,7 @@ func (s *Session) Connect() error {
 
 func (s *Session) Disconnect(reason string) error {
 	if s.IsDisconnected() {
-		return nil // Already disconnected
+		return nil
 	}
 
 	s.status = StatusDisconnected

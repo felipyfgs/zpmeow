@@ -123,7 +123,7 @@ func (uc *GetContactsUseCase) Handle(ctx context.Context, query GetContactsQuery
 	return &GetContactsResult{
 		SessionID: query.SessionID,
 		Contacts:  contactViews,
-		Total:     len(contactViews), // In a real implementation, this would be the total count
+		Total:     len(contactViews),
 		Limit:     query.Limit,
 		Offset:    query.Offset,
 	}, nil
@@ -310,12 +310,12 @@ func (uc *GetUserInfoUseCase) Handle(ctx context.Context, query GetUserInfoQuery
 		PushName:     userInfo.PushName,
 		BusinessName: userInfo.BusinessName,
 		Phone:        phone,
-		Status:       "", // UserInfoResult não tem Status
-		Avatar:       "", // UserInfoResult não tem Avatar
+		Status:       "",
+		Avatar:       "",
 		IsBlocked:    userInfo.IsBlocked,
 		IsMuted:      userInfo.IsMuted,
-		IsContact:    false, // UserInfoResult não tem IsContact
-		LastSeen:     "",    // UserInfoResult não tem LastSeen
+		IsContact:    false,
+		LastSeen:     "",
 	}
 
 	uc.logger.Debug(ctx, "User info retrieved successfully",

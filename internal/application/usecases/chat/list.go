@@ -121,7 +121,7 @@ func (uc *GetChatsUseCase) Handle(ctx context.Context, query GetChatsQuery) (*Ge
 	return &GetChatsResult{
 		SessionID: query.SessionID,
 		Chats:     chatViews,
-		Total:     len(chatViews), // In a real implementation, this would be the total count
+		Total:     len(chatViews),
 		Limit:     query.Limit,
 		Offset:    query.Offset,
 	}, nil

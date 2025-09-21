@@ -80,7 +80,7 @@ func NewDeviceJID(value string) (DeviceJID, error) {
 	trimmed := strings.TrimSpace(value)
 
 	if trimmed == "" {
-		return DeviceJID{}, nil // Empty JID is allowed for new sessions
+		return DeviceJID{}, nil
 	}
 
 	if !strings.Contains(trimmed, "@") {
@@ -115,7 +115,7 @@ func NewQRCode(value string) (QRCode, error) {
 	trimmed := strings.TrimSpace(value)
 
 	if trimmed == "" {
-		return QRCode{}, nil // Empty QR code is allowed
+		return QRCode{}, nil
 	}
 
 	if len(trimmed) > 10000 {
@@ -149,10 +149,10 @@ func NewProxyConfiguration(value string) (ProxyConfiguration, error) {
 	trimmed := strings.TrimSpace(value)
 
 	if trimmed == "" {
-		return ProxyConfiguration{}, nil // Empty proxy is allowed (no proxy)
+		return ProxyConfiguration{}, nil
 	}
 
-	if len(trimmed) < 7 { // Minimum: "a://b:1"
+	if len(trimmed) < 7 {
 		return ProxyConfiguration{}, fmt.Errorf("proxy configuration too short")
 	}
 
@@ -160,11 +160,11 @@ func NewProxyConfiguration(value string) (ProxyConfiguration, error) {
 		return ProxyConfiguration{}, fmt.Errorf("proxy configuration too long")
 	}
 
-	if !strings.Contains(trimmed, "://") {
-		return ProxyConfiguration{}, fmt.Errorf("proxy configuration must contain scheme (://)")
+	if !strings.Contains(trimmed, ":") {
+		return ProxyConfiguration{}, fmt.Errorf("proxy configuration must contain scheme (:)")
 	}
 
-	parts := strings.Split(trimmed, "://")
+	parts := strings.Split(trimmed, ":")
 	if len(parts) != 2 {
 		return ProxyConfiguration{}, fmt.Errorf("invalid proxy configuration format")
 	}
@@ -197,65 +197,9 @@ func (p ProxyConfiguration) Scheme() string {
 	if p.value == "" {
 		return ""
 	}
-	parts := strings.Split(p.value, "://")
+	parts := strings.Split(p.value, ":")
 	if len(parts) < 2 {
 		return ""
 	}
 	return strings.ToLower(parts[0])
-}
-
-type WebhookEndpoint struct {
-	value string
-}
-
-func NewWebhookEndpoint(value string) (WebhookEndpoint, error) {
-	trimmed := strings.TrimSpace(value)
-
-	if trimmed == "" {
-		return WebhookEndpoint{}, nil // Empty webhook endpoint is allowed
-	}
-
-	if len(trimmed) < 10 { // Minimum: "http://a.b"
-		return WebhookEndpoint{}, fmt.Errorf("webhook endpoint too short")
-	}
-
-	if len(trimmed) > 2000 {
-		return WebhookEndpoint{}, fmt.Errorf("webhook endpoint too long")
-	}
-
-	if !strings.Contains(trimmed, "://") {
-		return WebhookEndpoint{}, fmt.Errorf("webhook endpoint must contain scheme (://)")
-	}
-
-	parts := strings.Split(trimmed, "://")
-	if len(parts) != 2 {
-		return WebhookEndpoint{}, fmt.Errorf("invalid webhook endpoint format")
-	}
-
-	scheme := strings.ToLower(parts[0])
-	if scheme != "http" && scheme != "https" {
-		return WebhookEndpoint{}, fmt.Errorf("webhook endpoint must use http or https scheme")
-	}
-
-	if parts[1] == "" {
-		return WebhookEndpoint{}, fmt.Errorf("webhook endpoint must have host")
-	}
-
-	return WebhookEndpoint{value: trimmed}, nil
-}
-
-func (w WebhookEndpoint) Value() string {
-	return w.value
-}
-
-func (w WebhookEndpoint) String() string {
-	return w.value
-}
-
-func (w WebhookEndpoint) IsEmpty() bool {
-	return w.value == ""
-}
-
-func (w WebhookEndpoint) IsSecure() bool {
-	return strings.HasPrefix(strings.ToLower(w.value), "https://")
 }

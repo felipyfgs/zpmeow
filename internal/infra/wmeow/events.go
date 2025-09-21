@@ -83,7 +83,7 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 		webhookURL:       webhookURL,
 		sessionRepo:      sessionRepo,
 		logger:           logging.GetLogger().Sub("events").Sub(sessionID),
-		subscribedEvents: []string{}, // Will be loaded from session
+		subscribedEvents: []string{},
 	}
 
 	ep.loadSubscribedEvents()
@@ -165,7 +165,7 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 		"event":      "Message",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       msg, // Raw whatsmeow message event
+		"data":       msg,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -178,7 +178,7 @@ func (ep *EventProcessor) handleConnected(evt interface{}) {
 		"event":      "Connected",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       evt, // Raw whatsmeow connected event
+		"data":       evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -191,7 +191,7 @@ func (ep *EventProcessor) handleDisconnected(evt interface{}) {
 		"event":      "Disconnected",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       evt, // Raw whatsmeow disconnected event
+		"data":       evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -207,7 +207,7 @@ func (ep *EventProcessor) handleQR(evt interface{}) {
 		"event":      "QR",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       qr, // Raw whatsmeow QR event
+		"data":       qr,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -222,7 +222,7 @@ func (ep *EventProcessor) handlePairSuccess(evt interface{}) {
 		"event":      "PairSuccess",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       evt, // Raw whatsmeow pair success event
+		"data":       evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -238,7 +238,7 @@ func (ep *EventProcessor) handlePairError(evt interface{}) {
 		"event":      "PairError",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       pairError, // Raw whatsmeow pair error event
+		"data":       pairError,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -251,7 +251,7 @@ func (ep *EventProcessor) handleLoggedOut(evt interface{}) {
 		"event":      "LoggedOut",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       evt, // Raw whatsmeow logged out event
+		"data":       evt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -267,7 +267,7 @@ func (ep *EventProcessor) handleReceipt(evt interface{}) {
 		"event":      "Receipt",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       receipt, // Raw whatsmeow receipt event
+		"data":       receipt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -283,7 +283,7 @@ func (ep *EventProcessor) handlePresence(evt interface{}) {
 		"event":      "Presence",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       presence, // Raw whatsmeow presence event
+		"data":       presence,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -299,7 +299,7 @@ func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 		"event":      "ChatPresence",
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       chatPresence, // Raw whatsmeow chat presence event
+		"data":       chatPresence,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
@@ -318,7 +318,7 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 		"event":      eventType,
 		"session_id": ep.sessionID,
 		"timestamp":  time.Now().Unix(),
-		"data":       evt, // Raw whatsmeow event payload
+		"data":       evt,
 	}
 
 	ep.logger.Infof("📤 Sending generic event: %s", eventType)
@@ -329,7 +329,7 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 
 func sendWebhook(url string, data interface{}) error {
 	if url == "" {
-		return nil // No webhook configured
+		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

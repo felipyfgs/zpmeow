@@ -12,7 +12,7 @@ import (
 
 type DeleteSessionCommand struct {
 	SessionID string
-	Force     bool // Force deletion even if session is connected
+	Force     bool
 }
 
 func (c DeleteSessionCommand) Validate() error {

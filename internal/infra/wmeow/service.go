@@ -21,7 +21,7 @@ import (
 
 type ButtonData = ports.ButtonData
 type ListItem = ports.ListItem
-type ListRow = ports.ListItem // Alias para compatibilidade
+type ListRow = ports.ListItem
 type ListSection = ports.ListSection
 
 type WameowService = ports.WameowService
@@ -249,7 +249,7 @@ func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) (str
 	qrCode, err := m.GetQRCode(sessionID)
 	if err != nil {
 		m.logger.Warnf("Failed to get QR code for session %s: %v", sessionID, err)
-		return "", nil // Return empty QR code but no error since connection might still work
+		return "", nil
 	}
 
 	return qrCode, nil
@@ -298,7 +298,7 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 			if err != nil {
 				m.logger.Errorf("Failed to disconnect session %s: %v", sessionEntity.ID().Value(), err)
 			}
-			err = sessionEntity.Authenticate("") // Clear invalid device_jid
+			err = sessionEntity.Authenticate("")
 			if err != nil {
 				m.logger.Errorf("Failed to clear device_jid for session %s: %v", sessionEntity.ID().Value(), err)
 			}
@@ -368,12 +368,12 @@ func (m *MeowService) DeleteMessage(ctx context.Context, sessionID, phone, messa
 
 	var revokeTarget waTypes.JID
 	if forEveryone {
-		revokeTarget = waTypes.EmptyJID // Delete for everyone
+		revokeTarget = waTypes.EmptyJID
 	} else {
 		if client.GetClient().Store.ID == nil {
 			return fmt.Errorf("unable to get client ID for delete operation")
 		}
-		revokeTarget = *client.GetClient().Store.ID // Delete for me only
+		revokeTarget = *client.GetClient().Store.ID
 	}
 
 	revokeMsg := client.GetClient().BuildRevoke(recipient, revokeTarget, messageID)
@@ -696,7 +696,7 @@ func (m *MeowService) SendPollMessage(ctx context.Context, sessionID, phone, nam
 	}
 
 	if selectableCount <= 0 {
-		selectableCount = 1 // Default to single select
+		selectableCount = 1
 	}
 	if selectableCount > len(options) {
 		selectableCount = len(options)
@@ -1076,9 +1076,9 @@ func (m *MeowService) SetGroupEphemeral(ctx context.Context, sessionID, groupJID
 	if ephemeral && duration > 0 {
 		expiration = time.Duration(duration) * time.Second
 	} else if ephemeral {
-		expiration = 24 * time.Hour // Default 24 hours
+		expiration = 24 * time.Hour
 	} else {
-		expiration = 0 // Disable ephemeral
+		expiration = 0
 	}
 
 	err = client.GetClient().SetDisappearingTimer(jid, expiration, time.Time{})
@@ -1344,7 +1344,7 @@ func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []
 		result := UserCheckResult{
 			Query:        item.Query,
 			IsInWhatsapp: item.IsIn,
-			IsInMeow:     item.IsIn, // Corrigido: IsInMeow em vez de IsInmeow
+			IsInMeow:     item.IsIn,
 			JID:          item.JID.String(),
 			VerifiedName: verifiedName,
 		}
@@ -1381,7 +1381,7 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones 
 	}
 
 	var jids []waTypes.JID
-	phoneToJIDMap := make(map[string]string) // phone -> jid string mapping
+	phoneToJIDMap := make(map[string]string)
 
 	for _, phone := range phones {
 		jid, err := parsePhoneToJID(phone)
@@ -1407,10 +1407,10 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones 
 
 		result := UserInfoResult{
 			JID:          jid.String(),
-			Name:         "", // Nome do usuário
-			Notify:       "", // Nome de notificação
-			PushName:     "", // Nome push
-			BusinessName: "", // Nome comercial se aplicável
+			Name:         "",
+			Notify:       "",
+			PushName:     "",
+			BusinessName: "",
 			IsBlocked:    false,
 			IsMuted:      false,
 		}
@@ -1478,10 +1478,10 @@ func (m *MeowService) GetContacts(ctx context.Context, sessionID string, limit, 
 			Notify:       contact.PushName,
 			PushName:     contact.PushName,
 			BusinessName: contact.BusinessName,
-			IsBlocked:    false, // WhatsApp doesn't expose this easily
-			IsMuted:      false, // WhatsApp doesn't expose this easily
-			IsContact:    true,  // Default to true since these are contacts
-			Avatar:       "",    // Default empty avatar
+			IsBlocked:    false,
+			IsMuted:      false,
+			IsContact:    true,
+			Avatar:       "",
 		}
 		allResults = append(allResults, result)
 	}
@@ -1710,7 +1710,7 @@ func (m *MeowService) GetMediaProgress(ctx context.Context, sessionID, mediaID s
 	progress := map[string]interface{}{
 		"media_id":   mediaID,
 		"session_id": sessionID,
-		"progress":   100, // Always complete for now
+		"progress":   100,
 		"status":     "completed",
 		"total_size": 0,
 		"downloaded": 0,
@@ -2212,7 +2212,7 @@ func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string)
 					JID:         group.JID.String(),
 					Name:        group.Name,
 					Type:        "group",
-					IsGroup:     true, // Explicitly set IsGroup for groups
+					IsGroup:     true,
 					IsPinned:    false,
 					IsMuted:     false,
 					IsArchived:  false,
@@ -2238,7 +2238,7 @@ func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string)
 					JID:         jid.String(),
 					Name:        contact.FullName,
 					Type:        "contact",
-					IsGroup:     false, // Explicitly set IsGroup for contacts
+					IsGroup:     false,
 					IsPinned:    false,
 					IsMuted:     false,
 					IsArchived:  false,
@@ -2838,7 +2838,7 @@ func sendStickerMessage(client *whatsmeow.Client, to string, data []byte, mimeTy
 		return nil, err
 	}
 
-	uploaded, err := uploadMedia(client, data, whatsmeow.MediaImage) // Stickers use image media type
+	uploaded, err := uploadMedia(client, data, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}

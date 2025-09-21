@@ -34,7 +34,7 @@ func RequestValidationMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		if c.Request.ContentLength > 10*1024*1024 { // 10MB limit
+		if c.Request.ContentLength > 10*1024*1024 {
 			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
 				"error":   "Request too large",
 				"message": "Request body exceeds maximum size of 10MB",

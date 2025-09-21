@@ -31,12 +31,12 @@ type DatabaseConfig struct {
 	MaxOpenConns    int           `json:"max_open_conns"`
 	MaxIdleConns    int           `json:"max_idle_conns"`
 	ConnMaxLifetime time.Duration `json:"conn_max_lifetime"`
-	URL             string        `json:"url"` // Computed field
+	URL             string        `json:"url"`
 }
 
 type ServerConfig struct {
 	Port         string        `json:"port"`
-	Mode         string        `json:"mode"` // debug, release, test
+	Mode         string        `json:"mode"`
 	ReadTimeout  time.Duration `json:"read_timeout"`
 	WriteTimeout time.Duration `json:"write_timeout"`
 	IdleTimeout  time.Duration `json:"idle_timeout"`
@@ -236,7 +236,7 @@ func loadSecurityConfig() SecurityConfig {
 		RateLimitEnabled: getBoolEnvOrDefault("SECURITY_RATE_LIMIT_ENABLED", false),
 		RateLimitRPS:     getIntEnvOrDefault("SECURITY_RATE_LIMIT_RPS", 100),
 		RequestTimeout:   getDurationEnvOrDefault("SECURITY_REQUEST_TIMEOUT", 30*time.Second),
-		MaxRequestSize:   getInt64EnvOrDefault("SECURITY_MAX_REQUEST_SIZE", 10*1024*1024), // 10MB
+		MaxRequestSize:   getInt64EnvOrDefault("SECURITY_MAX_REQUEST_SIZE", 10*1024*1024),
 	}
 }
 

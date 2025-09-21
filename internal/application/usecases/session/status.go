@@ -90,7 +90,7 @@ func (uc *GetSessionStatusUseCase) Handle(ctx context.Context, query GetSessionS
 
 	statusView := &SessionStatusView{
 		SessionID:       sessionEntity.SessionID().Value(),
-		Status:          whatsappStatus, // Use real-time status
+		Status:          whatsappStatus,
 		IsConnected:     sessionEntity.IsConnected(),
 		IsAuthenticated: sessionEntity.IsAuthenticated(),
 		DeviceJID:       sessionEntity.WaJID().Value(),

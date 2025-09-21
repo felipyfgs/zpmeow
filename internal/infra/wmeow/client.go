@@ -30,7 +30,7 @@ type WameowClient struct {
 	lastActivity time.Time
 
 	qrCode       string
-	qrCodeBase64 string // Base64 encoded QR code image
+	qrCodeBase64 string
 	qrLoopActive bool
 
 	eventHandlerID uint32

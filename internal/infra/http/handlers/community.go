@@ -207,10 +207,10 @@ func (h *CommunityHandler) GetSubGroups(c *gin.Context) {
 	for _, groupJID := range subGroups {
 		communityInfos = append(communityInfos, dto.CommunityInfo{
 			JID:         groupJID,
-			Name:        "", // Name not available from GetSubGroups, would need separate call
+			Name:        "",
 			Description: "",
-			CreatedAt:   time.Now(), // Default value
-			MemberCount: 0,          // Not available from GetSubGroups
+			CreatedAt:   time.Now(),
+			MemberCount: 0,
 		})
 	}
 
@@ -278,10 +278,10 @@ func (h *CommunityHandler) GetLinkedGroupsParticipants(c *gin.Context) {
 	for _, participantJID := range participants {
 		groupParticipants = append(groupParticipants, dto.GroupParticipant{
 			JID:          participantJID,
-			Phone:        participantJID, // JID is the phone for now
-			Name:         "",             // Name not available from GetLinkedGroupsParticipants
-			IsAdmin:      false,          // Admin status not available
-			IsSuperAdmin: false,          // SuperAdmin status not available
+			Phone:        participantJID,
+			Name:         "",
+			IsAdmin:      false,
+			IsSuperAdmin: false,
 		})
 	}
 

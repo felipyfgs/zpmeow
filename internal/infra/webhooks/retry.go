@@ -105,7 +105,7 @@ func (r *RetryStrategy) isRetryableError(err error) bool {
 		"timeout",
 		"temporary failure",
 		"network unreachable",
-		"status 5", // 5xx HTTP errors
+		"status 5",
 		"context deadline exceeded",
 		"no such host",
 		"connection reset",
@@ -127,12 +127,12 @@ func (r *RetryStrategy) isRetryableError(err error) bool {
 
 func IsHTTPStatusRetryable(statusCode int) bool {
 	switch statusCode {
-	case http.StatusRequestTimeout, // 408
-		http.StatusTooManyRequests,     // 429
-		http.StatusInternalServerError, // 500
-		http.StatusBadGateway,          // 502
-		http.StatusServiceUnavailable,  // 503
-		http.StatusGatewayTimeout:      // 504
+	case http.StatusRequestTimeout,
+		http.StatusTooManyRequests,
+		http.StatusInternalServerError,
+		http.StatusBadGateway,
+		http.StatusServiceUnavailable,
+		http.StatusGatewayTimeout:
 		return true
 	default:
 		return false

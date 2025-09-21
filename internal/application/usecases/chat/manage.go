@@ -15,7 +15,7 @@ type MuteChatCommand struct {
 	SessionID string
 	ChatJID   string
 	Mute      bool
-	Duration  time.Duration // Duration to mute (0 for permanent)
+	Duration  time.Duration
 }
 
 func (c MuteChatCommand) Validate() error {

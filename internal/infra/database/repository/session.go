@@ -63,11 +63,11 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 		sessionEntity.GetDeviceJIDString(),
 		string(sessionEntity.Status()),
 		sessionEntity.QRCode().Value(),
-		sessionEntity.ProxyConfiguration().Value(), // ✅ CORREÇÃO: usar método correto
-		sessionEntity.WebhookEndpoint().Value(),    // ✅ CORREÇÃO: usar método correto
+		sessionEntity.ProxyConfiguration().Value(),
+		sessionEntity.WebhookEndpoint().Value(),
 		string(eventsJSON),
 		isConnected,
-		apiKey, // Use the generated or existing API key
+		apiKey,
 		createdAt,
 		updatedAt,
 	).Scan(&generatedID)
@@ -368,7 +368,7 @@ func (r *PostgresRepo) GetByDeviceJID(ctx context.Context, deviceJID string) (*s
 
 func (r *PostgresRepo) ValidateDeviceUniqueness(ctx context.Context, sessionID, deviceJID string) error {
 	if deviceJID == "" {
-		return nil // Empty device JID is allowed (not connected yet)
+		return nil
 	}
 
 	var count int

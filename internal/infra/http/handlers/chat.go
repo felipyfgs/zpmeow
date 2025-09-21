@@ -477,7 +477,7 @@ func (h *ChatHandler) MuteChat(c *gin.Context) {
 		case "1w":
 			duration = 7 * 24 * time.Hour
 		case "forever", "":
-			duration = 0 // 0 means forever
+			duration = 0
 		default:
 			c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
 				http.StatusBadRequest,

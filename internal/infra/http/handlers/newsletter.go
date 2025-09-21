@@ -49,8 +49,8 @@ func (h *NewsletterHandler) GetNewsletterMessageUpdates(c *gin.Context) {
 	}
 	before := c.Query("before")
 
-	_ = count  // Suppress unused variable warning
-	_ = before // Suppress unused variable warning
+	_ = count
+	_ = before
 	updates, err := h.wmeowService.GetNewsletterMessageUpdates(c.Request.Context(), sessionID, newsletterID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.StandardResponse{
@@ -463,7 +463,7 @@ func (h *NewsletterHandler) CreateNewsletter(c *gin.Context) {
 		Name:            resp.Name,
 		Description:     resp.Description,
 		CreatedAt:       time.Unix(resp.Timestamp, 0),
-		SubscriberCount: 0, // Default value
+		SubscriberCount: 0,
 	}
 
 	c.JSON(http.StatusCreated, dto.CreateNewsletterResponse{
@@ -511,7 +511,7 @@ func (h *NewsletterHandler) GetNewsletter(c *gin.Context) {
 		SubscriberCount: info.Subscribers,
 		CreatedAt:       time.Unix(info.CreatedAt, 0),
 		IsVerified:      info.IsVerified,
-		IsSubscribed:    false, // Default value
+		IsSubscribed:    false,
 	}
 
 	c.JSON(http.StatusOK, dto.NewsletterInfoResponse{
@@ -700,8 +700,8 @@ func (h *NewsletterHandler) GetNewsletterMessages(c *gin.Context) {
 		return
 	}
 
-	_ = c.Query("count")  // Ignore for now
-	_ = c.Query("before") // Ignore for now
+	_ = c.Query("count")
+	_ = c.Query("before")
 
 	messages, err := h.wmeowService.GetNewsletterMessages(c.Request.Context(), sessionID, newsletterJID)
 	if err != nil {

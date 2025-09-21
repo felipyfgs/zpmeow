@@ -52,7 +52,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "SESSION_NOT_FOUND",
 				Message: "Session not found: " + err.Error(),
 			},
@@ -66,7 +66,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "INVALID_REQUEST",
 				Message: "Invalid request body: " + err.Error(),
 			},
@@ -79,7 +79,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.WebhookResponse{
 			Success: false,
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "VALIDATION_ERROR",
 				Message: "Failed to get valid events",
 				Details: err.Error(),
@@ -94,7 +94,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusBadRequest, dto.WebhookResponse{
 				Success: false,
-				Error: &dto.WebhookErrorResponse{
+				Error: &dto.ErrorInfo{
 					Code:    "INVALID_EVENT",
 					Message: fmt.Sprintf("Invalid event type: %s", event),
 				},
@@ -108,7 +108,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "INVALID_EVENTS",
 				Message: fmt.Sprintf("No valid events provided. Valid events include: %s", strings.Join(allValidEvents, ", ")),
 			},
@@ -122,7 +122,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusBadRequest,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "VALIDATION_FAILED",
 				Message: "Failed to register webhook: " + err.Error(),
 			},
@@ -136,8 +136,8 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dto.StandardWebhookCreateResponse{
-		Status:  http.StatusCreated,
-		Message: "Webhook registered successfully",
+		Success: true,
+		Code:    http.StatusCreated,
 		Data: &dto.StandardWebhookData{
 			CreatedAt: time.Now(),
 			Events:    validEvents,
@@ -157,7 +157,7 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "SESSION_NOT_FOUND",
 				Message: "Session not found: " + err.Error(),
 			},
@@ -171,7 +171,7 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusInternalServerError,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "GET_FAILED",
 				Message: "Failed to get webhook: " + err.Error(),
 			},
@@ -184,7 +184,7 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 			Success: false,
 			Code:    http.StatusNotFound,
 			Data:    &dto.WebhookResponseData{},
-			Error: &dto.WebhookErrorResponse{
+			Error: &dto.ErrorInfo{
 				Code:    "NOT_FOUND",
 				Message: "No webhook configured for this session",
 			},
@@ -193,8 +193,8 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.StandardWebhookResponse{
-		Status:  http.StatusOK,
-		Message: "Webhook retrieved successfully",
+		Success: true,
+		Code:    http.StatusOK,
 		Data: &dto.StandardWebhookData{
 			CreatedAt: time.Now(),
 			Events:    events,

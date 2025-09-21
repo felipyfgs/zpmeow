@@ -25,7 +25,7 @@ func Connect(cfg *config.Config) (*sqlx.DB, error) {
 	db.SetMaxOpenConns(dbConfig.GetMaxOpenConns())
 	db.SetMaxIdleConns(dbConfig.GetMaxIdleConns())
 	db.SetConnMaxLifetime(dbConfig.GetConnMaxLifetime())
-	db.SetConnMaxIdleTime(5 * time.Minute) // Close idle connections after 5 minutes
+	db.SetConnMaxIdleTime(5 * time.Minute)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -61,7 +61,7 @@ func RunMigrations(cfg *config.Config) error {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://internal/infra/database/migrations",
+		"file://migrations",
 		"postgres",
 		driver,
 	)

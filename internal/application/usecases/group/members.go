@@ -14,7 +14,7 @@ type ManageParticipantsCommand struct {
 	SessionID    string
 	GroupJID     string
 	Participants []string
-	Action       string // "add" or "remove"
+	Action       string
 }
 
 func (c ManageParticipantsCommand) Validate() error {

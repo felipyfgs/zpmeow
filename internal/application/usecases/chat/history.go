@@ -118,10 +118,10 @@ func (uc *GetChatHistoryUseCase) Handle(ctx context.Context, query GetChatHistor
 			Content:   message.Content,
 			Type:      message.Type,
 			Timestamp: fmt.Sprintf("%d", message.Timestamp.Unix()),
-			IsFromMe:  false, // Default value since not available in ChatMessage
-			IsRead:    false, // Default value since not available in ChatMessage
-			MediaURL:  "",    // Default value since not available in ChatMessage
-			Caption:   "",    // Default value since not available in ChatMessage
+			IsFromMe:  false,
+			IsRead:    false,
+			MediaURL:  "",
+			Caption:   "",
 		}
 	}
 
@@ -134,7 +134,7 @@ func (uc *GetChatHistoryUseCase) Handle(ctx context.Context, query GetChatHistor
 		SessionID: query.SessionID,
 		ChatJID:   query.ChatJID,
 		Messages:  messageViews,
-		Total:     len(messageViews), // In a real implementation, this would be the total count
+		Total:     len(messageViews),
 		Limit:     query.Limit,
 		Offset:    query.Offset,
 	}, nil
@@ -143,8 +143,8 @@ func (uc *GetChatHistoryUseCase) Handle(ctx context.Context, query GetChatHistor
 type SetPresenceCommand struct {
 	SessionID string
 	ChatJID   string
-	State     string // available, unavailable, composing, recording, paused
-	Media     string // optional media type for recording state
+	State     string
+	Media     string
 }
 
 func (c SetPresenceCommand) Validate() error {

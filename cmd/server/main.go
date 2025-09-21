@@ -1,19 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package main
 
 import (
@@ -25,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	_ "zpmeow/docs" // Import for swagger docs
+	_ "zpmeow/docs"
 	"zpmeow/internal/application"
 	"zpmeow/internal/config"
 	"zpmeow/internal/domain/session"
@@ -121,7 +105,7 @@ func main() {
 	ginRouter := gin.New()
 
 	ginRouter.Use(gin.LoggerWithConfig(gin.LoggerConfig{
-		SkipPaths: []string{"/ping", "/health"}, // Skip health check logs
+		SkipPaths: []string{"/ping", "/health"},
 		Formatter: func(param gin.LogFormatterParams) string {
 			if param.StatusCode >= 400 ||
 				(param.Path != "/ping" && param.Path != "/health") {

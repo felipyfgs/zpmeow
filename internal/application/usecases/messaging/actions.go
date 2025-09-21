@@ -183,7 +183,7 @@ func (uc *MarkAsReadUseCase) Handle(ctx context.Context, cmd MarkAsReadCommand) 
 	return &MessageActionResult{
 		SessionID: cmd.SessionID,
 		ChatJID:   cmd.ChatJID,
-		MessageID: strings.Join(cmd.MessageIDs, ","), // Para compatibilidade com a struct existente
+		MessageID: strings.Join(cmd.MessageIDs, ","),
 		Action:    "mark_as_read",
 		Success:   true,
 		Message:   fmt.Sprintf("%d messages marked as read successfully", len(cmd.MessageIDs)),

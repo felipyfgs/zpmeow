@@ -411,8 +411,8 @@ type StickerMessagePayload struct {
 type LocationMessagePayload struct {
 	Latitude  float64 `json:"latitude" example:"-23.5505"`
 	Longitude float64 `json:"longitude" example:"-46.6333"`
-	Name      string  `json:"name,omitempty" example:"São Paulo"`
-	Address   string  `json:"address,omitempty" example:"São Paulo, SP, Brazil"`
+	Name      string  `json:"name,omitempty" example:"Sao Paulo"`
+	Address   string  `json:"address,omitempty" example:"Sao Paulo, SP, Brazil"`
 }
 
 type ContactMessagePayload struct {
@@ -524,7 +524,7 @@ func NewTextResponse(success bool, code int, phone, messageID, text string, sent
 					Text: text,
 				},
 			},
-			Timestamp: 0, // Will be set by the service
+			Timestamp: 0,
 		},
 	}
 }

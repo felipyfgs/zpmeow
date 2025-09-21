@@ -172,7 +172,7 @@ func (uc *CreateNewsletterUseCase) Handle(ctx context.Context, cmd CreateNewslet
 		SubscriberCount: newsletterInfo.SubscriberCount,
 		IsSubscribed:    newsletterInfo.IsSubscribed,
 		CreatedAt:       fmt.Sprintf("%d", newsletterInfo.CreatedAt),
-		UpdatedAt:       fmt.Sprintf("%d", newsletterInfo.Timestamp), // Using Timestamp as UpdatedAt
+		UpdatedAt:       fmt.Sprintf("%d", newsletterInfo.Timestamp),
 	}
 
 	uc.logger.Info(ctx, "Newsletter created successfully",

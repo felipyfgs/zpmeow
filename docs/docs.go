@@ -8,15 +8,15 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
+        "termsOfService": "http:
         "contact": {
             "name": "meow API Support",
-            "url": "https://github.com/your-username/meow",
+            "url": "https:
             "email": "support@meow.com"
         },
         "license": {
             "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
+            "url": "https:
         },
         "version": "{{.Version}}"
     },
@@ -5416,7 +5416,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://example.com/audio.mp3"
+                    "example": "https:
                 }
             }
         },
@@ -5425,7 +5425,7 @@ const docTemplate = `{
             "properties": {
                 "avatar_url": {
                     "type": "string",
-                    "example": "https://pps.meow.net/..."
+                    "example": "https:
                 },
                 "jid": {
                     "type": "string",
@@ -5524,7 +5524,7 @@ const docTemplate = `{
                 },
                 "media_url": {
                     "type": "string",
-                    "example": "https://example.com/image.jpg"
+                    "example": "https:
                 },
                 "message_id": {
                     "type": "string",
@@ -5933,7 +5933,7 @@ const docTemplate = `{
             "properties": {
                 "avatar": {
                     "type": "string",
-                    "example": "https://..."
+                    "example": "https:
                 },
                 "business_name": {
                     "type": "string",
@@ -6181,11 +6181,11 @@ const docTemplate = `{
                 },
                 "proxy_url": {
                     "type": "string",
-                    "example": "http://proxy.example.com:8080"
+                    "example": "http:
                 },
                 "webhook_url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/whatsapp"
+                    "example": "https:
                 }
             }
         },
@@ -6244,7 +6244,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://example.com/document.pdf"
+                    "example": "https:
                 }
             }
         },
@@ -6643,7 +6643,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://example.com/image.jpg"
+                    "example": "https:
                 }
             }
         },
@@ -6765,7 +6765,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://maps.google.com/..."
+                    "example": "https:
                 }
             }
         },
@@ -6827,7 +6827,7 @@ const docTemplate = `{
             "properties": {
                 "download_url": {
                     "type": "string",
-                    "example": "https://storage.example.com/media_123456789"
+                    "example": "https:
                 },
                 "expires_at": {
                     "type": "string",
@@ -7445,7 +7445,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/meow"
+                    "example": "https:
                 }
             }
         },
@@ -7602,7 +7602,7 @@ const docTemplate = `{
                 },
                 "media_url": {
                     "type": "string",
-                    "example": "https://example.com/image.jpg"
+                    "example": "https:
                 },
                 "phone": {
                     "type": "string",
@@ -7872,7 +7872,7 @@ const docTemplate = `{
                 },
                 "proxy_url": {
                     "type": "string",
-                    "example": "http://proxy.example.com:8080"
+                    "example": "http:
                 },
                 "status": {
                     "type": "string",
@@ -7884,7 +7884,7 @@ const docTemplate = `{
                 },
                 "webhook_url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/whatsapp"
+                    "example": "https:
                 }
             }
         },
@@ -8242,7 +8242,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/meow"
+                    "example": "https:
                 }
             }
         },
@@ -8267,7 +8267,7 @@ const docTemplate = `{
             "properties": {
                 "url": {
                     "type": "string",
-                    "example": "https://example.com/sticker.webp"
+                    "example": "https:
                 }
             }
         },
@@ -8456,7 +8456,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/meow"
+                    "example": "https:
                 }
             }
         },
@@ -8515,7 +8515,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://example.com/video.mp4"
+                    "example": "https:
                 }
             }
         },
@@ -8572,7 +8572,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://webhook.example.com/meow"
+                    "example": "https:
                 },
                 "webhook_id": {
                     "type": "string",

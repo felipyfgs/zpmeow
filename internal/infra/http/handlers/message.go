@@ -211,7 +211,7 @@ func (h *MessageHandler) SendMedia(c *gin.Context) {
 	case "video":
 		sendResp, err = h.wmeowService.SendVideoMessage(ctx, sessionID, req.Phone, mediaData, req.Caption, "video/mp4")
 	case "document":
-		filename := "document" // Default filename since it's not in the DTO
+		filename := "document"
 		sendResp, err = h.wmeowService.SendDocumentMessage(ctx, sessionID, req.Phone, mediaData, filename, req.Caption, "application/octet-stream")
 	case "sticker":
 		sendResp, err = h.wmeowService.SendStickerMessage(ctx, sessionID, req.Phone, mediaData, "image/webp")

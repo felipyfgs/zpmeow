@@ -190,9 +190,9 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 		for _, participantJID := range group.Participants {
 			participants = append(participants, dto.GroupParticipant{
 				JID:          participantJID,
-				Phone:        participantJID, // Assuming JID is the phone for now
-				IsAdmin:      false,          // Default value, would need more info from service
-				IsSuperAdmin: false,          // Default value, would need more info from service
+				Phone:        participantJID,
+				IsAdmin:      false,
+				IsSuperAdmin: false,
 			})
 		}
 
@@ -432,9 +432,9 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 	for _, participantJID := range groupInfo.Participants {
 		participants = append(participants, dto.GroupParticipant{
 			JID:          participantJID,
-			Phone:        participantJID, // Assuming JID is the phone for now
-			IsAdmin:      false,          // Default value, would need more info from wmeow service
-			IsSuperAdmin: false,          // Default value, would need more info from wmeow service
+			Phone:        participantJID,
+			IsAdmin:      false,
+			IsSuperAdmin: false,
 		})
 	}
 
@@ -445,7 +445,7 @@ func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
 		Name:             groupInfo.Name,
 		Topic:            groupInfo.Topic,
 		Participants:     participants,
-		Admins:           []string{}, // Campo removido da estrutura simplificada
+		Admins:           []string{},
 		Owner:            groupInfo.CreatedBy,
 		CreatedAt:        createdAt,
 		Size:             len(groupInfo.Participants),
@@ -971,7 +971,7 @@ func (h *GroupHandler) SetEphemeral(c *gin.Context) {
 	ctx := c.Request.Context()
 	duration := 0
 	if req.Ephemeral {
-		duration = 604800 // 7 days in seconds
+		duration = 604800
 	}
 	err = h.wmeowService.SetGroupEphemeral(ctx, sessionID, req.GroupJID, req.Ephemeral, duration)
 	if err != nil {

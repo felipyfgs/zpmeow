@@ -104,7 +104,7 @@ func (uc *SendTextMessageUseCase) Handle(ctx context.Context, cmd SendTextMessag
 	return &SendTextMessageResult{
 		SessionID: cmd.SessionID,
 		ChatJID:   cmd.ChatJID,
-		MessageID: "", // Would be provided by WhatsApp service
+		MessageID: "",
 		Sent:      true,
 	}, nil
 }
