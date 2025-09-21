@@ -96,23 +96,23 @@ type SecurityConfig struct {
 }
 
 type CacheConfig struct {
-	Enabled           bool          `json:"enabled"`
-	RedisURL          string        `json:"redis_url"`
-	RedisHost         string        `json:"redis_host"`
-	RedisPort         string        `json:"redis_port"`
-	RedisPassword     string        `json:"redis_password"`
-	RedisDB           int           `json:"redis_db"`
-	PoolSize          int           `json:"pool_size"`
-	MinIdleConns      int           `json:"min_idle_conns"`
-	MaxRetries        int           `json:"max_retries"`
-	RetryDelay        time.Duration `json:"retry_delay"`
-	DialTimeout       time.Duration `json:"dial_timeout"`
-	ReadTimeout       time.Duration `json:"read_timeout"`
-	WriteTimeout      time.Duration `json:"write_timeout"`
-	SessionTTL        time.Duration `json:"session_ttl"`
-	QRCodeTTL         time.Duration `json:"qr_code_ttl"`
-	CredentialTTL     time.Duration `json:"credential_ttl"`
-	StatusTTL         time.Duration `json:"status_ttl"`
+	Enabled       bool          `json:"enabled"`
+	RedisURL      string        `json:"redis_url"`
+	RedisHost     string        `json:"redis_host"`
+	RedisPort     string        `json:"redis_port"`
+	RedisPassword string        `json:"redis_password"`
+	RedisDB       int           `json:"redis_db"`
+	PoolSize      int           `json:"pool_size"`
+	MinIdleConns  int           `json:"min_idle_conns"`
+	MaxRetries    int           `json:"max_retries"`
+	RetryDelay    time.Duration `json:"retry_delay"`
+	DialTimeout   time.Duration `json:"dial_timeout"`
+	ReadTimeout   time.Duration `json:"read_timeout"`
+	WriteTimeout  time.Duration `json:"write_timeout"`
+	SessionTTL    time.Duration `json:"session_ttl"`
+	QRCodeTTL     time.Duration `json:"qr_code_ttl"`
+	CredentialTTL time.Duration `json:"credential_ttl"`
+	StatusTTL     time.Duration `json:"status_ttl"`
 }
 
 func LoadConfig() (*Config, error) {

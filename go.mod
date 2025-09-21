@@ -3,8 +3,9 @@ module zpmeow
 go 1.24.0
 
 require (
-	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
+	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/gofiber/swagger v1.1.1
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
@@ -16,8 +17,6 @@ require (
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/rs/zerolog v1.34.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
 	go.mau.fi/whatsmeow v0.0.0-20250919124702-c8bdfd36d05e
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -56,13 +55,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/gofiber/cors v0.2.2 // indirect
-	github.com/gofiber/fiber v1.13.3 // indirect
-	github.com/gofiber/fiber/v2 v2.52.9 // indirect
-	github.com/gofiber/recover v0.1.2 // indirect
-	github.com/gofiber/swagger v1.1.1 // indirect
-	github.com/gofiber/utils v0.0.9 // indirect
-	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

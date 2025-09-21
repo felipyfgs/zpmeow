@@ -6,7 +6,7 @@ import (
 
 	"zpmeow/internal/infra/logging"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type LogLevel int
@@ -28,53 +28,52 @@ type HTTPLogEntry struct {
 	Level     LogLevel `json:"level"`
 }
 
-func Logger() gin.HandlerFunc {
+func Logger() fiber.Handler {
 	httpLogger := logging.GetLogger().Sub("http")
 
-	return func(c *gin.Context) {
+	return func(c *fiber.Ctx) error {
 		start := time.Now()
-		path := c.Request.URL.Path
+		path := c.Path()
 
 		// Skip logging for certain paths
 		if shouldSkipLogging(path) {
-			c.Next()
-			return
+			return c.Next()
 		}
 
 		// Process request
-		c.Next()
+		err := c.Next()
 
 		// Log after request is processed
 		latency := time.Since(start)
-		status := c.Writer.Status()
+		status := c.Response().StatusCode()
 
 		entry := HTTPLogEntry{
-			Method:   c.Request.Method,
+			Method:   c.Method(),
 			Path:     path,
 			Status:   status,
 			Latency:  latency.String(),
-			ClientIP: c.ClientIP(),
+			ClientIP: c.IP(),
 			Level:    determineLogLevel(status),
 		}
 
 		// Add error if present
-		if len(c.Errors) > 0 {
-			entry.Error = c.Errors.String()
+		if err != nil {
+			entry.Error = err.Error()
 		}
 
 		// Add user agent for non-static resources
 		if !isStaticResource(path) {
-			entry.UserAgent = c.Request.UserAgent()
+			entry.UserAgent = c.Get("User-Agent")
 		}
 
 		// Extract correlation ID from context
-		correlationID := GetCorrelationID(c.Request.Context())
+		correlationID := GetCorrelationID(c.Context())
 
 		LogHTTPRequest(httpLogger, entry, correlationID)
+
+		return err
 	}
 }
-
-
 
 func LogHTTPRequest(httpLogger logging.Logger, entry HTTPLogEntry, correlationID string) {
 	logEntry := httpLogger.With().
@@ -165,5 +164,3 @@ func isStaticResource(path string) bool {
 
 	return false
 }
-
-

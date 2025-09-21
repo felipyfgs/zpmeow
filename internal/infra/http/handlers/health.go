@@ -2,14 +2,13 @@ package handlers
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"zpmeow/internal/application/ports"
 	"zpmeow/internal/infra/database"
 	"zpmeow/internal/infra/http/dto"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -46,7 +45,7 @@ type HealthData struct {
 
 type HealthStandardResponse = dto.StandardResponse
 
-func (h *HealthHandler) sendSuccessResponse(c *gin.Context, status, message, version string, dependencies map[string]string) {
+func (h *HealthHandler) sendSuccessResponse(c *fiber.Ctx, status, message, version string, dependencies map[string]string) error {
 	data := HealthData{
 		Status:       status,
 		Message:      message,
@@ -55,7 +54,7 @@ func (h *HealthHandler) sendSuccessResponse(c *gin.Context, status, message, ver
 		Timestamp:    time.Now(),
 		Dependencies: dependencies,
 	}
-	h.SendSuccessResponse(c, http.StatusOK, data)
+	return h.SendSuccessResponse(c, fiber.StatusOK, data)
 }
 
 func (h *HealthHandler) checkDependencies() map[string]string {
@@ -98,7 +97,7 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 // @Success 200 {object} dto.StandardResponse{data=HealthData} "Service is healthy"
 // @Failure 503 {object} dto.StandardResponse "Service is unhealthy"
 // @Router /health [get]
-func (h *HealthHandler) Health(c *gin.Context) {
+func (h *HealthHandler) Health(c *fiber.Ctx) error {
 	h.logger.Infof("Health check requested")
 
 	dependencies := h.checkDependencies()
@@ -112,11 +111,11 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	}
 
 	if allHealthy {
-		h.sendSuccessResponse(c, "ok", "Service is healthy", "1.0.0", dependencies)
 		h.logger.Infof("Health check completed successfully")
+		return h.sendSuccessResponse(c, "ok", "Service is healthy", "1.0.0", dependencies)
 	} else {
-		h.SendErrorResponse(c, http.StatusServiceUnavailable, "UNHEALTHY", "Service is unhealthy", nil)
 		h.logger.Warnf("Health check failed - some dependencies are unhealthy")
+		return h.SendErrorResponse(c, fiber.StatusServiceUnavailable, "UNHEALTHY", "Service is unhealthy", nil)
 	}
 }
 
@@ -128,11 +127,11 @@ func (h *HealthHandler) Health(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} dto.StandardResponse{data=HealthData} "Pong response"
 // @Router /ping [get]
-func (h *HealthHandler) Ping(c *gin.Context) {
+func (h *HealthHandler) Ping(c *fiber.Ctx) error {
 	h.logger.Infof("Ping requested")
 
-	h.sendSuccessResponse(c, "ok", "pong", "", nil)
 	h.logger.Infof("Ping completed successfully")
+	return h.sendSuccessResponse(c, "ok", "pong", "", nil)
 }
 
 // Metrics godoc
@@ -143,7 +142,7 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} dto.StandardResponse{data=map[string]interface{}} "Service metrics"
 // @Router /metrics [get]
-func (h *HealthHandler) Metrics(c *gin.Context) {
+func (h *HealthHandler) Metrics(c *fiber.Ctx) error {
 	h.logger.Infof("Metrics requested")
 
 	metrics := map[string]interface{}{
@@ -166,8 +165,8 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 		}
 	}
 
-	h.SendSuccessResponse(c, http.StatusOK, metrics)
 	h.logger.Infof("Metrics completed successfully")
+	return h.SendSuccessResponse(c, fiber.StatusOK, metrics)
 }
 
 // ResetMetrics godoc
@@ -178,10 +177,9 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} dto.StandardResponse{data=HealthData} "Metrics reset successfully"
 // @Router /metrics/reset [post]
-func (h *HealthHandler) ResetMetrics(c *gin.Context) {
+func (h *HealthHandler) ResetMetrics(c *fiber.Ctx) error {
 	h.logger.Infof("Metrics reset requested")
 
-	h.sendSuccessResponse(c, "ok", "Metrics reset not implemented yet", "", nil)
-
 	h.logger.Infof("Metrics reset completed successfully")
+	return h.sendSuccessResponse(c, "ok", "Metrics reset not implemented yet", "", nil)
 }

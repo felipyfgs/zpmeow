@@ -21,9 +21,9 @@ type EventProcessor struct {
 	subscribedEvents []string
 
 	// Receipt batching for performance
-	receiptMutex     sync.Mutex
-	receiptCount     int
-	lastReceiptLog   time.Time
+	receiptMutex   sync.Mutex
+	receiptCount   int
+	lastReceiptLog time.Time
 }
 
 var eventTypeMapping = map[string]string{
@@ -347,36 +347,36 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 // isCommonUnmappedEvent checks if an event type is commonly unmapped and can be ignored
 func isCommonUnmappedEvent(eventType string) bool {
 	commonUnmappedEvents := map[string]bool{
-		"*events.QR":                    true,
-		"*events.PairSuccess":           true,
-		"*events.PairError":             true,
-		"*events.LoggedOut":             true,
-		"*events.StreamReplaced":        true,
-		"*events.TemporaryBan":          true,
-		"*events.ConnectFailure":        true,
-		"*events.ClientOutdated":        true,
-		"*events.KeepAliveTimeout":      true,
-		"*events.KeepAliveRestored":     true,
-		"*events.Blocklist":             true,
-		"*events.PushName":              true,
-		"*events.BusinessName":          true,
-		"*events.JoinedGroup":           true,
-		"*events.GroupInfo":             true,
-		"*events.Picture":               true,
-		"*events.PushNameSetting":       true,
-		"*events.AppStateSyncComplete":  true,
-		"*events.HistorySync":           true,
-		"*events.AppState":              true,
-		"*events.MarkChatAsRead":        true,
-		"*events.Mute":                  true,
-		"*events.Pin":                   true,
-		"*events.Star":                  true,
-		"*events.Archive":               true,
-		"*events.DeleteChat":            true,
-		"*events.UndoDeleteChat":        true,
-		"*events.DeleteForMe":           true,
-		"*events.MediaRetry":            true,
-		"*events.UndecryptableMessage":  true,
+		"*events.QR":                   true,
+		"*events.PairSuccess":          true,
+		"*events.PairError":            true,
+		"*events.LoggedOut":            true,
+		"*events.StreamReplaced":       true,
+		"*events.TemporaryBan":         true,
+		"*events.ConnectFailure":       true,
+		"*events.ClientOutdated":       true,
+		"*events.KeepAliveTimeout":     true,
+		"*events.KeepAliveRestored":    true,
+		"*events.Blocklist":            true,
+		"*events.PushName":             true,
+		"*events.BusinessName":         true,
+		"*events.JoinedGroup":          true,
+		"*events.GroupInfo":            true,
+		"*events.Picture":              true,
+		"*events.PushNameSetting":      true,
+		"*events.AppStateSyncComplete": true,
+		"*events.HistorySync":          true,
+		"*events.AppState":             true,
+		"*events.MarkChatAsRead":       true,
+		"*events.Mute":                 true,
+		"*events.Pin":                  true,
+		"*events.Star":                 true,
+		"*events.Archive":              true,
+		"*events.DeleteChat":           true,
+		"*events.UndoDeleteChat":       true,
+		"*events.DeleteForMe":          true,
+		"*events.MediaRetry":           true,
+		"*events.UndecryptableMessage": true,
 	}
 	return commonUnmappedEvents[eventType]
 }

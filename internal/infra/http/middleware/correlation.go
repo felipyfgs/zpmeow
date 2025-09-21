@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -13,27 +13,27 @@ const (
 )
 
 // CorrelationIDMiddleware adds a correlation ID to each request
-func CorrelationIDMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func CorrelationIDMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		// Check if correlation ID already exists in header
-		correlationID := c.GetHeader(CorrelationIDHeader)
-		
+		correlationID := c.Get(CorrelationIDHeader)
+
 		// If not provided, generate a new one
 		if correlationID == "" {
 			correlationID = generateCorrelationID()
 		}
-		
+
 		// Add to context
-		ctx := context.WithValue(c.Request.Context(), CorrelationIDKey, correlationID)
-		c.Request = c.Request.WithContext(ctx)
-		
+		ctx := context.WithValue(c.Context(), CorrelationIDKey, correlationID)
+		c.SetUserContext(ctx)
+
 		// Add to response header
-		c.Header(CorrelationIDHeader, correlationID)
-		
-		// Add to gin context for easy access
-		c.Set(CorrelationIDKey, correlationID)
-		
-		c.Next()
+		c.Set(CorrelationIDHeader, correlationID)
+
+		// Add to fiber context for easy access
+		c.Locals(CorrelationIDKey, correlationID)
+
+		return c.Next()
 	}
 }
 
@@ -52,9 +52,9 @@ func GetCorrelationID(ctx context.Context) string {
 	return ""
 }
 
-// GetCorrelationIDFromGin extracts correlation ID from gin context
-func GetCorrelationIDFromGin(c *gin.Context) string {
-	if id, exists := c.Get(CorrelationIDKey); exists {
+// GetCorrelationIDFromFiber extracts correlation ID from fiber context
+func GetCorrelationIDFromFiber(c *fiber.Ctx) string {
+	if id := c.Locals(CorrelationIDKey); id != nil {
 		if correlationID, ok := id.(string); ok {
 			return correlationID
 		}

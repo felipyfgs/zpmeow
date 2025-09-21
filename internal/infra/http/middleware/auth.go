@@ -3,13 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"zpmeow/internal/config"
 	"zpmeow/internal/domain/session"
 	"zpmeow/internal/infra/logging"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type AuthMiddleware struct {
@@ -26,119 +25,105 @@ func NewAuthMiddleware(config *config.Config, sessionRepo session.Repository, lo
 	}
 }
 
-func (a *AuthMiddleware) AuthenticateGlobal() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (a *AuthMiddleware) AuthenticateGlobal() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		apiKey := a.extractAPIKey(c)
 		if apiKey == "" {
 			a.logger.Warn("Missing API key in request")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
-			c.Abort()
-			return
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "API key required"})
 		}
 
 		if apiKey == a.config.GetAuth().GetGlobalAPIKey() {
 			a.logger.Debug("Global API key authenticated successfully")
-			c.Set("auth_type", "global")
-			c.Set("api_key", apiKey)
-			c.Next()
-			return
+			c.Locals("auth_type", "global")
+			c.Locals("api_key", apiKey)
+			return c.Next()
 		}
 
 		a.logger.Warn("Invalid global API key provided")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
-		c.Abort()
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid API key"})
 	}
 }
 
-func (a *AuthMiddleware) AuthenticateSession() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (a *AuthMiddleware) AuthenticateSession() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		apiKey := a.extractAPIKey(c)
 		if apiKey == "" {
 			a.logger.Warn("Missing API key in request")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
-			c.Abort()
-			return
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "API key required"})
 		}
 
 		if apiKey == a.config.GetAuth().GetGlobalAPIKey() {
 			a.logger.Debug("Global API key authenticated for session access")
-			c.Set("auth_type", "global")
-			c.Set("api_key", apiKey)
-			c.Next()
-			return
+			c.Locals("auth_type", "global")
+			c.Locals("api_key", apiKey)
+			return c.Next()
 		}
 
 		session, err := a.sessionRepo.GetByApiKey(context.Background(), apiKey)
 		if err != nil {
 			if err == fmt.Errorf("session not found") {
 				a.logger.Warn("Invalid session API key provided")
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid API key"})
 			} else {
 				a.logger.Error("Error validating session API key: " + err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication error"})
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Authentication error"})
 			}
-			c.Abort()
-			return
 		}
 
 		a.logger.Debug("Session API key authenticated successfully for session: " + session.SessionID().Value() + " (" + session.Name().Value() + ")")
-		c.Set("auth_type", "session")
-		c.Set("api_key", apiKey)
-		c.Set("session_id", session.SessionID())
-		c.Set("session", session)
-		c.Next()
+		c.Locals("auth_type", "session")
+		c.Locals("api_key", apiKey)
+		c.Locals("session_id", session.SessionID())
+		c.Locals("session", session)
+		return c.Next()
 	}
 }
 
-func (a *AuthMiddleware) AuthenticateAny() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (a *AuthMiddleware) AuthenticateAny() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		apiKey := a.extractAPIKey(c)
 		if apiKey == "" {
 			a.logger.Warn("Missing API key in request")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
-			c.Abort()
-			return
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "API key required"})
 		}
 
 		if apiKey == a.config.GetAuth().GetGlobalAPIKey() {
 			a.logger.Debug("Global API key authenticated")
-			c.Set("auth_type", "global")
-			c.Set("api_key", apiKey)
-			c.Next()
-			return
+			c.Locals("auth_type", "global")
+			c.Locals("api_key", apiKey)
+			return c.Next()
 		}
 
 		session, err := a.sessionRepo.GetByApiKey(context.Background(), apiKey)
 		if err != nil {
 			if err == fmt.Errorf("session not found") {
 				a.logger.Warn("Invalid API key provided")
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid API key"})
 			} else {
 				a.logger.Error("Error validating API key: " + err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication error"})
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Authentication error"})
 			}
-			c.Abort()
-			return
 		}
 
 		a.logger.Debug("Session API key authenticated for session: " + session.SessionID().Value() + " (" + session.Name().Value() + ")")
-		c.Set("auth_type", "session")
-		c.Set("api_key", apiKey)
-		c.Set("session_id", session.SessionID())
-		c.Set("session", session)
-		c.Next()
+		c.Locals("auth_type", "session")
+		c.Locals("api_key", apiKey)
+		c.Locals("session_id", session.SessionID())
+		c.Locals("session", session)
+		return c.Next()
 	}
 }
 
-func (a *AuthMiddleware) extractAPIKey(c *gin.Context) string {
+func (a *AuthMiddleware) extractAPIKey(c *fiber.Ctx) string {
 	// Try X-API-Key header first (preferred)
-	apiKey := c.GetHeader("X-API-Key")
+	apiKey := c.Get("X-API-Key")
 	if apiKey != "" {
 		return apiKey
 	}
 
 	// Fallback to Authorization header
-	authHeader := c.GetHeader("Authorization")
+	authHeader := c.Get("Authorization")
 	if authHeader != "" {
 		return authHeader
 	}
@@ -146,8 +131,8 @@ func (a *AuthMiddleware) extractAPIKey(c *gin.Context) string {
 	return ""
 }
 
-func GetAuthenticatedSession(c *gin.Context) (*session.Session, bool) {
-	if sessionData, exists := c.Get("session"); exists {
+func GetAuthenticatedSession(c *fiber.Ctx) (*session.Session, bool) {
+	if sessionData := c.Locals("session"); sessionData != nil {
 		if s, ok := sessionData.(*session.Session); ok {
 			return s, true
 		}
@@ -155,8 +140,8 @@ func GetAuthenticatedSession(c *gin.Context) (*session.Session, bool) {
 	return nil, false
 }
 
-func GetAuthType(c *gin.Context) string {
-	if authType, exists := c.Get("auth_type"); exists {
+func GetAuthType(c *fiber.Ctx) string {
+	if authType := c.Locals("auth_type"); authType != nil {
 		if t, ok := authType.(string); ok {
 			return t
 		}
@@ -164,10 +149,10 @@ func GetAuthType(c *gin.Context) string {
 	return ""
 }
 
-func IsGlobalAuth(c *gin.Context) bool {
+func IsGlobalAuth(c *fiber.Ctx) bool {
 	return GetAuthType(c) == "global"
 }
 
-func IsSessionAuth(c *gin.Context) bool {
+func IsSessionAuth(c *fiber.Ctx) bool {
 	return GetAuthType(c) == "session"
 }

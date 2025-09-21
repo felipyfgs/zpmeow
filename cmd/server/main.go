@@ -54,7 +54,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -74,7 +73,7 @@ import (
 	"zpmeow/internal/infra/webhooks"
 	"zpmeow/internal/infra/wmeow"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 )
 
@@ -169,17 +168,26 @@ func main() {
 	newsletterHandler := handlers.NewNewsletterHandler(appSessionService, wmeowService)
 	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
 
-	gin.SetMode(cfg.GetServer().GetMode())
-
-	ginRouter := gin.New()
+	// Create Fiber app
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			return c.Status(code).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		},
+	})
 
 	// Add correlation ID middleware first
-	ginRouter.Use(middleware.CorrelationIDMiddleware())
+	app.Use(middleware.CorrelationIDMiddleware())
 
 	// Add structured logging middleware
-	ginRouter.Use(middleware.Logger())
+	app.Use(middleware.Logger())
 
-	ginRouter.Use(middleware.CORS(cfg.GetCORS()))
+	app.Use(middleware.CORS(cfg.GetCORS()))
 
 	// Handler dependencies in the specified order:
 	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
@@ -196,20 +204,13 @@ func main() {
 		WebhookHandler:    webhookHandler,
 	}
 
-	routes.SetupRoutes(ginRouter, handlerDeps, authMiddleware)
+	routes.SetupRoutes(app, handlerDeps, authMiddleware)
 
 	addr := fmt.Sprintf(":%s", cfg.GetServer().GetPort())
-	srv := &http.Server{
-		Addr:         addr,
-		Handler:      ginRouter,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
-	}
 
 	go func() {
 		log.Infof("Server listening on %s", addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := app.Listen(addr); err != nil {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
@@ -219,10 +220,7 @@ func main() {
 	<-quit
 	log.Info("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := app.Shutdown(); err != nil {
 		log.Errorf("Server forced to shutdown: %v", err)
 	}
 

@@ -3,10 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 
 	"zpmeow/internal/application"
 	"zpmeow/internal/domain/session"
@@ -28,16 +27,16 @@ func NewSessionHandler(sessionService *application.SessionApp, wmeowService wmeo
 	}
 }
 
-func (h *SessionHandler) validateSessionID(c *gin.Context) (string, bool) {
-	sessionIDOrName := c.Param("sessionId")
+func (h *SessionHandler) validateSessionID(c *fiber.Ctx) (string, bool) {
+	sessionIDOrName := c.Params("sessionId")
 	if sessionIDOrName == "" {
-		h.sendErrorResponse(c, http.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", "Missing session ID or name in path")
+		h.sendErrorResponse(c, fiber.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", "Missing session ID or name in path")
 		return "", false
 	}
 	return sessionIDOrName, true
 }
 
-func (h *SessionHandler) bindAndValidateRequest(c *gin.Context, req interface{}) bool {
+func (h *SessionHandler) bindAndValidateRequest(c *fiber.Ctx, req interface{}) bool {
 	if err := h.BindAndValidate(c, req); err != nil {
 		h.logger.Errorf("Failed to bind or validate request: %v", err)
 		h.SendValidationErrorResponse(c, err)
@@ -46,10 +45,10 @@ func (h *SessionHandler) bindAndValidateRequest(c *gin.Context, req interface{})
 	return true
 }
 
-func (h *SessionHandler) sendSuccessResponse(c *gin.Context, sessionID, action string, data interface{}) {
+func (h *SessionHandler) sendSuccessResponse(c *fiber.Ctx, sessionID, action string, data interface{}) error {
 	response := &dto.SessionResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: dto.SessionData{
 			SessionID: sessionID,
 			Action:    action,
@@ -70,14 +69,14 @@ func (h *SessionHandler) sendSuccessResponse(c *gin.Context, sessionID, action s
 	jsonBytes, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		h.logger.Errorf("Failed to marshal response: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to format response"})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to format response"})
 	}
 
-	c.Data(http.StatusOK, "application/json", jsonBytes)
+	c.Set("Content-Type", "application/json")
+	return c.Status(fiber.StatusOK).Send(jsonBytes)
 }
 
-func (h *SessionHandler) sendErrorResponse(c *gin.Context, status int, errorCode, message, _ string) {
+func (h *SessionHandler) sendErrorResponse(c *fiber.Ctx, status int, errorCode, message, _ string) error {
 	response := &dto.SessionResponse{
 		Success: false,
 		Code:    status,
@@ -94,11 +93,11 @@ func (h *SessionHandler) sendErrorResponse(c *gin.Context, status int, errorCode
 	jsonBytes, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		h.logger.Errorf("Failed to marshal error response: %v", err)
-		c.JSON(status, gin.H{"error": "Failed to format error response"})
-		return
+		return c.Status(status).JSON(fiber.Map{"error": "Failed to format error response"})
 	}
 
-	c.Data(status, "application/json", jsonBytes)
+	c.Set("Content-Type", "application/json")
+	return c.Status(status).Send(jsonBytes)
 }
 
 func (h *SessionHandler) convertToSessionInfo(session *session.Session) *dto.SessionInfo {
@@ -138,14 +137,13 @@ func (h *SessionHandler) logError(operation string, err error) {
 // @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 500 {object} dto.SessionResponse "Failed to get sessions"
 // @Router /sessions/list [get]
-func (h *SessionHandler) GetSessions(c *gin.Context) {
+func (h *SessionHandler) GetSessions(c *fiber.Ctx) error {
 	h.logOperation("Getting all sessions", "")
 
-	sessions, err := h.sessionService.GetAllSessions(c.Request.Context())
+	sessions, err := h.sessionService.GetAllSessions(c.Context())
 	if err != nil {
 		h.logError("get all sessions", err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "GET_SESSIONS_FAILED", "Failed to get sessions", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "GET_SESSIONS_FAILED", "Failed to get sessions", err.Error())
 	}
 
 	sessionInfos := make([]dto.SessionInfo, len(sessions))
@@ -153,8 +151,8 @@ func (h *SessionHandler) GetSessions(c *gin.Context) {
 		sessionInfos[i] = *h.convertToSessionInfo(session)
 	}
 
-	h.sendSuccessResponse(c, "", "list", sessionInfos)
 	h.logSuccess("Get all sessions", fmt.Sprintf("retrieved %d sessions", len(sessions)))
+	return h.sendSuccessResponse(c, "", "list", sessionInfos)
 }
 
 // GetSession godoc
@@ -170,24 +168,23 @@ func (h *SessionHandler) GetSessions(c *gin.Context) {
 // @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Router /sessions/{sessionId}/info [get]
-func (h *SessionHandler) GetSession(c *gin.Context) {
+func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	h.logOperation("Getting session", sessionID)
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID, err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	sessionInfo := h.convertToSessionInfo(session)
-	h.sendSuccessResponse(c, sessionID, "get", sessionInfo)
 	h.logSuccess("Get session", sessionID)
+	return h.sendSuccessResponse(c, sessionID, "get", sessionInfo)
 }
 
 // CreateSession godoc
@@ -203,10 +200,10 @@ func (h *SessionHandler) GetSession(c *gin.Context) {
 // @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 500 {object} dto.SessionResponse "Failed to create session"
 // @Router /sessions/create [post]
-func (h *SessionHandler) CreateSession(c *gin.Context) {
+func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 	var req dto.CreateSessionRequest
 	if !h.bindAndValidateRequest(c, &req) {
-		return
+		return nil // bindAndValidateRequest já enviou a resposta de erro
 	}
 
 	h.logOperation("Creating session", "name: "+req.Name)
@@ -215,18 +212,17 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 		Name: req.Name,
 	}
 
-	session, err := h.sessionService.CreateSessionWithRequest(c.Request.Context(), appReq)
+	session, err := h.sessionService.CreateSessionWithRequest(c.Context(), appReq)
 	if err != nil {
 		h.logError("create session", err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "CREATE_SESSION_FAILED", "Failed to create session", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "CREATE_SESSION_FAILED", "Failed to create session", err.Error())
 	}
 
 	sessionInfo := h.convertToSessionInfo(session)
 
 	response := &dto.CreateSessionResponse{
 		Success: true,
-		Code:    http.StatusCreated,
+		Code:    fiber.StatusCreated,
 		Data: &dto.SessionCreateData{
 			Action:    "create",
 			Status:    "success",
@@ -235,8 +231,8 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusCreated, response)
 	h.logSuccess("Create session", session.SessionID().Value())
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // DeleteSession godoc
@@ -253,33 +249,31 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to delete session"
 // @Router /sessions/{sessionId}/delete [delete]
-func (h *SessionHandler) DeleteSession(c *gin.Context) {
+func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	h.logOperation("Deleting session", sessionID)
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID+" for deletion", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	if err := h.wmeowService.StopClient(session.SessionID().Value()); err != nil {
 		h.logger.Warnf("Could not stop client for session %s (may already be stopped): %v", session.SessionID().Value(), err)
 	}
 
-	if err := h.sessionService.DeleteSession(c.Request.Context(), session.SessionID().Value()); err != nil {
+	if err := h.sessionService.DeleteSession(c.Context(), session.SessionID().Value()); err != nil {
 		h.logError("delete session "+session.SessionID().Value(), err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "DELETE_SESSION_FAILED", "Failed to delete session", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "DELETE_SESSION_FAILED", "Failed to delete session", err.Error())
 	}
 
-	h.sendSuccessResponse(c, sessionID, "delete", nil)
 	h.logSuccess("Delete session", sessionID)
+	return h.sendSuccessResponse(c, sessionID, "delete", nil)
 }
 
 // ConnectSession godoc
@@ -297,35 +291,32 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 // @Failure 409 {object} dto.SessionResponse "Device already in use"
 // @Failure 500 {object} dto.SessionResponse "Failed to start client"
 // @Router /sessions/{sessionId}/connect [post]
-func (h *SessionHandler) ConnectSession(c *gin.Context) {
+func (h *SessionHandler) ConnectSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	h.logOperation("Connecting session", sessionID)
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID+" for connection", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	if !session.WaJID().IsEmpty() {
-		existingSession, err := h.sessionService.GetSessionByDeviceJID(c.Request.Context(), session.WaJID().Value())
+		existingSession, err := h.sessionService.GetSessionByDeviceJID(c.Context(), session.WaJID().Value())
 		if err == nil && existingSession.SessionID() != session.SessionID() {
-			h.sendErrorResponse(c, http.StatusConflict, "DEVICE_ALREADY_IN_USE",
+			return h.sendErrorResponse(c, fiber.StatusConflict, "DEVICE_ALREADY_IN_USE",
 				fmt.Sprintf("Device %s is already in use by session %s (%s)", session.WaJID().Value(), existingSession.SessionID().Value(), existingSession.Name().Value()),
 				"Each meow device can only be used by one session at a time")
-			return
 		}
 	}
 
 	if err := h.wmeowService.StartClient(session.SessionID().Value()); err != nil {
 		h.logError("start client for session "+session.SessionID().Value(), err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "START_CLIENT_FAILED", "Failed to start client", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "START_CLIENT_FAILED", "Failed to start client", err.Error())
 	}
 
 	var qrCode string
@@ -345,7 +336,7 @@ func (h *SessionHandler) ConnectSession(c *gin.Context) {
 
 	response := &dto.ConnectSessionResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: &dto.SessionConnectData{
 			SessionID:  session.SessionID().Value(),
 			Action:     "connect",
@@ -357,8 +348,8 @@ func (h *SessionHandler) ConnectSession(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, response)
 	h.logSuccess("Connect session", sessionID)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // DisconnectSession godoc
@@ -375,22 +366,21 @@ func (h *SessionHandler) ConnectSession(c *gin.Context) {
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to disconnect session"
 // @Router /sessions/{sessionId}/disconnect [post]
-func (h *SessionHandler) DisconnectSession(c *gin.Context) {
+func (h *SessionHandler) DisconnectSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
 		h.logger.Debugf("DisconnectSession: validateSessionID failed for %s", sessionID)
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	h.logOperation("Disconnecting session", sessionID)
 	h.logger.Debugf("DisconnectSession: Starting disconnect for session %s", sessionID)
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logger.Debugf("DisconnectSession: Failed to get session %s: %v", sessionID, err)
 		h.logError("get session "+sessionID+" for disconnection", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	h.logger.Debugf("DisconnectSession: Found session %s (ID: %s), calling StopClient", sessionID, session.SessionID().Value())
@@ -398,14 +388,13 @@ func (h *SessionHandler) DisconnectSession(c *gin.Context) {
 	if err := h.wmeowService.StopClient(session.SessionID().Value()); err != nil {
 		h.logger.Debugf("DisconnectSession: StopClient failed for session %s: %v", session.SessionID().Value(), err)
 		h.logError("stop client for session "+session.SessionID().Value(), err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "STOP_CLIENT_FAILED", "Failed to disconnect session", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "STOP_CLIENT_FAILED", "Failed to disconnect session", err.Error())
 	}
 
 	h.logger.Debugf("DisconnectSession: StopClient succeeded for session %s, sending success response", sessionID)
-	h.sendSuccessResponse(c, sessionID, "disconnect", nil)
 	h.logSuccess("Disconnect session", sessionID)
 	h.logger.Debugf("DisconnectSession: Completed successfully for session %s", sessionID)
+	return h.sendSuccessResponse(c, sessionID, "disconnect", nil)
 }
 
 // PairPhone godoc
@@ -423,36 +412,34 @@ func (h *SessionHandler) DisconnectSession(c *gin.Context) {
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to pair phone"
 // @Router /sessions/{sessionId}/pair [post]
-func (h *SessionHandler) PairPhone(c *gin.Context) {
+func (h *SessionHandler) PairPhone(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	var req dto.PairPhoneRequest
 	if !h.bindAndValidateRequest(c, &req) {
-		return
+		return nil // bindAndValidateRequest já enviou a resposta de erro
 	}
 
 	h.logOperation("Pairing phone for session", fmt.Sprintf("session: %s, phone: %s", sessionID, req.Phone))
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID+" for phone pairing", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	pairCode, err := h.wmeowService.PairPhone(session.SessionID().Value(), req.Phone)
 	if err != nil {
 		h.logError("pair phone for session "+session.SessionID().Value(), err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "PHONE_PAIRING_FAILED", "Failed to pair phone", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "PHONE_PAIRING_FAILED", "Failed to pair phone", err.Error())
 	}
 
 	response := &dto.PairPhoneResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: &dto.PairPhoneResponseData{
 			SessionID: sessionID,
 			Action:    "pair",
@@ -463,8 +450,8 @@ func (h *SessionHandler) PairPhone(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, response)
 	h.logSuccess("Pair phone", fmt.Sprintf("session: %s, phone: %s", sessionID, req.Phone))
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // GetSessionStatus godoc
@@ -480,19 +467,18 @@ func (h *SessionHandler) PairPhone(c *gin.Context) {
 // @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Router /sessions/{sessionId}/status [get]
-func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
+func (h *SessionHandler) GetSessionStatus(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	h.logOperation("Getting status for session", sessionID)
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID+" for status", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	isConnected := h.wmeowService.IsClientConnected(session.SessionID().Value())
@@ -503,7 +489,7 @@ func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 
 	response := &dto.SessionStatusResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: &dto.SessionStatusResponseData{
 			SessionID:     sessionID,
 			Action:        "status",
@@ -519,8 +505,8 @@ func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, response)
 	h.logSuccess("Get session status", sessionID)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // UpdateSessionWebhook godoc
@@ -538,40 +524,37 @@ func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to update webhook"
 // @Router /sessions/{sessionId}/webhook [put]
-func (h *SessionHandler) UpdateSessionWebhook(c *gin.Context) {
+func (h *SessionHandler) UpdateSessionWebhook(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return
+		return nil // validateSessionID já enviou a resposta de erro
 	}
 
 	var req dto.UpdateWebhookRequest
 	if !h.bindAndValidateRequest(c, &req) {
-		return
+		return nil // bindAndValidateRequest já enviou a resposta de erro
 	}
 
 	h.logOperation("Updating webhook for session", fmt.Sprintf("session: %s, url: %s", sessionID, req.URL))
 
-	session, err := h.sessionService.GetSession(c.Request.Context(), sessionID)
+	session, err := h.sessionService.GetSession(c.Context(), sessionID)
 	if err != nil {
 		h.logError("get session "+sessionID+" for webhook update", err)
-		h.sendErrorResponse(c, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
 	if err := h.wmeowService.UpdateSessionWebhook(session.SessionID().Value(), req.URL); err != nil {
 		h.logError("update webhook for session "+session.SessionID().Value(), err)
-		h.sendErrorResponse(c, http.StatusInternalServerError, "WEBHOOK_UPDATE_FAILED", "Failed to update webhook", err.Error())
-		return
+		return h.sendErrorResponse(c, fiber.StatusInternalServerError, "WEBHOOK_UPDATE_FAILED", "Failed to update webhook", err.Error())
 	}
 
 	if len(req.Events) > 0 {
 		if err := h.wmeowService.UpdateSessionSubscriptions(session.SessionID().Value(), req.Events); err != nil {
 			h.logError("update events subscription for session "+session.SessionID().Value(), err)
-			h.sendErrorResponse(c, http.StatusInternalServerError, "EVENTS_UPDATE_FAILED", "Failed to update events subscription", err.Error())
-			return
+			return h.sendErrorResponse(c, fiber.StatusInternalServerError, "EVENTS_UPDATE_FAILED", "Failed to update events subscription", err.Error())
 		}
 	}
 
-	h.sendSuccessResponse(c, sessionID, "webhook_update", nil)
 	h.logSuccess("Update session webhook", sessionID)
+	return h.sendSuccessResponse(c, sessionID, "webhook_update", nil)
 }

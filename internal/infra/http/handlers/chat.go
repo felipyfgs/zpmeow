@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +9,7 @@ import (
 	"zpmeow/internal/infra/http/dto"
 	"zpmeow/internal/infra/wmeow"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type ChatHandler struct {
@@ -42,101 +41,95 @@ func NewChatHandler(chatService *application.ChatApp, wmeowService wmeow.WameowS
 // @Router /session/{sessionId}/chat/presence [post]
 // @Router /session/{sessionId}/presences/typing [post]
 // @Router /session/{sessionId}/presences/recording [post]
-func (h *ChatHandler) SetPresence(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) SetPresence(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.SetPresenceRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.State == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_STATE",
 			"State is required",
 			"Valid states: available, unavailable, composing, recording, paused",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.SetPresence(ctx, sessionID, req.Phone, req.State, req.Media)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"SET_PRESENCE_FAILED",
 			"Failed to set presence",
 			err.Error(),
 		))
-		return
 	}
 
 	response := dto.NewChatSuccessResponse(req.Phone, "", "set_presence")
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) DownloadImage(c *gin.Context) {
-	h.downloadMedia(c, "image")
+func (h *ChatHandler) DownloadImage(c *fiber.Ctx) error {
+	return h.downloadMedia(c, "image")
 }
 
-func (h *ChatHandler) DownloadVideo(c *gin.Context) {
-	h.downloadMedia(c, "video")
+func (h *ChatHandler) DownloadVideo(c *fiber.Ctx) error {
+	return h.downloadMedia(c, "video")
 }
 
-func (h *ChatHandler) DownloadAudio(c *gin.Context) {
-	h.downloadMedia(c, "audio")
+func (h *ChatHandler) DownloadAudio(c *fiber.Ctx) error {
+	return h.downloadMedia(c, "audio")
 }
 
-func (h *ChatHandler) DownloadDocument(c *gin.Context) {
-	h.downloadMedia(c, "document")
+func (h *ChatHandler) DownloadDocument(c *fiber.Ctx) error {
+	return h.downloadMedia(c, "document")
 }
 
-func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) downloadMedia(c *fiber.Ctx, mediaType string) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.DownloadMediaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.MessageID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_MESSAGE_ID",
 			"Message ID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	data, mimeType, err := h.wmeowService.DownloadMedia(ctx, sessionID, req.MessageID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"DOWNLOAD_FAILED",
 			"Failed to download media",
 			err.Error(),
 		))
-		return
 	}
 
 	response := &dto.MediaDownloadResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: &dto.MediaDownloadData{
 			MediaID:  req.MessageID,
 			Type:     mediaType,
@@ -146,7 +139,7 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 		},
 	}
 
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
 // GetChatHistory godoc
@@ -165,33 +158,31 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 // @Failure 404 {object} dto.ChatResponse "Session not found"
 // @Failure 500 {object} dto.ChatResponse "Failed to get chat history"
 // @Router /session/{sessionId}/chat/history [get]
-func (h *ChatHandler) GetChatHistory(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) GetChatHistory(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 	phone := c.Query("phone")
-	limitStr := c.DefaultQuery("limit", "50")
+	limitStr := c.Query("limit", "50")
 
 	if phone == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_PHONE",
 			"Phone number is required",
 			"",
 		))
-		return
 	}
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_LIMIT",
 			"Invalid limit parameter",
 			err.Error(),
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	req := application.GetChatHistoryRequest{
 		SessionID: sessionID,
 		Phone:     phone,
@@ -201,13 +192,12 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 
 	result, err := h.chatService.GetChatHistory(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"GET_CHAT_HISTORY_FAILED",
 			"Failed to get chat history",
 			err.Error(),
 		))
-		return
 	}
 
 	var messages []dto.ChatHistoryData
@@ -230,7 +220,7 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 
 	response := &dto.ChatHistoryResponse{
 		Success: true,
-		Code:    http.StatusOK,
+		Code:    fiber.StatusOK,
 		Data: &dto.ChatHistoryResponseData{
 			Phone:    phone,
 			Messages: messages,
@@ -239,41 +229,38 @@ func (h *ChatHandler) GetChatHistory(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) SetDisappearingTimer(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.SetDisappearingTimerRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.JID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_JID",
 			"JID is required",
 			"",
 		))
-		return
 	}
 
 	if req.Timer == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_TIMER",
 			"Timer is required",
 			"Valid values: off, 24h, 7d, 90d",
 		))
-		return
 	}
 
 	var timer time.Duration
@@ -287,29 +274,27 @@ func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 	case "90d":
 		timer = 90 * 24 * time.Hour
 	default:
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_TIMER",
 			"Invalid timer value",
 			"Valid values: off, 24h, 7d, 90d",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.SetDisappearingTimer(ctx, sessionID, req.JID, timer)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"SET_TIMER_FAILED",
 			"Failed to set disappearing timer",
 			err.Error(),
 		))
-		return
 	}
 
 	response := dto.NewChatSuccessResponse(req.JID, "", "set_disappearing_timer")
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
 // ListChats godoc
@@ -327,11 +312,11 @@ func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 // @Failure 404 {object} dto.ChatResponse "Session not found"
 // @Failure 500 {object} dto.ChatResponse "Failed to list chats"
 // @Router /session/{sessionId}/chat/list [post]
-func (h *ChatHandler) ListChats(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) ListChats(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.ListChatsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		req.Type = "all"
 	}
 
@@ -346,25 +331,23 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	}
 
 	if !validTypes[req.Type] {
-		c.JSON(http.StatusBadRequest, dto.NewListChatsErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewListChatsErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_TYPE",
 			"Invalid chat type",
 			"Valid types: all, groups, contacts",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	chats, err := h.wmeowService.ListChats(ctx, sessionID, req.Type)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewListChatsErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewListChatsErrorResponse(
+			fiber.StatusInternalServerError,
 			"LIST_CHATS_FAILED",
 			"Failed to list chats",
 			err.Error(),
 		))
-		return
 	}
 
 	dtoChats := make([]dto.ChatInfo, len(chats))
@@ -387,43 +370,40 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	}
 
 	response := dto.NewListChatsSuccessResponse(dtoChats, req.Type)
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) GetChatInfo(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) GetChatInfo(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.GetChatInfoRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewGetChatInfoErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGetChatInfoErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.JID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewGetChatInfoErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewGetChatInfoErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_JID",
 			"JID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	chatInfo, err := h.wmeowService.GetChatInfo(ctx, sessionID, req.JID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewGetChatInfoErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewGetChatInfoErrorResponse(
+			fiber.StatusInternalServerError,
 			"GET_CHAT_INFO_FAILED",
 			"Failed to get chat info",
 			err.Error(),
 		))
-		return
 	}
 
 	timestamp := ""
@@ -443,43 +423,40 @@ func (h *ChatHandler) GetChatInfo(c *gin.Context) {
 	}
 
 	response := dto.NewGetChatInfoSuccessResponse(dtoChatInfo)
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) PinChat(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) PinChat(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.PinChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.JID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_JID",
 			"JID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.PinChat(ctx, sessionID, req.JID, req.Pinned)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"PIN_CHAT_FAILED",
 			"Failed to pin/unpin chat",
 			err.Error(),
 		))
-		return
 	}
 
 	action := "unpin_chat"
@@ -488,31 +465,29 @@ func (h *ChatHandler) PinChat(c *gin.Context) {
 	}
 
 	response := dto.NewChatSuccessResponse(req.JID, "", action)
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) MuteChat(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) MuteChat(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.MuteChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.JID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_JID",
 			"JID is required",
 			"",
 		))
-		return
 	}
 
 	var duration time.Duration
@@ -527,26 +502,24 @@ func (h *ChatHandler) MuteChat(c *gin.Context) {
 		case "forever", "":
 			duration = 0
 		default:
-			c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-				http.StatusBadRequest,
+			return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+				fiber.StatusBadRequest,
 				"INVALID_DURATION",
 				"Invalid mute duration",
 				"Valid durations: 1h, 8h, 1w, forever",
 			))
-			return
 		}
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.MuteChat(ctx, sessionID, req.JID, req.Muted, duration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"MUTE_CHAT_FAILED",
 			"Failed to mute/unmute chat",
 			err.Error(),
 		))
-		return
 	}
 
 	action := "unmute_chat"
@@ -555,43 +528,40 @@ func (h *ChatHandler) MuteChat(c *gin.Context) {
 	}
 
 	response := dto.NewChatSuccessResponse(req.JID, "", action)
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
 
-func (h *ChatHandler) ArchiveChat(c *gin.Context) {
-	sessionID := c.Param("sessionId")
+func (h *ChatHandler) ArchiveChat(c *fiber.Ctx) error {
+	sessionID := c.Params("sessionId")
 
 	var req dto.ArchiveChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"INVALID_REQUEST",
 			"Invalid request format",
 			err.Error(),
 		))
-		return
 	}
 
 	if req.JID == "" {
-		c.JSON(http.StatusBadRequest, dto.NewChatErrorResponse(
-			http.StatusBadRequest,
+		return c.Status(fiber.StatusBadRequest).JSON( dto.NewChatErrorResponse(
+			fiber.StatusBadRequest,
 			"MISSING_JID",
 			"JID is required",
 			"",
 		))
-		return
 	}
 
-	ctx := c.Request.Context()
+	ctx := c.Context()
 	err := h.wmeowService.ArchiveChat(ctx, sessionID, req.JID, req.Archived)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.NewChatErrorResponse(
-			http.StatusInternalServerError,
+		return c.Status(fiber.StatusInternalServerError).JSON( dto.NewChatErrorResponse(
+			fiber.StatusInternalServerError,
 			"ARCHIVE_CHAT_FAILED",
 			"Failed to archive/unarchive chat",
 			err.Error(),
 		))
-		return
 	}
 
 	action := "unarchive_chat"
@@ -600,5 +570,5 @@ func (h *ChatHandler) ArchiveChat(c *gin.Context) {
 	}
 
 	response := dto.NewChatSuccessResponse(req.JID, "", action)
-	c.JSON(http.StatusOK, response)
+	return c.Status(fiber.StatusOK).JSON( response)
 }
