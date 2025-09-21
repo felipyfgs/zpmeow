@@ -141,20 +141,18 @@ func (ep *EventProcessor) isSubscribedToEvent(eventType string) bool {
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)
 
-	ep.logger.Debugf("Event received: %s", eventType)
-
 	systemEventType, exists := eventTypeMapping[eventType]
 	if !exists {
-		ep.logger.Debugf("Unmapped event: %s", eventType)
+		// Only log unmapped events that might be important
+		if !isCommonUnmappedEvent(eventType) {
+			ep.logger.Debugf("Unmapped event: %s", eventType)
+		}
 		return
 	}
 
 	if !ep.isSubscribedToEvent(systemEventType) {
-		ep.logger.Debugf("Not subscribed to event: %s (system: %s)", eventType, systemEventType)
 		return
 	}
-
-	ep.logger.Debugf("Processing subscribed event: %s -> %s", eventType, systemEventType)
 
 	if handler, exists := eventHandlers[eventType]; exists {
 		handler(ep, evt)
@@ -296,7 +294,7 @@ func (ep *EventProcessor) handleReceipt(evt interface{}) {
 
 func (ep *EventProcessor) handlePresence(evt interface{}) {
 	presence := evt.(*events.Presence)
-	ep.logger.Debugf("Presence update for session %s", ep.sessionID)
+	// Removed verbose presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
 		"event":      "Presence",
@@ -312,7 +310,7 @@ func (ep *EventProcessor) handlePresence(evt interface{}) {
 
 func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 	chatPresence := evt.(*events.ChatPresence)
-	ep.logger.Debugf("Chat presence update for session %s", ep.sessionID)
+	// Removed verbose chat presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
 		"event":      "ChatPresence",
@@ -344,6 +342,43 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
 		ep.logger.Errorf("Failed to send generic webhook: %v", err)
 	}
+}
+
+// isCommonUnmappedEvent checks if an event type is commonly unmapped and can be ignored
+func isCommonUnmappedEvent(eventType string) bool {
+	commonUnmappedEvents := map[string]bool{
+		"*events.QR":                    true,
+		"*events.PairSuccess":           true,
+		"*events.PairError":             true,
+		"*events.LoggedOut":             true,
+		"*events.StreamReplaced":        true,
+		"*events.TemporaryBan":          true,
+		"*events.ConnectFailure":        true,
+		"*events.ClientOutdated":        true,
+		"*events.KeepAliveTimeout":      true,
+		"*events.KeepAliveRestored":     true,
+		"*events.Blocklist":             true,
+		"*events.PushName":              true,
+		"*events.BusinessName":          true,
+		"*events.JoinedGroup":           true,
+		"*events.GroupInfo":             true,
+		"*events.Picture":               true,
+		"*events.PushNameSetting":       true,
+		"*events.AppStateSyncComplete":  true,
+		"*events.HistorySync":           true,
+		"*events.AppState":              true,
+		"*events.MarkChatAsRead":        true,
+		"*events.Mute":                  true,
+		"*events.Pin":                   true,
+		"*events.Star":                  true,
+		"*events.Archive":               true,
+		"*events.DeleteChat":            true,
+		"*events.UndoDeleteChat":        true,
+		"*events.DeleteForMe":           true,
+		"*events.MediaRetry":            true,
+		"*events.UndecryptableMessage":  true,
+	}
+	return commonUnmappedEvents[eventType]
 }
 
 func sendWebhook(url string, data interface{}) error {
