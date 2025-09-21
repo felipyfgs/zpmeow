@@ -193,7 +193,9 @@ func (h *HTTPHandler) GetQueryParamInt(c *fiber.Ctx, key string, defaultValue in
 func (h *BaseHandler) BindJSON(c *fiber.Ctx, obj interface{}) error {
 	if err := c.BodyParser(obj); err != nil {
 		h.logger.Errorf("JSON binding failed: %v", err)
-		h.SendValidationErrorResponse(c, err)
+		if sendErr := h.SendValidationErrorResponse(c, err); sendErr != nil {
+			h.logger.Errorf("Failed to send validation error response: %v", sendErr)
+		}
 		return err
 	}
 	return nil
@@ -202,7 +204,9 @@ func (h *BaseHandler) BindJSON(c *fiber.Ctx, obj interface{}) error {
 func (h *BaseHandler) BindQuery(c *fiber.Ctx, obj interface{}) error {
 	if err := c.QueryParser(obj); err != nil {
 		h.logger.Errorf("Query binding failed: %v", err)
-		h.SendValidationErrorResponse(c, err)
+		if sendErr := h.SendValidationErrorResponse(c, err); sendErr != nil {
+			h.logger.Errorf("Failed to send validation error response: %v", sendErr)
+		}
 		return err
 	}
 	return nil
@@ -211,7 +215,9 @@ func (h *BaseHandler) BindQuery(c *fiber.Ctx, obj interface{}) error {
 func (h *BaseHandler) BindURI(c *fiber.Ctx, obj interface{}) error {
 	if err := c.ParamsParser(obj); err != nil {
 		h.logger.Errorf("URI binding failed: %v", err)
-		h.SendValidationErrorResponse(c, err)
+		if sendErr := h.SendValidationErrorResponse(c, err); sendErr != nil {
+			h.logger.Errorf("Failed to send validation error response: %v", sendErr)
+		}
 		return err
 	}
 	return nil
