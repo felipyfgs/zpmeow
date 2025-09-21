@@ -313,6 +313,8 @@ type Logger interface {
 	Fatal(ctx context.Context, msg string, keysAndValues ...interface{})
 }
 
+
+
 type IDGenerator interface {
 	Generate() string
 	GenerateAPIKey() string

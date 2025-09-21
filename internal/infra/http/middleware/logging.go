@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"strings"
+	"time"
 
 	"zpmeow/internal/infra/logging"
 
@@ -30,47 +31,62 @@ type HTTPLogEntry struct {
 func Logger() gin.HandlerFunc {
 	httpLogger := logging.GetLogger().Sub("http")
 
-	return gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
 
-		if shouldSkipLogging(params.Path) {
-			return ""
+		// Skip logging for certain paths
+		if shouldSkipLogging(path) {
+			c.Next()
+			return
 		}
 
-		entry := CreateHTTPLogEntry(params)
-		LogHTTPRequest(httpLogger, entry)
+		// Process request
+		c.Next()
 
-		return ""
-	})
+		// Log after request is processed
+		latency := time.Since(start)
+		status := c.Writer.Status()
+
+		entry := HTTPLogEntry{
+			Method:   c.Request.Method,
+			Path:     path,
+			Status:   status,
+			Latency:  latency.String(),
+			ClientIP: c.ClientIP(),
+			Level:    determineLogLevel(status),
+		}
+
+		// Add error if present
+		if len(c.Errors) > 0 {
+			entry.Error = c.Errors.String()
+		}
+
+		// Add user agent for non-static resources
+		if !isStaticResource(path) {
+			entry.UserAgent = c.Request.UserAgent()
+		}
+
+		// Extract correlation ID from context
+		correlationID := GetCorrelationID(c.Request.Context())
+
+		LogHTTPRequest(httpLogger, entry, correlationID)
+	}
 }
 
-func CreateHTTPLogEntry(params gin.LogFormatterParams) HTTPLogEntry {
-	entry := HTTPLogEntry{
-		Method:   params.Method,
-		Path:     params.Path,
-		Status:   params.StatusCode,
-		Latency:  params.Latency.String(),
-		ClientIP: params.ClientIP,
-		Level:    determineLogLevel(params.StatusCode),
-	}
 
-	if params.ErrorMessage != "" {
-		entry.Error = params.ErrorMessage
-	}
 
-	if !isStaticResource(params.Path) && params.Request != nil {
-		entry.UserAgent = params.Request.UserAgent()
-	}
-
-	return entry
-}
-
-func LogHTTPRequest(httpLogger logging.Logger, entry HTTPLogEntry) {
+func LogHTTPRequest(httpLogger logging.Logger, entry HTTPLogEntry, correlationID string) {
 	logEntry := httpLogger.With().
 		Str("method", entry.Method).
 		Str("path", entry.Path).
 		Int("status", entry.Status).
 		Str("latency", entry.Latency).
 		Str("client_ip", entry.ClientIP)
+
+	if correlationID != "" {
+		logEntry = logEntry.Str("correlation_id", correlationID)
+	}
 
 	if entry.Error != "" {
 		logEntry = logEntry.Str("error", entry.Error)
@@ -149,3 +165,5 @@ func isStaticResource(path string) bool {
 
 	return false
 }
+
+

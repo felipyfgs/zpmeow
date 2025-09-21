@@ -64,6 +64,7 @@ import (
 	"zpmeow/internal/application"
 	"zpmeow/internal/config"
 	"zpmeow/internal/domain/session"
+	"zpmeow/internal/infra/cache"
 	"zpmeow/internal/infra/database"
 	"zpmeow/internal/infra/database/repository"
 	"zpmeow/internal/infra/http/handlers"
@@ -109,7 +110,22 @@ func main() {
 		log.Fatalf("Failed to create whatsmeow container: %v", err)
 	}
 
-	sessionRepo := repository.NewPostgresRepo(db)
+	// Initialize cache service
+	cacheService, err := cache.NewRedisService(cfg.GetCache())
+	if err != nil {
+		log.Fatalf("Failed to initialize cache service: %v", err)
+	}
+	defer func() {
+		if closer, ok := cacheService.(*cache.RedisService); ok {
+			if err := closer.Close(); err != nil {
+				log.Errorf("Error closing cache service: %v", err)
+			}
+		}
+	}()
+
+	// Initialize repositories
+	baseSessionRepo := repository.NewPostgresRepo(db)
+	sessionRepo := cache.NewCachedSessionRepository(baseSessionRepo, cacheService)
 
 	_ = webhooks.NewService()
 
@@ -142,7 +158,7 @@ func main() {
 
 	// Initialize handlers in the specified order:
 	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
-	healthHandler := handlers.NewHealthHandler(db)
+	healthHandler := handlers.NewHealthHandlerWithCache(db, cacheService)
 	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
 	privacyHandler := handlers.NewPrivacyHandler(appSessionService, wmeowService)
@@ -157,22 +173,11 @@ func main() {
 
 	ginRouter := gin.New()
 
-	ginRouter.Use(gin.LoggerWithConfig(gin.LoggerConfig{
-		SkipPaths: []string{"/ping", "/health"},
-		Formatter: func(param gin.LogFormatterParams) string {
-			if param.StatusCode >= 400 ||
-				(param.Path != "/ping" && param.Path != "/health") {
-				return fmt.Sprintf("%s - %s %s %d %s\n",
-					param.TimeStamp.Format("15:04:05"),
-					param.Method,
-					param.Path,
-					param.StatusCode,
-					param.Latency,
-				)
-			}
-			return ""
-		},
-	}))
+	// Add correlation ID middleware first
+	ginRouter.Use(middleware.CorrelationIDMiddleware())
+
+	// Add structured logging middleware
+	ginRouter.Use(middleware.Logger())
 
 	ginRouter.Use(middleware.CORS(cfg.GetCORS()))
 

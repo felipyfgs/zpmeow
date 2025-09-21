@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +29,12 @@ type Logger interface {
 	Errorf(format string, args ...interface{})
 	Fatal(msg string)
 	Fatalf(format string, args ...interface{})
+
+	// Context-aware methods
+	DebugCtx(ctx context.Context, msg string)
+	InfoCtx(ctx context.Context, msg string)
+	WarnCtx(ctx context.Context, msg string)
+	ErrorCtx(ctx context.Context, msg string)
 
 	With() LogContext
 	Sub(module string) Logger
@@ -188,6 +195,23 @@ func TruncateID(id string) string {
 	return id[:8] + "..." + id[len(id)-8:]
 }
 
+// addCorrelationID adds correlation ID from context to log event
+func (l *ZerologLogger) addCorrelationID(ctx context.Context, event *zerolog.Event) {
+	if ctx == nil {
+		return
+	}
+
+	// Try to get correlation ID from context
+	if correlationID, ok := ctx.Value("correlation_id").(string); ok && correlationID != "" {
+		event.Str("correlation_id", correlationID)
+	}
+
+	// Add module if available
+	if l.module != "" {
+		event.Str("module", l.module)
+	}
+}
+
 func shouldUseColor(out io.Writer, configColor bool) bool {
 	if forceColor := os.Getenv("FORCE_COLOR"); forceColor != "" {
 		return forceColor != "0" && forceColor != "false"
@@ -265,6 +289,31 @@ func (l *ZerologLogger) Fatal(msg string) {
 
 func (l *ZerologLogger) Fatalf(format string, args ...interface{}) {
 	l.logger.Fatal().Msgf(format, args...)
+}
+
+// Context-aware methods
+func (l *ZerologLogger) DebugCtx(ctx context.Context, msg string) {
+	event := l.logger.Debug()
+	l.addCorrelationID(ctx, event)
+	event.Msg(msg)
+}
+
+func (l *ZerologLogger) InfoCtx(ctx context.Context, msg string) {
+	event := l.logger.Info()
+	l.addCorrelationID(ctx, event)
+	event.Msg(msg)
+}
+
+func (l *ZerologLogger) WarnCtx(ctx context.Context, msg string) {
+	event := l.logger.Warn()
+	l.addCorrelationID(ctx, event)
+	event.Msg(msg)
+}
+
+func (l *ZerologLogger) ErrorCtx(ctx context.Context, msg string) {
+	event := l.logger.Error()
+	l.addCorrelationID(ctx, event)
+	event.Msg(msg)
 }
 
 func (l *ZerologLogger) With() LogContext {

@@ -12,6 +12,7 @@ func DefaultConfig() *Config {
 		Webhook:  DefaultWebhookConfig(),
 		Meow:     DefaultMeowConfig(),
 		Security: DefaultSecurityConfig(),
+		Cache:    DefaultCacheConfig(),
 	}
 }
 
@@ -104,6 +105,27 @@ func DefaultSecurityConfig() SecurityConfig {
 		RateLimitRPS:     100,
 		RequestTimeout:   30 * time.Second,
 		MaxRequestSize:   10 * 1024 * 1024,
+	}
+}
+
+func DefaultCacheConfig() CacheConfig {
+	return CacheConfig{
+		Enabled:       true,
+		RedisHost:     "localhost",
+		RedisPort:     "6379",
+		RedisPassword: "",
+		RedisDB:       0,
+		PoolSize:      10,
+		MinIdleConns:  2,
+		MaxRetries:    3,
+		RetryDelay:    1 * time.Second,
+		DialTimeout:   5 * time.Second,
+		ReadTimeout:   3 * time.Second,
+		WriteTimeout:  3 * time.Second,
+		SessionTTL:    24 * time.Hour,
+		QRCodeTTL:     60 * time.Second,
+		CredentialTTL: 6 * time.Hour,
+		StatusTTL:     5 * time.Minute,
 	}
 }
 

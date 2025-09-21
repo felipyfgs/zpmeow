@@ -3,6 +3,7 @@ package wmeow
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"zpmeow/internal/domain/session"
@@ -18,6 +19,11 @@ type EventProcessor struct {
 	sessionRepo      session.Repository
 	logger           logging.Logger
 	subscribedEvents []string
+
+	// Receipt batching for performance
+	receiptMutex     sync.Mutex
+	receiptCount     int
+	lastReceiptLog   time.Time
 }
 
 var eventTypeMapping = map[string]string{
@@ -135,20 +141,20 @@ func (ep *EventProcessor) isSubscribedToEvent(eventType string) bool {
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)
 
-	ep.logger.Debugf("📨 Event received: %s", eventType)
+	ep.logger.Debugf("Event received: %s", eventType)
 
 	systemEventType, exists := eventTypeMapping[eventType]
 	if !exists {
-		ep.logger.Debugf("❓ Unmapped event: %s", eventType)
+		ep.logger.Debugf("Unmapped event: %s", eventType)
 		return
 	}
 
 	if !ep.isSubscribedToEvent(systemEventType) {
-		ep.logger.Debugf("🚫 Not subscribed to event: %s (system: %s)", eventType, systemEventType)
+		ep.logger.Debugf("Not subscribed to event: %s (system: %s)", eventType, systemEventType)
 		return
 	}
 
-	ep.logger.Debugf("✅ Processing subscribed event: %s -> %s", eventType, systemEventType)
+	ep.logger.Debugf("Processing subscribed event: %s -> %s", eventType, systemEventType)
 
 	if handler, exists := eventHandlers[eventType]; exists {
 		handler(ep, evt)
@@ -261,17 +267,30 @@ func (ep *EventProcessor) handleLoggedOut(evt interface{}) {
 
 func (ep *EventProcessor) handleReceipt(evt interface{}) {
 	receipt := evt.(*events.Receipt)
-	ep.logger.Debugf("Receipt received for session %s", ep.sessionID)
+
+	// Batch receipt logs to reduce verbosity
+	ep.receiptMutex.Lock()
+	ep.receiptCount++
+	now := time.Now()
+
+	// Log every 10 receipts or every 30 seconds, whichever comes first
+	shouldLog := ep.receiptCount%10 == 0 || now.Sub(ep.lastReceiptLog) > 30*time.Second
+	if shouldLog {
+		ep.logger.Debugf("Processed %d receipts for session %s (last 30s)", ep.receiptCount, ep.sessionID)
+		ep.lastReceiptLog = now
+		ep.receiptCount = 0
+	}
+	ep.receiptMutex.Unlock()
 
 	webhookPayload := map[string]interface{}{
 		"event":      "Receipt",
 		"session_id": ep.sessionID,
-		"timestamp":  time.Now().Unix(),
+		"timestamp":  now.Unix(),
 		"data":       receipt,
 	}
 
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		ep.logger.Errorf("Failed to send receipt webhook: %v", err)
 	}
 }
 
@@ -321,9 +340,9 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 		"data":       evt,
 	}
 
-	ep.logger.Infof("📤 Sending generic event: %s", eventType)
+	ep.logger.Infof("Sending generic event: %s", eventType)
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("❌ Failed to send generic webhook: %v", err)
+		ep.logger.Errorf("Failed to send generic webhook: %v", err)
 	}
 }
 

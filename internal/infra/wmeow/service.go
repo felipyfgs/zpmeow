@@ -118,14 +118,20 @@ func (m *MeowService) getOrCreateClient(sessionID string) *WameowClient {
 	var expectedDeviceJID string
 	var webhookURL string
 	if err == nil {
-		if sessionEntity.GetDeviceJIDString() != "" {
-			expectedDeviceJID = sessionEntity.GetDeviceJIDString()
+		deviceJIDString := sessionEntity.GetDeviceJIDString()
+		m.logger.Debugf("Session %s device JID from entity: '%s'", sessionID, deviceJIDString)
+		if deviceJIDString != "" {
+			expectedDeviceJID = deviceJIDString
 			m.logger.Infof("Creating client for session %s with expected device JID: %s", sessionID, expectedDeviceJID)
+		} else {
+			m.logger.Warnf("Session %s has empty device JID string", sessionID)
 		}
 		webhookURL = sessionEntity.GetWebhookEndpointString()
 		if webhookURL != "" {
 			m.logger.Infof("Creating client for session %s with webhook URL: %s", sessionID, webhookURL)
 		}
+	} else {
+		m.logger.Errorf("Failed to get session %s: %v", sessionID, err)
 	}
 
 	eventProcessor := NewEventProcessor(sessionID, webhookURL, m.sessions)
@@ -340,18 +346,27 @@ func (m *MeowService) deviceExistsInDatabase(deviceJID string) bool {
 		return false
 	}
 
-	devices, err := m.container.GetAllDevices(context.Background())
+	// Parse the deviceJID to get the JID object
+	jid, err := waTypes.ParseJID(deviceJID)
 	if err != nil {
-		m.logger.Errorf("Failed to get devices from container: %v", err)
+		m.logger.Errorf("Failed to parse device JID %s: %v", deviceJID, err)
 		return false
 	}
 
-	for _, device := range devices {
-		if device != nil && device.ID != nil && device.ID.String() == deviceJID {
-			return true
-		}
+	// Try to get the specific device from the container
+	device, err := m.container.GetDevice(context.Background(), jid)
+	if err != nil {
+		m.logger.Debugf("Device %s not found in container: %v", deviceJID, err)
+		return false
 	}
 
+	// Check if device exists and has valid ID
+	if device != nil && device.ID != nil {
+		m.logger.Debugf("Device %s found in container", deviceJID)
+		return true
+	}
+
+	m.logger.Debugf("Device %s not found or invalid", deviceJID)
 	return false
 }
 

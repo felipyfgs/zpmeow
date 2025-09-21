@@ -22,6 +22,7 @@ meow é uma API REST moderna e completa que permite integração total com o meo
 - 🐳 **Containerização com Docker**
 - 📊 **Logging estruturado e monitoramento**
 - 🔄 **Reconexão automática e gestão de sessões**
+- 🗄️ **Sistema de cache Redis para alta performance**
 
 ## 📊 **Status da Implementação**
 
@@ -76,6 +77,7 @@ meow é uma API REST moderna e completa que permite integração total com o meo
 - **meow**: [whatsmeow](https://github.com/tulir/whatsmeow)
 - **Web Framework**: Gin
 - **Database**: SQLite (padrão) / PostgreSQL / MySQL
+- **Cache**: Redis (opcional, melhora performance em 70-80%)
 - **Documentação**: Swagger/OpenAPI
 - **Containerização**: Docker & Docker Compose
 - **Arquitetura**: Clean Architecture + DDD

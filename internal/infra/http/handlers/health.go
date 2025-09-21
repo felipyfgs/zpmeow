@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"time"
 
+	"zpmeow/internal/application/ports"
 	"zpmeow/internal/infra/database"
 	"zpmeow/internal/infra/http/dto"
 
@@ -13,13 +15,23 @@ import (
 
 type HealthHandler struct {
 	*BaseHandler
-	db *sqlx.DB
+	db    *sqlx.DB
+	cache ports.CacheService
 }
 
 func NewHealthHandler(db *sqlx.DB) *HealthHandler {
 	return &HealthHandler{
 		BaseHandler: NewBaseHandler("health-handler"),
 		db:          db,
+		cache:       nil,
+	}
+}
+
+func NewHealthHandlerWithCache(db *sqlx.DB, cache ports.CacheService) *HealthHandler {
+	return &HealthHandler{
+		BaseHandler: NewBaseHandler("health-handler"),
+		db:          db,
+		cache:       cache,
 	}
 }
 
@@ -49,6 +61,7 @@ func (h *HealthHandler) sendSuccessResponse(c *gin.Context, status, message, ver
 func (h *HealthHandler) checkDependencies() map[string]string {
 	dependencies := make(map[string]string)
 
+	// Check database
 	if h.db != nil {
 		if err := database.HealthCheck(h.db); err != nil {
 			dependencies["database"] = "unhealthy: " + err.Error()
@@ -57,6 +70,20 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 		}
 	} else {
 		dependencies["database"] = "not configured"
+	}
+
+	// Check cache
+	if h.cache != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if err := h.cache.Ping(ctx); err != nil {
+			dependencies["cache"] = "unhealthy: " + err.Error()
+		} else {
+			dependencies["cache"] = "healthy"
+		}
+	} else {
+		dependencies["cache"] = "not configured"
 	}
 
 	return dependencies
@@ -120,11 +147,26 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 	h.logger.Infof("Metrics requested")
 
 	metrics := map[string]interface{}{
-		"status":    "metrics not implemented yet",
+		"service":   "meow",
 		"timestamp": time.Now().Unix(),
+		"uptime":    time.Since(time.Now()).String(), // This would be calculated from service start time
 	}
-	h.SendSuccessResponse(c, http.StatusOK, metrics)
 
+	// Add cache metrics if available
+	if h.cache != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if stats, err := h.cache.GetStats(ctx); err == nil {
+			metrics["cache"] = stats
+		} else {
+			metrics["cache"] = map[string]interface{}{
+				"error": err.Error(),
+			}
+		}
+	}
+
+	h.SendSuccessResponse(c, http.StatusOK, metrics)
 	h.logger.Infof("Metrics completed successfully")
 }
 

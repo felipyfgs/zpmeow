@@ -131,10 +131,18 @@ func (a *AuthMiddleware) AuthenticateAny() gin.HandlerFunc {
 }
 
 func (a *AuthMiddleware) extractAPIKey(c *gin.Context) string {
+	// Try X-API-Key header first (preferred)
+	apiKey := c.GetHeader("X-API-Key")
+	if apiKey != "" {
+		return apiKey
+	}
+
+	// Fallback to Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
 		return authHeader
 	}
+
 	return ""
 }
 

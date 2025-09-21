@@ -11,6 +11,7 @@ type ConfigProvider interface {
 	GetWebhook() WebhookConfigProvider
 	GetMeow() MeowConfigProvider
 	GetSecurity() SecurityConfigProvider
+	GetCache() CacheConfigProvider
 }
 
 type DatabaseConfigProvider interface {
@@ -86,6 +87,26 @@ type SecurityConfigProvider interface {
 	GetMaxRequestSize() int64
 }
 
+type CacheConfigProvider interface {
+	GetCacheEnabled() bool
+	GetRedisURL() string
+	GetRedisHost() string
+	GetRedisPort() string
+	GetRedisPassword() string
+	GetRedisDB() int
+	GetPoolSize() int
+	GetMinIdleConns() int
+	GetMaxRetries() int
+	GetRetryDelay() time.Duration
+	GetDialTimeout() time.Duration
+	GetReadTimeout() time.Duration
+	GetWriteTimeout() time.Duration
+	GetSessionTTL() time.Duration
+	GetQRCodeTTL() time.Duration
+	GetCredentialTTL() time.Duration
+	GetStatusTTL() time.Duration
+}
+
 func (c *Config) GetDatabase() DatabaseConfigProvider {
 	return &c.Database
 }
@@ -116,6 +137,10 @@ func (c *Config) GetMeow() MeowConfigProvider {
 
 func (c *Config) GetSecurity() SecurityConfigProvider {
 	return &c.Security
+}
+
+func (c *Config) GetCache() CacheConfigProvider {
+	return &c.Cache
 }
 
 func (d *DatabaseConfig) GetHost() string                   { return d.Host }
@@ -174,3 +199,21 @@ func (s *SecurityConfig) GetRateLimitEnabled() bool        { return s.RateLimitE
 func (s *SecurityConfig) GetRateLimitRPS() int             { return s.RateLimitRPS }
 func (s *SecurityConfig) GetRequestTimeout() time.Duration { return s.RequestTimeout }
 func (s *SecurityConfig) GetMaxRequestSize() int64         { return s.MaxRequestSize }
+
+func (c *CacheConfig) GetCacheEnabled() bool           { return c.Enabled }
+func (c *CacheConfig) GetRedisURL() string             { return c.RedisURL }
+func (c *CacheConfig) GetRedisHost() string            { return c.RedisHost }
+func (c *CacheConfig) GetRedisPort() string            { return c.RedisPort }
+func (c *CacheConfig) GetRedisPassword() string        { return c.RedisPassword }
+func (c *CacheConfig) GetRedisDB() int                 { return c.RedisDB }
+func (c *CacheConfig) GetPoolSize() int                { return c.PoolSize }
+func (c *CacheConfig) GetMinIdleConns() int            { return c.MinIdleConns }
+func (c *CacheConfig) GetMaxRetries() int              { return c.MaxRetries }
+func (c *CacheConfig) GetRetryDelay() time.Duration    { return c.RetryDelay }
+func (c *CacheConfig) GetDialTimeout() time.Duration   { return c.DialTimeout }
+func (c *CacheConfig) GetReadTimeout() time.Duration   { return c.ReadTimeout }
+func (c *CacheConfig) GetWriteTimeout() time.Duration  { return c.WriteTimeout }
+func (c *CacheConfig) GetSessionTTL() time.Duration    { return c.SessionTTL }
+func (c *CacheConfig) GetQRCodeTTL() time.Duration     { return c.QRCodeTTL }
+func (c *CacheConfig) GetCredentialTTL() time.Duration { return c.CredentialTTL }
+func (c *CacheConfig) GetStatusTTL() time.Duration     { return c.StatusTTL }

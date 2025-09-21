@@ -1,8 +1,10 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"zpmeow/internal/domain/common"
 )
@@ -429,4 +431,97 @@ func (s *Session) SetID(id string) error {
 func (s *Session) MarkCreated() {
 	event := NewSessionCreatedEvent(s.id.Value(), s.name.Value())
 	s.AddEvent(event)
+}
+
+// sessionJSON is a helper struct for JSON marshaling/unmarshaling
+type sessionJSON struct {
+	ID              string    `json:"id"`
+	Name            string    `json:"name"`
+	Status          string    `json:"status"`
+	DeviceJID       string    `json:"device_jid"`
+	QRCode          string    `json:"qr_code"`
+	ProxyConfig     string    `json:"proxy_config"`
+	WebhookEndpoint string    `json:"webhook_endpoint"`
+	WebhookEvents   []string  `json:"webhook_events"`
+	ApiKey          string    `json:"api_key"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// MarshalJSON implements the json.Marshaler interface
+func (s *Session) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sessionJSON{
+		ID:              s.id.Value(),
+		Name:            s.name.Value(),
+		Status:          string(s.status),
+		DeviceJID:       s.deviceJID.Value(),
+		QRCode:          s.qrCode.Value(),
+		ProxyConfig:     s.proxyConfig.Value(),
+		WebhookEndpoint: s.webhookEndpoint.Value(),
+		WebhookEvents:   s.webhookEvents,
+		ApiKey:          s.apiKey.Value(),
+		CreatedAt:       s.createdAt.Value(),
+		UpdatedAt:       s.updatedAt.Value(),
+	})
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface
+func (s *Session) UnmarshalJSON(data []byte) error {
+	var sj sessionJSON
+	if err := json.Unmarshal(data, &sj); err != nil {
+		return err
+	}
+
+	// Reconstruct the Session from JSON data
+	sessionID, err := NewSessionID(sj.ID)
+	if err != nil {
+		return err
+	}
+
+	sessionName, err := NewSessionName(sj.Name)
+	if err != nil {
+		return err
+	}
+
+	deviceJID, err := NewDeviceJID(sj.DeviceJID)
+	if err != nil {
+		return err
+	}
+
+	qrCode, err := NewQRCode(sj.QRCode)
+	if err != nil {
+		return err
+	}
+
+	proxyConfig, err := NewProxyConfiguration(sj.ProxyConfig)
+	if err != nil {
+		return err
+	}
+
+	webhookEndpoint, err := NewWebhookEndpoint(sj.WebhookEndpoint)
+	if err != nil {
+		// Allow empty webhook endpoints
+		webhookEndpoint = WebhookEndpoint{}
+	}
+
+	apiKey, err := NewApiKey(sj.ApiKey)
+	if err != nil {
+		// Allow empty API keys
+		apiKey = ApiKey{}
+	}
+
+	s.AggregateRoot = common.NewAggregateRoot(sessionID.ID)
+	s.id = sessionID
+	s.name = sessionName
+	s.status = Status(sj.Status)
+	s.deviceJID = deviceJID
+	s.qrCode = qrCode
+	s.proxyConfig = proxyConfig
+	s.webhookEndpoint = webhookEndpoint
+	s.webhookEvents = sj.WebhookEvents
+	s.apiKey = apiKey
+	s.createdAt = common.NewTimestamp(sj.CreatedAt)
+	s.updatedAt = common.NewTimestamp(sj.UpdatedAt)
+
+	return nil
 }

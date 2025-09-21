@@ -31,7 +31,6 @@ func SetupRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 ) {
 
-	router.Use(middleware.Logger())
 	router.Use(gin.Recovery())
 
 	router.Use(func(c *gin.Context) {

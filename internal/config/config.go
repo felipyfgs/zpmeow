@@ -19,6 +19,7 @@ type Config struct {
 	Webhook  WebhookConfig  `json:"webhook"`
 	Meow     MeowConfig     `json:"meow"`
 	Security SecurityConfig `json:"security"`
+	Cache    CacheConfig    `json:"cache"`
 }
 
 type DatabaseConfig struct {
@@ -94,6 +95,26 @@ type SecurityConfig struct {
 	MaxRequestSize   int64         `json:"max_request_size"`
 }
 
+type CacheConfig struct {
+	Enabled           bool          `json:"enabled"`
+	RedisURL          string        `json:"redis_url"`
+	RedisHost         string        `json:"redis_host"`
+	RedisPort         string        `json:"redis_port"`
+	RedisPassword     string        `json:"redis_password"`
+	RedisDB           int           `json:"redis_db"`
+	PoolSize          int           `json:"pool_size"`
+	MinIdleConns      int           `json:"min_idle_conns"`
+	MaxRetries        int           `json:"max_retries"`
+	RetryDelay        time.Duration `json:"retry_delay"`
+	DialTimeout       time.Duration `json:"dial_timeout"`
+	ReadTimeout       time.Duration `json:"read_timeout"`
+	WriteTimeout      time.Duration `json:"write_timeout"`
+	SessionTTL        time.Duration `json:"session_ttl"`
+	QRCodeTTL         time.Duration `json:"qr_code_ttl"`
+	CredentialTTL     time.Duration `json:"credential_ttl"`
+	StatusTTL         time.Duration `json:"status_ttl"`
+}
+
 func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
 
@@ -106,6 +127,7 @@ func LoadConfig() (*Config, error) {
 		Webhook:  loadWebhookConfig(),
 		Meow:     loadMeowConfig(),
 		Security: loadSecurityConfig(),
+		Cache:    loadCacheConfig(),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -238,6 +260,38 @@ func loadSecurityConfig() SecurityConfig {
 		RequestTimeout:   getDurationEnvOrDefault("SECURITY_REQUEST_TIMEOUT", 30*time.Second),
 		MaxRequestSize:   getInt64EnvOrDefault("SECURITY_MAX_REQUEST_SIZE", 10*1024*1024),
 	}
+}
+
+func loadCacheConfig() CacheConfig {
+	cfg := CacheConfig{
+		Enabled:       getBoolEnvOrDefault("CACHE_ENABLED", true),
+		RedisHost:     getEnvOrDefault("REDIS_HOST", "localhost"),
+		RedisPort:     getEnvOrDefault("REDIS_PORT", "6379"),
+		RedisPassword: getEnvOrDefault("REDIS_PASSWORD", ""),
+		RedisDB:       getIntEnvOrDefault("REDIS_DB", 0),
+		PoolSize:      getIntEnvOrDefault("REDIS_POOL_SIZE", 10),
+		MinIdleConns:  getIntEnvOrDefault("REDIS_MIN_IDLE_CONNS", 2),
+		MaxRetries:    getIntEnvOrDefault("REDIS_MAX_RETRIES", 3),
+		RetryDelay:    getDurationEnvOrDefault("REDIS_RETRY_DELAY", 1*time.Second),
+		DialTimeout:   getDurationEnvOrDefault("REDIS_DIAL_TIMEOUT", 5*time.Second),
+		ReadTimeout:   getDurationEnvOrDefault("REDIS_READ_TIMEOUT", 3*time.Second),
+		WriteTimeout:  getDurationEnvOrDefault("REDIS_WRITE_TIMEOUT", 3*time.Second),
+		SessionTTL:    getDurationEnvOrDefault("CACHE_SESSION_TTL", 24*time.Hour),
+		QRCodeTTL:     getDurationEnvOrDefault("CACHE_QR_CODE_TTL", 60*time.Second),
+		CredentialTTL: getDurationEnvOrDefault("CACHE_CREDENTIAL_TTL", 6*time.Hour),
+		StatusTTL:     getDurationEnvOrDefault("CACHE_STATUS_TTL", 5*time.Minute),
+	}
+
+	// Build Redis URL if not provided
+	if cfg.RedisURL == "" {
+		if cfg.RedisPassword != "" {
+			cfg.RedisURL = fmt.Sprintf("redis://:%s@%s:%s/%d", cfg.RedisPassword, cfg.RedisHost, cfg.RedisPort, cfg.RedisDB)
+		} else {
+			cfg.RedisURL = fmt.Sprintf("redis://%s:%s/%d", cfg.RedisHost, cfg.RedisPort, cfg.RedisDB)
+		}
+	}
+
+	return cfg
 }
 
 func getEnvOrDefault(key, defaultValue string) string {

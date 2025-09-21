@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"zpmeow/internal/application/ports"
@@ -21,13 +22,33 @@ func NewSessionApp(sessionRepo session.Repository, domainService session.Service
 	}
 }
 
-func (s *SessionApp) GetSession(ctx context.Context, sessionIDOrName string) (*session.Session, error) {
-	sess, err := s.sessionRepo.GetByID(ctx, sessionIDOrName)
-	if err == nil {
-		return sess, nil
-	}
+// isUUID checks if a string looks like a UUID
+func isUUID(s string) bool {
+	// UUID pattern: 8-4-4-4-12 hexadecimal digits
+	uuidPattern := `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
+	matched, _ := regexp.MatchString(uuidPattern, s)
+	return matched
+}
 
-	return s.sessionRepo.GetByName(ctx, sessionIDOrName)
+func (s *SessionApp) GetSession(ctx context.Context, sessionIDOrName string) (*session.Session, error) {
+	// Smart detection: try the most likely option first
+	if isUUID(sessionIDOrName) {
+		// Looks like UUID, try ID first
+		sess, err := s.sessionRepo.GetByID(ctx, sessionIDOrName)
+		if err == nil {
+			return sess, nil
+		}
+		// Fallback to name (edge case)
+		return s.sessionRepo.GetByName(ctx, sessionIDOrName)
+	} else {
+		// Looks like name, try name first
+		sess, err := s.sessionRepo.GetByName(ctx, sessionIDOrName)
+		if err == nil {
+			return sess, nil
+		}
+		// Fallback to ID (edge case)
+		return s.sessionRepo.GetByID(ctx, sessionIDOrName)
+	}
 }
 
 func (s *SessionApp) GetAllSessions(ctx context.Context) ([]*session.Session, error) {
