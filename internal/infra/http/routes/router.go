@@ -40,10 +40,7 @@ func SetupRoutes(
 		return c.Next()
 	})
 
-	app.Get("/ping", handlers.HealthHandler.Ping)
 	app.Get("/health", handlers.HealthHandler.Health)
-	app.Get("/metrics", handlers.HealthHandler.Metrics)
-	app.Post("/metrics/reset", handlers.HealthHandler.ResetMetrics)
 
 	sessionGroup := app.Group("/sessions")
 	sessionGroup.Use(authMiddleware.AuthenticateGlobal())
