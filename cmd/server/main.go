@@ -20,6 +20,8 @@
 // @name Authorization
 // @description Enter your API key directly
 //
+// @tags.name Health,Sessions,Messages,Privacy,Chat,Contacts,Groups,Communities,Newsletters,Webhooks
+//
 // @tag.name Health
 // @tag.description Health check and monitoring endpoints
 //
