@@ -84,6 +84,19 @@ func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
 	return data, nil
 }
 
+// SendText godoc
+// @Summary Send text message
+// @Description Sends a text message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendTextRequest true "Text message request"
+// @Success 200 {object} dto.MessageResponse "Message sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send message"
+// @Router /session/{sessionId}/message/send/text [post]
 func (h *MessageHandler) SendText(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -145,6 +158,19 @@ func (h *MessageHandler) SendText(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// SendMedia godoc
+// @Summary Send media message
+// @Description Sends a media message (image, video, audio, document) to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendMediaRequest true "Media message request"
+// @Success 200 {object} dto.MessageResponse "Media sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send media"
+// @Router /session/{sessionId}/message/send/media [post]
 func (h *MessageHandler) SendMedia(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -254,6 +280,19 @@ func (h *MessageHandler) SendMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// MarkAsRead godoc
+// @Summary Mark message as read
+// @Description Marks a message as read in a WhatsApp chat
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.MarkAsReadRequest true "Mark as read request"
+// @Success 200 {object} dto.MessageResponse "Message marked as read"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to mark as read"
+// @Router /session/{sessionId}/message/markread [post]
 func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -474,6 +513,19 @@ func (h *MessageHandler) EditMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// SendLocation godoc
+// @Summary Send location message
+// @Description Sends a location message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendLocationRequest true "Location message request"
+// @Success 200 {object} dto.MessageResponse "Location sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send location"
+// @Router /session/{sessionId}/message/send/location [post]
 func (h *MessageHandler) SendLocation(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -535,6 +587,19 @@ func (h *MessageHandler) SendLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendContact godoc
+// @Summary Send contact message
+// @Description Sends a contact message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendContactRequest true "Contact message request"
+// @Success 200 {object} dto.MessageResponse "Contact sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send contact"
+// @Router /session/{sessionId}/message/send/contact [post]
 func (h *MessageHandler) SendContact(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -645,6 +710,19 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 	))
 }
 
+// SendImage godoc
+// @Summary Send image message
+// @Description Sends an image message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendImageRequest true "Image message request"
+// @Success 200 {object} dto.MessageResponse "Image sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send image"
+// @Router /session/{sessionId}/message/send/image [post]
 func (h *MessageHandler) SendImage(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -717,6 +795,19 @@ func (h *MessageHandler) SendImage(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendAudio godoc
+// @Summary Send audio message
+// @Description Sends an audio message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendAudioRequest true "Audio message request"
+// @Success 200 {object} dto.MessageResponse "Audio sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send audio"
+// @Router /session/{sessionId}/message/send/audio [post]
 func (h *MessageHandler) SendAudio(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -789,6 +880,19 @@ func (h *MessageHandler) SendAudio(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendDocument godoc
+// @Summary Send document message
+// @Description Sends a document message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendDocumentRequest true "Document message request"
+// @Success 200 {object} dto.MessageResponse "Document sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send document"
+// @Router /session/{sessionId}/message/send/document [post]
 func (h *MessageHandler) SendDocument(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -871,6 +975,19 @@ func (h *MessageHandler) SendDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendVideo godoc
+// @Summary Send video message
+// @Description Sends a video message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendVideoRequest true "Video message request"
+// @Success 200 {object} dto.MessageResponse "Video sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send video"
+// @Router /session/{sessionId}/message/send/video [post]
 func (h *MessageHandler) SendVideo(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -943,6 +1060,19 @@ func (h *MessageHandler) SendVideo(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendSticker godoc
+// @Summary Send sticker message
+// @Description Sends a sticker message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendStickerRequest true "Sticker message request"
+// @Success 200 {object} dto.MessageResponse "Sticker sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send sticker"
+// @Router /session/{sessionId}/message/send/sticker [post]
 func (h *MessageHandler) SendSticker(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {
@@ -1015,6 +1145,19 @@ func (h *MessageHandler) SendSticker(c *gin.Context) {
 	c.JSON(http.StatusOK, messageResponse)
 }
 
+// SendButton godoc
+// @Summary Send button message
+// @Description Sends an interactive button message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendButtonMessageRequest true "Button message request"
+// @Success 200 {object} dto.MessageResponse "Button message sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send button message"
+// @Router /session/{sessionId}/message/send/buttons [post]
 func (h *MessageHandler) SendButton(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -1064,6 +1207,19 @@ func (h *MessageHandler) SendButton(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// SendList godoc
+// @Summary Send list message
+// @Description Sends an interactive list message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendListMessageRequest true "List message request"
+// @Success 200 {object} dto.MessageResponse "List message sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send list message"
+// @Router /session/{sessionId}/message/send/list [post]
 func (h *MessageHandler) SendList(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
@@ -1120,6 +1276,19 @@ func (h *MessageHandler) SendList(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// SendPoll godoc
+// @Summary Send poll message
+// @Description Sends a poll message to a WhatsApp contact or group
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.SendPollMessageRequest true "Poll message request"
+// @Success 200 {object} dto.MessageResponse "Poll message sent successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to send poll message"
+// @Router /session/{sessionId}/message/send/poll [post]
 func (h *MessageHandler) SendPoll(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 

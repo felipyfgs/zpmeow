@@ -69,7 +69,7 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 // @Accept json
 // @Produce json
 // @Success 200 {object} dto.StandardResponse{data=HealthData} "Service is healthy"
-// @Failure 503 {object} dto.ErrorResponse "Service is unhealthy"
+// @Failure 503 {object} dto.StandardResponse "Service is unhealthy"
 // @Router /health [get]
 func (h *HealthHandler) Health(c *gin.Context) {
 	h.logger.Infof("Health check requested")

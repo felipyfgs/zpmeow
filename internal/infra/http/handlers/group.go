@@ -29,6 +29,19 @@ func (h *GroupHandler) resolveSessionID(_ *gin.Context, sessionIDOrName string) 
 	return sessionIDOrName, nil
 }
 
+// CreateGroup godoc
+// @Summary Create a new WhatsApp group
+// @Description Creates a new WhatsApp group with specified participants
+// @Tags Groups
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.CreateGroupRequest true "Group creation request"
+// @Success 201 {object} dto.GroupResponse "Group created successfully"
+// @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 404 {object} dto.GroupResponse "Session not found"
+// @Failure 500 {object} dto.GroupResponse "Failed to create group"
+// @Router /session/{sessionId}/group/create [post]
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 	if sessionIDOrName == "" {

@@ -453,6 +453,17 @@ func (h *SessionHandler) PairPhone(c *gin.Context) {
 	h.logSuccess("Pair phone", fmt.Sprintf("session: %s, phone: %s", sessionID, req.Phone))
 }
 
+// GetSessionStatus godoc
+// @Summary Get session status
+// @Description Retrieves the current status and connection state of a WhatsApp session
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.SessionStatusResponse "Session status information"
+// @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Router /sessions/{sessionId}/status [get]
 func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
@@ -496,6 +507,19 @@ func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 	h.logSuccess("Get session status", sessionID)
 }
 
+// UpdateSessionWebhook godoc
+// @Summary Update session webhook
+// @Description Updates the webhook URL and event subscriptions for a WhatsApp session
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.UpdateWebhookRequest true "Webhook update request"
+// @Success 200 {object} dto.SessionResponse "Webhook updated successfully"
+// @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 404 {object} dto.SessionResponse "Session not found"
+// @Failure 500 {object} dto.SessionResponse "Failed to update webhook"
+// @Router /sessions/{sessionId}/webhook [put]
 func (h *SessionHandler) UpdateSessionWebhook(c *gin.Context) {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {

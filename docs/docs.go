@@ -14,7 +14,2450 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Performs a comprehensive health check of the service and its dependencies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handlers.HealthData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "503": {
+                        "description": "Service is unhealthy",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "description": "Returns service metrics and performance data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Get service metrics",
+                "responses": {
+                    "200": {
+                        "description": "Service metrics",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics/reset": {
+            "post": {
+                "description": "Resets all service metrics and counters to zero",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Reset service metrics",
+                "responses": {
+                    "200": {
+                        "description": "Metrics reset successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handlers.HealthData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "Returns a simple pong response to verify service availability",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Simple ping endpoint",
+                "responses": {
+                    "200": {
+                        "description": "Pong response",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handlers.HealthData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/contacts/check": {
+            "post": {
+                "description": "Verifies if phone numbers are registered on WhatsApp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Check if contacts are on WhatsApp",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact check request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact check results",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to check contacts",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/contacts/info": {
+            "post": {
+                "description": "Retrieves detailed information about WhatsApp contacts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Get contact information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact info request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetContactInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get contact info",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/group/create": {
+            "post": {
+                "description": "Creates a new WhatsApp group with specified participants",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Create a new WhatsApp group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Group created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create group",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/audio": {
+            "post": {
+                "description": "Sends an audio message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send audio message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Audio message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendAudioRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audio sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send audio",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/buttons": {
+            "post": {
+                "description": "Sends an interactive button message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send button message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Button message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendButtonMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Button message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send button message",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/image": {
+            "post": {
+                "description": "Sends an image message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send image message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Image message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendImageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send image",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/list": {
+            "post": {
+                "description": "Sends an interactive list message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send list message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "List message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendListMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send list message",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/poll": {
+            "post": {
+                "description": "Sends a poll message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send poll message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Poll message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendPollMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Poll message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send poll message",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/text": {
+            "post": {
+                "description": "Sends a text message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send text message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendTextRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send message",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{sessionId}/message/send/video": {
+            "post": {
+                "description": "Sends a video message to a WhatsApp contact or group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send video message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Video message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendVideoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send video",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/create": {
+            "post": {
+                "description": "Creates a new WhatsApp session with the specified name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Create a new WhatsApp session",
+                "parameters": [
+                    {
+                        "description": "Session creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Session created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateSessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create session",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/list": {
+            "get": {
+                "description": "Retrieves a list of all WhatsApp sessions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "List all sessions",
+                "responses": {
+                    "200": {
+                        "description": "List of sessions",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.SessionResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/dto.SessionData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "sessions": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/dto.SessionInfo"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get sessions",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/connect": {
+            "post": {
+                "description": "Starts the WhatsApp client for a session and generates QR code if needed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Connect a WhatsApp session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session connection initiated",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ConnectSessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid session ID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Device already in use",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to start client",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/delete": {
+            "delete": {
+                "description": "Permanently deletes a WhatsApp session and stops its client",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Delete a WhatsApp session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid session ID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete session",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/disconnect": {
+            "post": {
+                "description": "Stops the WhatsApp client for a session and disconnects it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Disconnect a WhatsApp session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session disconnected successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid session ID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to disconnect session",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/info": {
+            "get": {
+                "description": "Retrieves detailed information about a specific WhatsApp session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get session information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session information",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.SessionResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/dto.SessionData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "session": {
+                                                            "$ref": "#/definitions/dto.SessionInfo"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid session ID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/pair": {
+            "post": {
+                "description": "Pairs a phone number with a WhatsApp session using pairing code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Pair phone with session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Phone pairing request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PairPhoneRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Phone paired successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PairPhoneResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to pair phone",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/status": {
+            "get": {
+                "description": "Retrieves the current status and connection state of a WhatsApp session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get session status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session status information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionStatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid session ID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/webhook": {
+            "put": {
+                "description": "Updates the webhook URL and event subscriptions for a WhatsApp session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Update session webhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Webhook update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateWebhookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update webhook",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.AudioMessagePayload": {
+            "type": "object",
+            "properties": {
+                "ptt": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/audio.mp3"
+                }
+            }
+        },
+        "dto.ButtonData": {
+            "type": "object",
+            "required": [
+                "id",
+                "text"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "btn_1"
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Click me"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "reply"
+                }
+            }
+        },
+        "dto.CheckContactRequest": {
+            "type": "object",
+            "required": [
+                "phones"
+            ],
+            "properties": {
+                "phones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999\"",
+                        " \"5511888888888\"]"
+                    ]
+                }
+            }
+        },
+        "dto.ConnectSessionResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.SessionConnectData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.ContactErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "CONTACT_NOT_FOUND"
+                },
+                "details": {
+                    "type": "string",
+                    "example": "Contact with phone 5511999999999 not found"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Contact not found"
+                }
+            }
+        },
+        "dto.ContactInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "business_name": {
+                    "type": "string",
+                    "example": "João's Business"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "João Silva"
+                },
+                "is_blocked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_muted": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_on_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "last_seen": {
+                    "type": "string",
+                    "example": "2023-01-01T12:00:00Z"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "João Silva"
+                },
+                "notify": {
+                    "type": "string",
+                    "example": "João"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "push_name": {
+                    "type": "string",
+                    "example": "João"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Hey there! I am using WhatsApp."
+                },
+                "verified_name": {
+                    "type": "string",
+                    "example": "João Silva"
+                }
+            }
+        },
+        "dto.ContactMessagePayload": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "vcard": {
+                    "type": "string",
+                    "example": "BEGIN:VCARD\\nVERSION:3.0\\nFN:John Doe\\nTEL:5511888888888\\nEND:VCARD"
+                }
+            }
+        },
+        "dto.ContactResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.ContactResponseData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ContactErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.ContactResponseData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "contact": {
+                    "$ref": "#/definitions/dto.ContactInfo"
+                },
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ContactInfo"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ContactsMessagePayload": {
+            "type": "object",
+            "properties": {
+                "vcards": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.CreateGroupRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is my group"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Group"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999\"",
+                        " \"5511888888888\"]"
+                    ]
+                }
+            }
+        },
+        "dto.CreateSessionRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "example": "sk-1234567890abcdef"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my-session"
+                }
+            }
+        },
+        "dto.CreateSessionResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.SessionCreateData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.DocumentMessagePayload": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "example": "document.pdf"
+                },
+                "mime_type": {
+                    "type": "string",
+                    "example": "application/pdf"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/document.pdf"
+                }
+            }
+        },
+        "dto.ErrorInfo": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "SESSION_NOT_FOUND"
+                },
+                "details": {
+                    "type": "string",
+                    "example": "Session with ID 'test' does not exist"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Session not found"
+                }
+            }
+        },
+        "dto.GetContactInfoRequest": {
+            "type": "object",
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "phones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"5511999999999\"",
+                        " \"5511888888888\"]"
+                    ]
+                }
+            }
+        },
+        "dto.GroupErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "GROUP_NOT_FOUND"
+                },
+                "details": {
+                    "type": "string",
+                    "example": "Group with ID 'group123' not found"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Group not found"
+                }
+            }
+        },
+        "dto.GroupInfo": {
+            "type": "object",
+            "properties": {
+                "admins": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "announce": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-01-01T12:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "This is my group"
+                },
+                "ephemeral": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_announce": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_ephemeral": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_locked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "120363025246125486@g.us"
+                },
+                "locked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Group"
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "participant_count": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GroupParticipant"
+                    }
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "topic": {
+                    "type": "string",
+                    "example": "Group topic"
+                }
+            }
+        },
+        "dto.GroupParticipant": {
+            "type": "object",
+            "properties": {
+                "is_admin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_super_admin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "João Silva"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "dto.GroupResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.GroupResponseData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.GroupErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.GroupResponseData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "group": {
+                    "$ref": "#/definitions/dto.GroupInfo"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ImageMessagePayload": {
+            "type": "object",
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Check this image!"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/image.jpg"
+                }
+            }
+        },
+        "dto.ListRow": {
+            "type": "object",
+            "required": [
+                "id",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Description for option 1"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "row_1"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Option 1"
+                }
+            }
+        },
+        "dto.ListSection": {
+            "type": "object",
+            "required": [
+                "rows",
+                "title"
+            ],
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ListRow"
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Section 1"
+                }
+            }
+        },
+        "dto.LocationMessagePayload": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Sao Paulo, SP, Brazil"
+                },
+                "latitude": {
+                    "type": "number",
+                    "example": -23.5505
+                },
+                "longitude": {
+                    "type": "number",
+                    "example": -46.6333
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Sao Paulo"
+                }
+            }
+        },
+        "dto.MessageErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INVALID_PHONE"
+                },
+                "details": {
+                    "type": "string",
+                    "example": "Phone number must include country code"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid phone number format"
+                }
+            }
+        },
+        "dto.MessageKey": {
+            "type": "object",
+            "properties": {
+                "fromMe": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "remoteJid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.MessagePayload": {
+            "type": "object",
+            "properties": {
+                "audio": {
+                    "$ref": "#/definitions/dto.AudioMessagePayload"
+                },
+                "contact": {
+                    "$ref": "#/definitions/dto.ContactMessagePayload"
+                },
+                "contacts": {
+                    "$ref": "#/definitions/dto.ContactsMessagePayload"
+                },
+                "document": {
+                    "$ref": "#/definitions/dto.DocumentMessagePayload"
+                },
+                "image": {
+                    "$ref": "#/definitions/dto.ImageMessagePayload"
+                },
+                "location": {
+                    "$ref": "#/definitions/dto.LocationMessagePayload"
+                },
+                "sticker": {
+                    "$ref": "#/definitions/dto.StickerMessagePayload"
+                },
+                "text": {
+                    "$ref": "#/definitions/dto.TextMessagePayload"
+                },
+                "video": {
+                    "$ref": "#/definitions/dto.VideoMessagePayload"
+                }
+            }
+        },
+        "dto.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.MessageResponseData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.MessageErrorResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.MessageResponseData": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "$ref": "#/definitions/dto.MessageKey"
+                },
+                "message": {
+                    "$ref": "#/definitions/dto.MessagePayload"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PairPhoneRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "dto.PairPhoneResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.PairPhoneResponseData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.PairPhoneResponseData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SendAudioRequest": {
+            "type": "object",
+            "required": [
+                "audio",
+                "phone"
+            ],
+            "properties": {
+                "audio": {
+                    "type": "string",
+                    "example": "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "ptt": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "dto.SendButtonMessageRequest": {
+            "type": "object",
+            "required": [
+                "buttons",
+                "phone",
+                "title"
+            ],
+            "properties": {
+                "buttons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ButtonData"
+                    }
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Choose an option"
+                }
+            }
+        },
+        "dto.SendImageRequest": {
+            "type": "object",
+            "required": [
+                "image",
+                "phone"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Check this image!"
+                },
+                "image": {
+                    "type": "string",
+                    "example": "data:image/jpeg;base64,/9j/4AAQ..."
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "dto.SendListMessageRequest": {
+            "type": "object",
+            "required": [
+                "button_text",
+                "phone",
+                "sections",
+                "title"
+            ],
+            "properties": {
+                "button_text": {
+                    "type": "string",
+                    "example": "Select"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Please select an option"
+                },
+                "footer_text": {
+                    "type": "string",
+                    "example": "Footer text"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ListSection"
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Choose from list"
+                }
+            }
+        },
+        "dto.SendPollMessageRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "options",
+                "phone"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "What's your favorite color?"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"Red\"",
+                        " \"Blue\"",
+                        " \"Green\"]"
+                    ]
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "selectable_count": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.SendTextRequest": {
+            "type": "object",
+            "required": [
+                "body",
+                "phone"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string",
+                    "example": "Hello, World!"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "dto.SendVideoRequest": {
+            "type": "object",
+            "required": [
+                "phone",
+                "video"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Check this video!"
+                },
+                "gif_playback": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "video": {
+                    "type": "string",
+                    "example": "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28y"
+                }
+            }
+        },
+        "dto.SessionConnectData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "connection": {
+                    "$ref": "#/definitions/dto.SessionConnectionInfo"
+                },
+                "qr_code": {
+                    "type": "string"
+                },
+                "session": {
+                    "$ref": "#/definitions/dto.SessionInfo"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SessionConnectionInfo": {
+            "type": "object",
+            "properties": {
+                "connected": {
+                    "type": "boolean"
+                },
+                "device_jid": {
+                    "type": "string"
+                },
+                "is_connected": {
+                    "type": "boolean"
+                },
+                "last_seen": {
+                    "type": "string"
+                },
+                "qr_code": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SessionCreateData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "session": {
+                    "$ref": "#/definitions/dto.SessionInfo"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SessionData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "qr_code": {
+                    "type": "string"
+                },
+                "session": {
+                    "$ref": "#/definitions/dto.SessionInfo"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SessionInfo"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SessionInfo": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "example": "sk-1234567890abcdef"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-01-01T12:00:00Z"
+                },
+                "device_jid": {
+                    "type": "string",
+                    "example": "5511999999999.0:1@s.whatsapp.net"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my-session"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "connected"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-01-01T12:00:00Z"
+                }
+            }
+        },
+        "dto.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.SessionData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.SessionStatusResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.SessionStatusResponseData"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.SessionStatusResponseData": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "client_status": {
+                    "type": "string"
+                },
+                "connection": {
+                    "$ref": "#/definitions/dto.SessionConnectionInfo"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "device_jid": {
+                    "type": "string"
+                },
+                "is_connected": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "session_status": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.StickerMessagePayload": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/sticker.webp"
+                }
+            }
+        },
+        "dto.TextMessagePayload": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "example": "Hello, World!"
+                }
+            }
+        },
+        "dto.UpdateWebhookRequest": {
+            "type": "object",
+            "required": [
+                "webhook_url"
+            ],
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"message\"",
+                        " \"status\"]"
+                    ]
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/webhook"
+                },
+                "webhook_url": {
+                    "type": "string",
+                    "example": "https://example.com/webhook"
+                }
+            }
+        },
+        "dto.VideoMessagePayload": {
+            "type": "object",
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Check this video!"
+                },
+                "gif_playback": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/video.mp4"
+                }
+            }
+        },
+        "handlers.HealthData": {
+            "type": "object",
+            "properties": {
+                "dependencies": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Service is healthy"
+                },
+                "service": {
+                    "type": "string",
+                    "example": "meow"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
