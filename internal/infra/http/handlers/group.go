@@ -35,10 +35,12 @@ func (h *GroupHandler) resolveSessionID(_ *gin.Context, sessionIDOrName string) 
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.CreateGroupRequest true "Group creation request"
 // @Success 201 {object} dto.GroupResponse "Group created successfully"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to create group"
 // @Router /session/{sessionId}/group/create [post]
@@ -111,10 +113,12 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.GetGroupInfoRequest true "Group info request"
 // @Success 200 {object} dto.GroupResponse "Group information"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to get group info"
 // @Router /session/{sessionId}/group/info [post]
@@ -176,9 +180,11 @@ func (h *GroupHandler) GetGroupInfo(c *gin.Context) {
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.GroupResponse "Groups list"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to list groups"
 // @Router /session/{sessionId}/group/list [get]
@@ -256,10 +262,12 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.JoinGroupRequest true "Join group request"
 // @Success 200 {object} dto.GroupResponse "Joined group successfully"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to join group"
 // @Router /session/{sessionId}/group/join [post]
@@ -328,10 +336,12 @@ func (h *GroupHandler) JoinGroup(c *gin.Context) {
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.JoinGroupWithInviteRequest true "Join group with invite request"
 // @Success 200 {object} dto.GroupResponse "Joined group successfully"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to join group"
 // @Router /session/{sessionId}/group/join-with-invite [post]
@@ -393,10 +403,12 @@ func (h *GroupHandler) JoinGroupWithInvite(c *gin.Context) {
 // @Tags Groups
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.LeaveGroupRequest true "Leave group request"
 // @Success 200 {object} dto.GroupResponse "Left group successfully"
 // @Failure 400 {object} dto.GroupResponse "Invalid request data"
+// @Failure 401 {object} dto.GroupResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.GroupResponse "Session not found"
 // @Failure 500 {object} dto.GroupResponse "Failed to leave group"
 // @Router /session/{sessionId}/group/leave [post]

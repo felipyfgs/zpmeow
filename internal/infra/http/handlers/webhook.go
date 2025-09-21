@@ -49,10 +49,12 @@ func (h *WebhookHandler) resolveSessionID(c *gin.Context, sessionIDOrName string
 // @Tags Webhooks
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.RegisterWebhookRequest true "Webhook configuration"
 // @Success 200 {object} dto.WebhookResponse "Webhook set successfully"
 // @Failure 400 {object} dto.WebhookResponse "Invalid request data"
+// @Failure 401 {object} dto.WebhookResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.WebhookResponse "Session not found"
 // @Failure 500 {object} dto.WebhookResponse "Failed to set webhook"
 // @Router /session/{sessionId}/webhook [post]
@@ -167,6 +169,7 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 // @Tags Webhooks
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.WebhookResponse "Webhook configuration"
 // @Failure 404 {object} dto.WebhookResponse "Session not found"
@@ -235,6 +238,7 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 // @Tags Webhooks
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.SupportedEventsResponse "Supported events list"
 // @Failure 500 {object} dto.SupportedEventsResponse "Failed to get events"

@@ -31,10 +31,12 @@ func NewChatHandler(chatService *application.ChatApp, wmeowService wmeow.WameowS
 // @Tags Chat
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SetPresenceRequest true "Presence request"
 // @Success 200 {object} dto.ChatResponse "Presence set successfully"
 // @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ChatResponse "Session not found"
 // @Failure 500 {object} dto.ChatResponse "Failed to set presence"
 // @Router /session/{sessionId}/chat/presence [post]
@@ -153,11 +155,13 @@ func (h *ChatHandler) downloadMedia(c *gin.Context, mediaType string) {
 // @Tags Chat
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param phone query string true "Phone number or JID"
 // @Param limit query int false "Number of messages to retrieve" default(50)
 // @Success 200 {object} dto.ChatResponse "Chat history"
 // @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ChatResponse "Session not found"
 // @Failure 500 {object} dto.ChatResponse "Failed to get chat history"
 // @Router /session/{sessionId}/chat/history [get]
@@ -314,10 +318,12 @@ func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 // @Tags Chat
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.ListChatsRequest false "List chats request"
 // @Success 200 {object} dto.ChatResponse "Chats list"
 // @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 401 {object} dto.ChatResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ChatResponse "Session not found"
 // @Failure 500 {object} dto.ChatResponse "Failed to list chats"
 // @Router /session/{sessionId}/chat/list [post]

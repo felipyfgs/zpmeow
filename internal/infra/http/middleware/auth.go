@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"zpmeow/internal/config"
 	"zpmeow/internal/domain/session"
@@ -134,27 +133,8 @@ func (a *AuthMiddleware) AuthenticateAny() gin.HandlerFunc {
 func (a *AuthMiddleware) extractAPIKey(c *gin.Context) string {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
-		if strings.HasPrefix(authHeader, "Bearer ") {
-			return strings.TrimPrefix(authHeader, "Bearer ")
-		}
-		if strings.HasPrefix(authHeader, "ApiKey ") {
-			return strings.TrimPrefix(authHeader, "ApiKey ")
-		}
 		return authHeader
 	}
-
-	if apiKey := c.GetHeader("X-API-Key"); apiKey != "" {
-		return apiKey
-	}
-
-	if apiKey := c.GetHeader("apikey"); apiKey != "" {
-		return apiKey
-	}
-
-	if apiKey := c.Query("apikey"); apiKey != "" {
-		return apiKey
-	}
-
 	return ""
 }
 

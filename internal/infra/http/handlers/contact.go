@@ -30,10 +30,12 @@ func NewContactHandler(contactService *application.ContactApp, wmeowService wmeo
 // @Tags Contacts
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.CheckContactRequest true "Contact check request"
 // @Success 200 {object} dto.ContactResponse "Contact check results"
 // @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 401 {object} dto.ContactResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ContactResponse "Session not found"
 // @Failure 500 {object} dto.ContactResponse "Failed to check contacts"
 // @Router /session/{sessionId}/contacts/check [post]
@@ -99,10 +101,12 @@ func (h *ContactHandler) CheckContact(c *gin.Context) {
 // @Tags Contacts
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.GetContactInfoRequest true "Contact info request"
 // @Success 200 {object} dto.ContactResponse "Contact information"
 // @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 401 {object} dto.ContactResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ContactResponse "Session not found"
 // @Failure 500 {object} dto.ContactResponse "Failed to get contact info"
 // @Router /session/{sessionId}/contacts/info [post]
@@ -168,10 +172,12 @@ func (h *ContactHandler) GetContactInfo(c *gin.Context) {
 // @Tags Contacts
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.GetAvatarRequest true "Avatar request"
 // @Success 200 {object} dto.ContactResponse "Contact avatar"
 // @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 401 {object} dto.ContactResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ContactResponse "Session not found"
 // @Failure 500 {object} dto.ContactResponse "Failed to get avatar"
 // @Router /session/{sessionId}/contacts/avatar [post]
@@ -229,10 +235,12 @@ func (h *ContactHandler) GetAvatar(c *gin.Context) {
 // @Tags Contacts
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SetContactPresenceRequest true "Presence request"
 // @Success 200 {object} dto.ContactResponse "Presence set successfully"
 // @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 401 {object} dto.ContactResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ContactResponse "Session not found"
 // @Failure 500 {object} dto.ContactResponse "Failed to set presence"
 // @Router /session/{sessionId}/presences/set [put]
@@ -282,9 +290,11 @@ func (h *ContactHandler) SetPresence(c *gin.Context) {
 // @Tags Contacts
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.ContactResponse "Contacts list"
 // @Failure 400 {object} dto.ContactResponse "Invalid request data"
+// @Failure 401 {object} dto.ContactResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.ContactResponse "Session not found"
 // @Failure 500 {object} dto.ContactResponse "Failed to get contacts"
 // @Router /session/{sessionId}/contacts/list [get]

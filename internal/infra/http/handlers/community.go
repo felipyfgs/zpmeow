@@ -33,10 +33,12 @@ func (h *CommunityHandler) resolveSessionID(_ *gin.Context, sessionIDOrName stri
 // @Tags Communities
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.LinkGroupRequest true "Link group request"
 // @Success 200 {object} dto.CommunityResponse "Group linked successfully"
 // @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 401 {object} dto.CommunityResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.CommunityResponse "Session not found"
 // @Failure 500 {object} dto.CommunityResponse "Failed to link group"
 // @Router /session/{sessionId}/community/link [post]
@@ -106,10 +108,12 @@ func (h *CommunityHandler) LinkGroup(c *gin.Context) {
 // @Tags Communities
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.UnlinkGroupRequest true "Unlink group request"
 // @Success 200 {object} dto.CommunityResponse "Group unlinked successfully"
 // @Failure 400 {object} dto.CommunityResponse "Invalid request data"
+// @Failure 401 {object} dto.CommunityResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.CommunityResponse "Session not found"
 // @Failure 500 {object} dto.CommunityResponse "Failed to unlink group"
 // @Router /session/{sessionId}/community/unlink [post]

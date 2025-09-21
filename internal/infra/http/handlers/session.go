@@ -133,7 +133,9 @@ func (h *SessionHandler) logError(operation string, err error) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Success 200 {object} dto.SessionResponse{data=dto.SessionData{sessions=[]dto.SessionInfo}} "List of sessions"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 500 {object} dto.SessionResponse "Failed to get sessions"
 // @Router /sessions/list [get]
 func (h *SessionHandler) GetSessions(c *gin.Context) {
@@ -161,9 +163,11 @@ func (h *SessionHandler) GetSessions(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.SessionResponse{data=dto.SessionData{session=dto.SessionInfo}} "Session information"
 // @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Router /sessions/{sessionId}/info [get]
 func (h *SessionHandler) GetSession(c *gin.Context) {
@@ -192,9 +196,11 @@ func (h *SessionHandler) GetSession(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param request body dto.CreateSessionRequest true "Session creation request"
 // @Success 201 {object} dto.CreateSessionResponse "Session created successfully"
 // @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 500 {object} dto.SessionResponse "Failed to create session"
 // @Router /sessions/create [post]
 func (h *SessionHandler) CreateSession(c *gin.Context) {
@@ -239,9 +245,11 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.SessionResponse "Session deleted successfully"
 // @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to delete session"
 // @Router /sessions/{sessionId}/delete [delete]
@@ -280,9 +288,11 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.ConnectSessionResponse "Session connection initiated"
 // @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 409 {object} dto.SessionResponse "Device already in use"
 // @Failure 500 {object} dto.SessionResponse "Failed to start client"
@@ -357,9 +367,11 @@ func (h *SessionHandler) ConnectSession(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.SessionResponse "Session disconnected successfully"
 // @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to disconnect session"
 // @Router /sessions/{sessionId}/disconnect [post]
@@ -402,10 +414,12 @@ func (h *SessionHandler) DisconnectSession(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.PairPhoneRequest true "Phone pairing request"
 // @Success 200 {object} dto.PairPhoneResponse "Phone paired successfully"
 // @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to pair phone"
 // @Router /sessions/{sessionId}/pair [post]
@@ -459,9 +473,11 @@ func (h *SessionHandler) PairPhone(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Success 200 {object} dto.SessionStatusResponse "Session status information"
 // @Failure 400 {object} dto.SessionResponse "Invalid session ID"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Router /sessions/{sessionId}/status [get]
 func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
@@ -513,10 +529,12 @@ func (h *SessionHandler) GetSessionStatus(c *gin.Context) {
 // @Tags Sessions
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.UpdateWebhookRequest true "Webhook update request"
 // @Success 200 {object} dto.SessionResponse "Webhook updated successfully"
 // @Failure 400 {object} dto.SessionResponse "Invalid request data"
+// @Failure 401 {object} dto.SessionResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.SessionResponse "Session not found"
 // @Failure 500 {object} dto.SessionResponse "Failed to update webhook"
 // @Router /sessions/{sessionId}/webhook [put]

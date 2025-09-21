@@ -32,10 +32,12 @@ func NewPrivacyHandler(sessionService *application.SessionApp, wmeowService wmeo
 // @Tags Privacy
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SetAllPrivacySettingsRequest true "Privacy settings request"
 // @Success 200 {object} dto.PrivacySettingsResponse "Privacy settings updated"
 // @Failure 400 {object} dto.PrivacySettingsResponse "Invalid request data"
+// @Failure 401 {object} dto.PrivacySettingsResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
 // @Failure 500 {object} dto.PrivacySettingsResponse "Failed to set privacy settings"
 // @Router /session/{sessionId}/privacy/set [put]
@@ -380,10 +382,12 @@ func createNotFoundError(resource string) *dto.ErrorInfo {
 // @Tags Privacy
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.FindPrivacySettingsRequest false "Privacy settings query"
 // @Success 200 {object} dto.PrivacySettingsResponse "Privacy settings"
 // @Failure 400 {object} dto.PrivacySettingsResponse "Invalid request data"
+// @Failure 401 {object} dto.PrivacySettingsResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.PrivacySettingsResponse "Session not found"
 // @Failure 500 {object} dto.PrivacySettingsResponse "Failed to get privacy settings"
 // @Router /session/{sessionId}/privacy/find [post]

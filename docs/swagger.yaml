@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   dto.AudioMessagePayload:
     properties:
@@ -1374,8 +1375,20 @@ definitions:
         example: 1.0.0
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A comprehensive REST API for WhatsApp Business integration built with
+    Go and whatsmeow
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: WhatsApp API Gateway
+  version: "1.0"
 paths:
   /health:
     get:
@@ -1494,6 +1507,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
         "404":
           description: Session not found
           schema:
@@ -1502,6 +1519,8 @@ paths:
           description: Failed to get chat history
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get chat history
       tags:
       - Chat
@@ -1532,6 +1551,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
         "404":
           description: Session not found
           schema:
@@ -1540,6 +1563,8 @@ paths:
           description: Failed to list chats
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
       summary: List chats
       tags:
       - Chat
@@ -1571,6 +1596,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
         "404":
           description: Session not found
           schema:
@@ -1579,6 +1608,8 @@ paths:
           description: Failed to set presence
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set chat presence
       tags:
       - Chat
@@ -1610,6 +1641,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.CommunityResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
         "404":
           description: Session not found
           schema:
@@ -1618,6 +1653,8 @@ paths:
           description: Failed to link group
           schema:
             $ref: '#/definitions/dto.CommunityResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Link group to community
       tags:
       - Communities
@@ -1649,6 +1686,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.CommunityResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.CommunityResponse'
         "404":
           description: Session not found
           schema:
@@ -1657,6 +1698,8 @@ paths:
           description: Failed to unlink group
           schema:
             $ref: '#/definitions/dto.CommunityResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Unlink group from community
       tags:
       - Communities
@@ -1688,6 +1731,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -1696,6 +1743,8 @@ paths:
           description: Failed to get avatar
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get contact avatar
       tags:
       - Contacts
@@ -1727,6 +1776,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -1735,6 +1788,8 @@ paths:
           description: Failed to check contacts
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Check if contacts are on WhatsApp
       tags:
       - Contacts
@@ -1766,6 +1821,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -1774,6 +1833,8 @@ paths:
           description: Failed to get contact info
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get contact information
       tags:
       - Contacts
@@ -1799,6 +1860,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -1807,6 +1872,8 @@ paths:
           description: Failed to get contacts
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get contacts list
       tags:
       - Contacts
@@ -1832,6 +1899,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -1840,6 +1911,8 @@ paths:
           description: Failed to get contacts
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get contacts list
       tags:
       - Contacts
@@ -1871,6 +1944,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -1879,6 +1956,8 @@ paths:
           description: Failed to create group
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create a new WhatsApp group
       tags:
       - Groups
@@ -1910,6 +1989,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -1918,6 +2001,8 @@ paths:
           description: Failed to get group info
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get group information
       tags:
       - Groups
@@ -1949,6 +2034,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -1957,6 +2046,8 @@ paths:
           description: Failed to join group
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Join a WhatsApp group
       tags:
       - Groups
@@ -1988,6 +2079,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -1996,6 +2091,8 @@ paths:
           description: Failed to join group
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Join group with invite link
       tags:
       - Groups
@@ -2027,6 +2124,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -2035,6 +2136,8 @@ paths:
           description: Failed to leave group
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Leave a WhatsApp group
       tags:
       - Groups
@@ -2060,6 +2163,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
         "404":
           description: Session not found
           schema:
@@ -2068,6 +2175,8 @@ paths:
           description: Failed to list groups
           schema:
             $ref: '#/definitions/dto.GroupResponse'
+      security:
+      - ApiKeyAuth: []
       summary: List WhatsApp groups
       tags:
       - Groups
@@ -2099,6 +2208,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2107,6 +2220,8 @@ paths:
           description: Failed to delete message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Delete message
       tags:
       - Messages
@@ -2138,6 +2253,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2146,6 +2265,8 @@ paths:
           description: Failed to edit message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Edit message
       tags:
       - Messages
@@ -2177,6 +2298,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2185,6 +2310,9 @@ paths:
           description: Failed to mark as read
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
+      - ApiKeyAuth: []
       summary: Mark message as read
       tags:
       - Messages
@@ -2216,6 +2344,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2224,6 +2356,8 @@ paths:
           description: Failed to add reaction
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: React to message
       tags:
       - Messages
@@ -2255,6 +2389,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2263,6 +2401,8 @@ paths:
           description: Failed to send audio
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send audio message
       tags:
       - Messages
@@ -2294,6 +2434,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2302,6 +2446,8 @@ paths:
           description: Failed to send button message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send button message
       tags:
       - Messages
@@ -2333,6 +2479,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2341,6 +2491,8 @@ paths:
           description: Failed to send contact
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send contact message
       tags:
       - Messages
@@ -2372,6 +2524,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2380,6 +2536,8 @@ paths:
           description: Failed to send document
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send document message
       tags:
       - Messages
@@ -2411,6 +2569,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2419,6 +2581,8 @@ paths:
           description: Failed to send image
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send image message
       tags:
       - Messages
@@ -2450,6 +2614,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2458,6 +2626,8 @@ paths:
           description: Failed to send list message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send list message
       tags:
       - Messages
@@ -2489,6 +2659,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2497,6 +2671,8 @@ paths:
           description: Failed to send location
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send location message
       tags:
       - Messages
@@ -2529,6 +2705,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2537,6 +2717,9 @@ paths:
           description: Failed to send media
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
+      - ApiKeyAuth: []
       summary: Send media message
       tags:
       - Messages
@@ -2568,6 +2751,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2576,6 +2763,8 @@ paths:
           description: Failed to send poll message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send poll message
       tags:
       - Messages
@@ -2607,6 +2796,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2615,6 +2808,8 @@ paths:
           description: Failed to send sticker
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send sticker message
       tags:
       - Messages
@@ -2646,6 +2841,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2654,6 +2853,9 @@ paths:
           description: Failed to send message
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
+      - ApiKeyAuth: []
       summary: Send text message
       tags:
       - Messages
@@ -2685,6 +2887,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
         "404":
           description: Session not found
           schema:
@@ -2693,6 +2899,8 @@ paths:
           description: Failed to send video
           schema:
             $ref: '#/definitions/dto.MessageResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send video message
       tags:
       - Messages
@@ -2732,6 +2940,8 @@ paths:
           description: Failed to create newsletter
           schema:
             $ref: '#/definitions/dto.CreateNewsletterResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create newsletter
       tags:
       - Newsletters
@@ -2763,6 +2973,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
         "404":
           description: Session not found
           schema:
@@ -2771,6 +2985,8 @@ paths:
           description: Failed to set presence
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set chat presence
       tags:
       - Chat
@@ -2803,6 +3019,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ContactResponse'
         "404":
           description: Session not found
           schema:
@@ -2811,6 +3031,8 @@ paths:
           description: Failed to set presence
           schema:
             $ref: '#/definitions/dto.ContactResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set presence status
       tags:
       - Contacts
@@ -2842,6 +3064,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.ChatResponse'
         "404":
           description: Session not found
           schema:
@@ -2850,6 +3076,8 @@ paths:
           description: Failed to set presence
           schema:
             $ref: '#/definitions/dto.ChatResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set chat presence
       tags:
       - Chat
@@ -2880,6 +3108,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
         "404":
           description: Session not found
           schema:
@@ -2888,6 +3120,8 @@ paths:
           description: Failed to get privacy settings
           schema:
             $ref: '#/definitions/dto.PrivacySettingsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Find privacy settings
       tags:
       - Privacy
@@ -2919,6 +3153,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.PrivacySettingsResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.PrivacySettingsResponse'
         "404":
           description: Session not found
           schema:
@@ -2927,6 +3165,8 @@ paths:
           description: Failed to set privacy settings
           schema:
             $ref: '#/definitions/dto.PrivacySettingsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set all privacy settings
       tags:
       - Privacy
@@ -2956,6 +3196,8 @@ paths:
           description: Failed to get webhook
           schema:
             $ref: '#/definitions/dto.WebhookResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get webhook configuration
       tags:
       - Webhooks
@@ -2986,6 +3228,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.WebhookResponse'
+        "401":
+          description: Unauthorized - Invalid API key" "Invalid request data
+          schema:
+            $ref: '#/definitions/dto.WebhookResponse'
         "404":
           description: Session not found
           schema:
@@ -2994,6 +3240,8 @@ paths:
           description: Failed to set webhook
           schema:
             $ref: '#/definitions/dto.WebhookResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set webhook URL
       tags:
       - Webhooks
@@ -3019,6 +3267,8 @@ paths:
           description: Failed to get events
           schema:
             $ref: '#/definitions/dto.SupportedEventsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: List supported webhook events
       tags:
       - Webhooks
@@ -3045,6 +3295,10 @@ paths:
           description: Invalid session ID
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
@@ -3057,6 +3311,8 @@ paths:
           description: Failed to start client
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Connect a WhatsApp session
       tags:
       - Sessions
@@ -3082,6 +3338,10 @@ paths:
           description: Invalid session ID
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
@@ -3090,6 +3350,8 @@ paths:
           description: Failed to delete session
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Delete a WhatsApp session
       tags:
       - Sessions
@@ -3115,6 +3377,10 @@ paths:
           description: Invalid session ID
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
@@ -3123,6 +3389,8 @@ paths:
           description: Failed to disconnect session
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Disconnect a WhatsApp session
       tags:
       - Sessions
@@ -3158,10 +3426,16 @@ paths:
           description: Invalid session ID
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get session information
       tags:
       - Sessions
@@ -3193,6 +3467,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
@@ -3201,6 +3479,8 @@ paths:
           description: Failed to pair phone
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Pair phone with session
       tags:
       - Sessions
@@ -3227,10 +3507,16 @@ paths:
           description: Invalid session ID
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get session status
       tags:
       - Sessions
@@ -3263,6 +3549,10 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "404":
           description: Session not found
           schema:
@@ -3271,6 +3561,8 @@ paths:
           description: Failed to update webhook
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Update session webhook
       tags:
       - Sessions
@@ -3297,10 +3589,16 @@ paths:
           description: Invalid request data
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "500":
           description: Failed to create session
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create a new WhatsApp session
       tags:
       - Sessions
@@ -3328,11 +3626,23 @@ paths:
                         type: array
                     type: object
               type: object
+        "401":
+          description: Unauthorized - Invalid API key
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
         "500":
           description: Failed to get sessions
           schema:
             $ref: '#/definitions/dto.SessionResponse'
+      security:
+      - ApiKeyAuth: []
       summary: List all sessions
       tags:
       - Sessions
+securityDefinitions:
+  ApiKeyAuth:
+    description: Enter your API key directly
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

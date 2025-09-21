@@ -90,10 +90,14 @@ func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendTextRequest true "Text message request"
 // @Success 200 {object} dto.MessageResponse "Message sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send message"
 // @Router /session/{sessionId}/message/send/text [post]
@@ -164,10 +168,14 @@ func (h *MessageHandler) SendText(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendMediaRequest true "Media message request"
 // @Success 200 {object} dto.MessageResponse "Media sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send media"
 // @Router /session/{sessionId}/message/send/media [post]
@@ -286,10 +294,14 @@ func (h *MessageHandler) SendMedia(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.MarkAsReadRequest true "Mark as read request"
 // @Success 200 {object} dto.MessageResponse "Message marked as read"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to mark as read"
 // @Router /session/{sessionId}/message/markread [post]
@@ -348,10 +360,12 @@ func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.ReactToMessageRequest true "React to message request"
 // @Success 200 {object} dto.MessageResponse "Reaction added successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to add reaction"
 // @Router /session/{sessionId}/message/react [post]
@@ -421,10 +435,12 @@ func (h *MessageHandler) ReactToMessage(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.DeleteMessageRequest true "Delete message request"
 // @Success 200 {object} dto.MessageResponse "Message deleted successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to delete message"
 // @Router /session/{sessionId}/message/delete [post]
@@ -484,10 +500,12 @@ func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.EditMessageRequest true "Edit message request"
 // @Success 200 {object} dto.MessageResponse "Message edited successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to edit message"
 // @Router /session/{sessionId}/message/edit [post]
@@ -558,10 +576,12 @@ func (h *MessageHandler) EditMessage(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendLocationRequest true "Location message request"
 // @Success 200 {object} dto.MessageResponse "Location sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send location"
 // @Router /session/{sessionId}/message/send/location [post]
@@ -632,10 +652,12 @@ func (h *MessageHandler) SendLocation(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendContactRequest true "Contact message request"
 // @Success 200 {object} dto.MessageResponse "Contact sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send contact"
 // @Router /session/{sessionId}/message/send/contact [post]
@@ -755,10 +777,12 @@ func (h *MessageHandler) SendContact(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendImageRequest true "Image message request"
 // @Success 200 {object} dto.MessageResponse "Image sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send image"
 // @Router /session/{sessionId}/message/send/image [post]
@@ -840,10 +864,12 @@ func (h *MessageHandler) SendImage(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendAudioRequest true "Audio message request"
 // @Success 200 {object} dto.MessageResponse "Audio sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send audio"
 // @Router /session/{sessionId}/message/send/audio [post]
@@ -925,10 +951,12 @@ func (h *MessageHandler) SendAudio(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendDocumentRequest true "Document message request"
 // @Success 200 {object} dto.MessageResponse "Document sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send document"
 // @Router /session/{sessionId}/message/send/document [post]
@@ -1020,10 +1048,12 @@ func (h *MessageHandler) SendDocument(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendVideoRequest true "Video message request"
 // @Success 200 {object} dto.MessageResponse "Video sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send video"
 // @Router /session/{sessionId}/message/send/video [post]
@@ -1105,10 +1135,12 @@ func (h *MessageHandler) SendVideo(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendStickerRequest true "Sticker message request"
 // @Success 200 {object} dto.MessageResponse "Sticker sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send sticker"
 // @Router /session/{sessionId}/message/send/sticker [post]
@@ -1190,10 +1222,12 @@ func (h *MessageHandler) SendSticker(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendButtonMessageRequest true "Button message request"
 // @Success 200 {object} dto.MessageResponse "Button message sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send button message"
 // @Router /session/{sessionId}/message/send/buttons [post]
@@ -1252,10 +1286,12 @@ func (h *MessageHandler) SendButton(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendListMessageRequest true "List message request"
 // @Success 200 {object} dto.MessageResponse "List message sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send list message"
 // @Router /session/{sessionId}/message/send/list [post]
@@ -1321,10 +1357,12 @@ func (h *MessageHandler) SendList(c *gin.Context) {
 // @Tags Messages
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.SendPollMessageRequest true "Poll message request"
 // @Success 200 {object} dto.MessageResponse "Poll message sent successfully"
 // @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 401 {object} dto.MessageResponse "Unauthorized - Invalid API key" "Invalid request data"
 // @Failure 404 {object} dto.MessageResponse "Session not found"
 // @Failure 500 {object} dto.MessageResponse "Failed to send poll message"
 // @Router /session/{sessionId}/message/send/poll [post]

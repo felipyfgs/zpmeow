@@ -1,8 +1,22 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "A comprehensive REST API for WhatsApp Business integration built with Go and whatsmeow",
+        "title": "WhatsApp API Gateway",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
     },
+    "host": "localhost:8080",
+    "basePath": "/",
     "paths": {
         "/health": {
             "get": {
@@ -153,6 +167,11 @@
         },
         "/session/{sessionId}/chat/history": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves message history for a specific chat",
                 "consumes": [
                     "application/json"
@@ -200,6 +219,12 @@
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -217,6 +242,11 @@
         },
         "/session/{sessionId}/chat/list": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of chats for a session",
                 "consumes": [
                     "application/json"
@@ -258,6 +288,12 @@
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -275,6 +311,11 @@
         },
         "/session/{sessionId}/chat/presence": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets presence status (typing, recording, etc.) for a chat",
                 "consumes": [
                     "application/json"
@@ -317,6 +358,12 @@
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -334,6 +381,11 @@
         },
         "/session/{sessionId}/community/link": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Links a WhatsApp group to a community",
                 "consumes": [
                     "application/json"
@@ -376,6 +428,12 @@
                             "$ref": "#/definitions/dto.CommunityResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -393,6 +451,11 @@
         },
         "/session/{sessionId}/community/unlink": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Unlinks a WhatsApp group from a community",
                 "consumes": [
                     "application/json"
@@ -435,6 +498,12 @@
                             "$ref": "#/definitions/dto.CommunityResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunityResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -452,6 +521,11 @@
         },
         "/session/{sessionId}/contacts/avatar": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves the avatar/profile picture of a WhatsApp contact",
                 "consumes": [
                     "application/json"
@@ -494,6 +568,12 @@
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -511,6 +591,11 @@
         },
         "/session/{sessionId}/contacts/check": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Verifies if phone numbers are registered on WhatsApp",
                 "consumes": [
                     "application/json"
@@ -553,6 +638,12 @@
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -570,6 +661,11 @@
         },
         "/session/{sessionId}/contacts/info": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves detailed information about WhatsApp contacts",
                 "consumes": [
                     "application/json"
@@ -612,6 +708,12 @@
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -629,6 +731,11 @@
         },
         "/session/{sessionId}/contacts/list": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves the list of WhatsApp contacts for a session",
                 "consumes": [
                     "application/json"
@@ -658,6 +765,12 @@
                     },
                     "400": {
                         "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
                         "schema": {
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
@@ -679,6 +792,11 @@
         },
         "/session/{sessionId}/contacts/sync": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves the list of WhatsApp contacts for a session",
                 "consumes": [
                     "application/json"
@@ -712,6 +830,12 @@
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -729,6 +853,11 @@
         },
         "/session/{sessionId}/group/create": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates a new WhatsApp group with specified participants",
                 "consumes": [
                     "application/json"
@@ -771,6 +900,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -788,6 +923,11 @@
         },
         "/session/{sessionId}/group/info": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves detailed information about a WhatsApp group",
                 "consumes": [
                     "application/json"
@@ -830,6 +970,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -847,6 +993,11 @@
         },
         "/session/{sessionId}/group/join": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Joins a WhatsApp group using group JID",
                 "consumes": [
                     "application/json"
@@ -889,6 +1040,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -906,6 +1063,11 @@
         },
         "/session/{sessionId}/group/join-with-invite": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Joins a WhatsApp group using an invite link",
                 "consumes": [
                     "application/json"
@@ -948,6 +1110,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -965,6 +1133,11 @@
         },
         "/session/{sessionId}/group/leave": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Leaves a WhatsApp group",
                 "consumes": [
                     "application/json"
@@ -1007,6 +1180,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1024,6 +1203,11 @@
         },
         "/session/{sessionId}/group/list": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all WhatsApp groups for a session",
                 "consumes": [
                     "application/json"
@@ -1057,6 +1241,12 @@
                             "$ref": "#/definitions/dto.GroupResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1074,6 +1264,11 @@
         },
         "/session/{sessionId}/message/delete": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Deletes a previously sent WhatsApp message",
                 "consumes": [
                     "application/json"
@@ -1116,6 +1311,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1133,6 +1334,11 @@
         },
         "/session/{sessionId}/message/edit": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Edits a previously sent WhatsApp message",
                 "consumes": [
                     "application/json"
@@ -1175,6 +1381,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1192,6 +1404,14 @@
         },
         "/session/{sessionId}/message/markread": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Marks a message as read in a WhatsApp chat",
                 "consumes": [
                     "application/json"
@@ -1234,6 +1454,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1251,6 +1477,11 @@
         },
         "/session/{sessionId}/message/react": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Adds an emoji reaction to a WhatsApp message",
                 "consumes": [
                     "application/json"
@@ -1293,6 +1524,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1310,6 +1547,11 @@
         },
         "/session/{sessionId}/message/send/audio": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends an audio message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1352,6 +1594,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1369,6 +1617,11 @@
         },
         "/session/{sessionId}/message/send/buttons": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends an interactive button message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1411,6 +1664,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1428,6 +1687,11 @@
         },
         "/session/{sessionId}/message/send/contact": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a contact message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1470,6 +1734,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1487,6 +1757,11 @@
         },
         "/session/{sessionId}/message/send/document": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a document message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1529,6 +1804,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1546,6 +1827,11 @@
         },
         "/session/{sessionId}/message/send/image": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends an image message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1588,6 +1874,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1605,6 +1897,11 @@
         },
         "/session/{sessionId}/message/send/list": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends an interactive list message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1647,6 +1944,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1664,6 +1967,11 @@
         },
         "/session/{sessionId}/message/send/location": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a location message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1706,6 +2014,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1723,6 +2037,14 @@
         },
         "/session/{sessionId}/message/send/media": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a media message (image, video, audio, document) to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1765,6 +2087,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1782,6 +2110,11 @@
         },
         "/session/{sessionId}/message/send/poll": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a poll message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1824,6 +2157,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1841,6 +2180,11 @@
         },
         "/session/{sessionId}/message/send/sticker": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a sticker message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1883,6 +2227,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1900,6 +2250,14 @@
         },
         "/session/{sessionId}/message/send/text": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a text message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -1942,6 +2300,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -1959,6 +2323,11 @@
         },
         "/session/{sessionId}/message/send/video": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends a video message to a WhatsApp contact or group",
                 "consumes": [
                     "application/json"
@@ -2001,6 +2370,12 @@
                             "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2018,6 +2393,11 @@
         },
         "/session/{sessionId}/newsletter": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates a new WhatsApp newsletter",
                 "consumes": [
                     "application/json"
@@ -2077,6 +2457,11 @@
         },
         "/session/{sessionId}/presences/recording": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets presence status (typing, recording, etc.) for a chat",
                 "consumes": [
                     "application/json"
@@ -2119,6 +2504,12 @@
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2136,6 +2527,11 @@
         },
         "/session/{sessionId}/presences/set": {
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets the presence status (online, offline, typing, etc.) for a session",
                 "consumes": [
                     "application/json"
@@ -2178,6 +2574,12 @@
                             "$ref": "#/definitions/dto.ContactResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContactResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2195,6 +2597,11 @@
         },
         "/session/{sessionId}/presences/typing": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets presence status (typing, recording, etc.) for a chat",
                 "consumes": [
                     "application/json"
@@ -2237,6 +2644,12 @@
                             "$ref": "#/definitions/dto.ChatResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChatResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2254,6 +2667,11 @@
         },
         "/session/{sessionId}/privacy/find": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves current privacy settings for a WhatsApp session",
                 "consumes": [
                     "application/json"
@@ -2295,6 +2713,12 @@
                             "$ref": "#/definitions/dto.PrivacySettingsResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PrivacySettingsResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2312,6 +2736,11 @@
         },
         "/session/{sessionId}/privacy/set": {
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets all privacy settings for a WhatsApp session",
                 "consumes": [
                     "application/json"
@@ -2354,6 +2783,12 @@
                             "$ref": "#/definitions/dto.PrivacySettingsResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PrivacySettingsResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2371,6 +2806,11 @@
         },
         "/session/{sessionId}/webhook": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves the current webhook URL and events for a session",
                 "consumes": [
                     "application/json"
@@ -2413,6 +2853,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sets or updates the webhook URL and events for a session",
                 "consumes": [
                     "application/json"
@@ -2455,6 +2900,12 @@
                             "$ref": "#/definitions/dto.WebhookResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key\" \"Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WebhookResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2472,6 +2923,11 @@
         },
         "/session/{sessionId}/webhooks/events": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all supported webhook events",
                 "consumes": [
                     "application/json"
@@ -2510,6 +2966,11 @@
         },
         "/sessions/create": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates a new WhatsApp session with the specified name",
                 "consumes": [
                     "application/json"
@@ -2545,6 +3006,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to create session",
                         "schema": {
@@ -2556,6 +3023,11 @@
         },
         "/sessions/list": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all WhatsApp sessions",
                 "consumes": [
                     "application/json"
@@ -2601,6 +3073,12 @@
                             ]
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to get sessions",
                         "schema": {
@@ -2612,6 +3090,11 @@
         },
         "/sessions/{sessionId}/connect": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Starts the WhatsApp client for a session and generates QR code if needed",
                 "consumes": [
                     "application/json"
@@ -2645,6 +3128,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2668,6 +3157,11 @@
         },
         "/sessions/{sessionId}/delete": {
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Permanently deletes a WhatsApp session and stops its client",
                 "consumes": [
                     "application/json"
@@ -2701,6 +3195,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2718,6 +3218,11 @@
         },
         "/sessions/{sessionId}/disconnect": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Stops the WhatsApp client for a session and disconnects it",
                 "consumes": [
                     "application/json"
@@ -2751,6 +3256,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2768,6 +3279,11 @@
         },
         "/sessions/{sessionId}/info": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves detailed information about a specific WhatsApp session",
                 "consumes": [
                     "application/json"
@@ -2825,6 +3341,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2836,6 +3358,11 @@
         },
         "/sessions/{sessionId}/pair": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Pairs a phone number with a WhatsApp session using pairing code",
                 "consumes": [
                     "application/json"
@@ -2878,6 +3405,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2895,6 +3428,11 @@
         },
         "/sessions/{sessionId}/status": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves the current status and connection state of a WhatsApp session",
                 "consumes": [
                     "application/json"
@@ -2928,6 +3466,12 @@
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -2939,6 +3483,11 @@
         },
         "/sessions/{sessionId}/webhook": {
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Updates the webhook URL and event subscriptions for a WhatsApp session",
                 "consumes": [
                     "application/json"
@@ -2977,6 +3526,12 @@
                     },
                     "400": {
                         "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SessionResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API key",
                         "schema": {
                             "$ref": "#/definitions/dto.SessionResponse"
                         }
@@ -4988,6 +5543,14 @@
                     "example": "1.0.0"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "description": "Enter your API key directly",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

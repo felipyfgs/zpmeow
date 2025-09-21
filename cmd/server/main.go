@@ -1,3 +1,54 @@
+// Package main provides the entry point for the WhatsApp API server
+//
+// @title WhatsApp API Gateway
+// @version 1.0
+// @description A comprehensive REST API for WhatsApp Business integration built with Go and whatsmeow
+// @termsOfService http://swagger.io/terms/
+//
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+//
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+//
+// @host localhost:8080
+// @BasePath /
+//
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+// @description Enter your API key directly
+//
+// @tag.name Health
+// @tag.description Health check and monitoring endpoints
+//
+// @tag.name Sessions
+// @tag.description WhatsApp session management endpoints
+//
+// @tag.name Messages
+// @tag.description Message sending and management endpoints
+//
+// @tag.name Privacy
+// @tag.description Privacy settings and configuration endpoints
+//
+// @tag.name Chat
+// @tag.description Chat management and history endpoints
+//
+// @tag.name Contacts
+// @tag.description Contact management and presence endpoints
+//
+// @tag.name Groups
+// @tag.description WhatsApp group management endpoints
+//
+// @tag.name Communities
+// @tag.description WhatsApp community management endpoints
+//
+// @tag.name Newsletters
+// @tag.description Newsletter management and broadcasting endpoints
+//
+// @tag.name Webhooks
+// @tag.description Webhook configuration and event management endpoints
 package main
 
 import (

@@ -418,6 +418,7 @@ func (h *NewsletterHandler) resolveSessionID(c *gin.Context, sessionIDOrName str
 // @Tags Newsletters
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param sessionId path string true "Session ID"
 // @Param request body dto.CreateNewsletterRequest true "Newsletter creation request"
 // @Success 201 {object} dto.CreateNewsletterResponse "Newsletter created successfully"
