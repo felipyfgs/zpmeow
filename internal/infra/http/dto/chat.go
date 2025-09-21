@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 type SetPresenceRequest struct {
 	Phone string `json:"phone" binding:"required" example:"5511999999999"`
 	State string `json:"state" binding:"required" example:"available"`
@@ -124,7 +123,6 @@ func (r ArchiveChatRequest) Validate() error {
 	return nil
 }
 
-
 type ChatErrorResponse struct {
 	Code    string `json:"code" example:"INVALID_JID"`
 	Message string `json:"message" example:"Invalid JID format"`
@@ -177,7 +175,6 @@ type GetChatInfoResponse struct {
 	Error   *ChatErrorResponse `json:"error,omitempty"`
 }
 
-
 type ChatHistoryData struct {
 	MessageID string `json:"message_id" example:"msg_123"`
 	From      string `json:"from" example:"5511999999999@s.whatsapp.net"`
@@ -201,7 +198,6 @@ type ChatHistoryResponse struct {
 	Data    *ChatHistoryResponseData `json:"data,omitempty"`
 	Error   *ChatErrorResponse       `json:"error,omitempty"`
 }
-
 
 func NewChatErrorResponse(code int, errorCode, message, details string) *ChatResponse {
 	return &ChatResponse{

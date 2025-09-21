@@ -304,9 +304,9 @@ func (h *MediaHandler) ConvertMedia(c *gin.Context) {
 	}
 
 	responseData := map[string]interface{}{
-		"original_media_id": mediaID,
+		"original_media_id":  mediaID,
 		"converted_media_id": convertedMediaID,
-		"target_format": req.TargetFormat,
+		"target_format":      req.TargetFormat,
 	}
 
 	c.JSON(http.StatusOK, dto.NewMediaSuccessResponse(sessionID, "convert", "Media converted successfully", responseData))

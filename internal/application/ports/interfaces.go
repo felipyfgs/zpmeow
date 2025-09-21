@@ -7,7 +7,6 @@ import (
 	"go.mau.fi/whatsmeow"
 )
 
-
 type SessionManager interface {
 	StartClient(sessionID string) error
 	StopClient(sessionID string) error
@@ -20,7 +19,6 @@ type SessionManager interface {
 	ConnectSession(ctx context.Context, sessionID string) (string, error)
 	DisconnectSession(ctx context.Context, sessionID string) error
 }
-
 
 type ButtonData struct {
 	ID   string `json:"id"`
@@ -77,7 +75,6 @@ type MessageActions interface {
 	DownloadMedia(ctx context.Context, sessionID, messageID string) ([]byte, string, error)
 }
 
-
 type GroupInfo struct {
 	JID          string   `json:"jid"`
 	Name         string   `json:"name"`
@@ -125,7 +122,6 @@ type GroupManager interface {
 	GetLinkedGroupsParticipants(ctx context.Context, sessionID, communityJID string) ([]string, error)
 }
 
-
 type UserCheckResult struct {
 	Query        string `json:"query"`
 	IsInWhatsapp bool   `json:"is_in_whatsapp"`
@@ -172,7 +168,6 @@ type ContactManager interface {
 	SetUserPresence(ctx context.Context, sessionID, state string) error
 }
 
-
 type ChatInfo struct {
 	JID           string    `json:"jid"`
 	Name          string    `json:"name,omitempty"`
@@ -208,7 +203,6 @@ type ChatManager interface {
 	ArchiveChat(ctx context.Context, sessionID, chatJID string, archived bool) error
 	GetChatHistory(ctx context.Context, sessionID, chatJID string, limit, offset int) ([]ChatMessage, error)
 }
-
 
 type NewsletterInfo struct {
 	ID              string `json:"id"`
@@ -253,7 +247,6 @@ type NewsletterManager interface {
 	GetNewsletterMessages(ctx context.Context, sessionID, newsletterID string) ([]NewsletterMessage, error)
 }
 
-
 type PrivacySettings struct {
 	LastSeen             string `json:"last_seen"`
 	ProfilePhoto         string `json:"profile_photo"`
@@ -272,12 +265,10 @@ type PrivacyManager interface {
 	UpdateBlocklist(ctx context.Context, sessionID string, action string, contacts []string) error
 }
 
-
 type WebhookManager interface {
 	UpdateSessionWebhook(sessionID, webhookURL string) error
 	UpdateSessionSubscriptions(sessionID string, events []string) error
 }
-
 
 type ProfileManager interface {
 	UpdateProfile(ctx context.Context, sessionID, name, about string) error
@@ -286,7 +277,6 @@ type ProfileManager interface {
 	GetUserStatus(ctx context.Context, sessionID, phone string) (string, error)
 	SetStatus(ctx context.Context, sessionID, status string) error
 }
-
 
 type MediaManager interface {
 	UploadMedia(ctx context.Context, sessionID string, data []byte, mediaType string) (string, error)
@@ -298,7 +288,6 @@ type MediaManager interface {
 	CompressMedia(ctx context.Context, sessionID, mediaID string, quality int) (string, error)
 	GetMediaMetadata(ctx context.Context, sessionID, mediaID string) (map[string]interface{}, error)
 }
-
 
 type WameowService interface {
 	SessionManager
@@ -316,7 +305,6 @@ type WameowService interface {
 
 type WhatsAppService = WameowService
 
-
 type Logger interface {
 	Debug(ctx context.Context, msg string, keysAndValues ...interface{})
 	Info(ctx context.Context, msg string, keysAndValues ...interface{})
@@ -324,7 +312,6 @@ type Logger interface {
 	Error(ctx context.Context, msg string, keysAndValues ...interface{})
 	Fatal(ctx context.Context, msg string, keysAndValues ...interface{})
 }
-
 
 type IDGenerator interface {
 	Generate() string

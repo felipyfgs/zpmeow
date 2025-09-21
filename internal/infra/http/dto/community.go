@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type CreateCommunityRequest struct {
 	Name        string `json:"name" binding:"required" example:"My Community"`
 	Description string `json:"description,omitempty" example:"This is my community"`
@@ -115,7 +114,6 @@ func (r GetLinkedGroupsParticipantsRequest) Validate() error {
 	return nil
 }
 
-
 type CommunityErrorResponse struct {
 	Code    string `json:"code" example:"COMMUNITY_NOT_FOUND"`
 	Message string `json:"message" example:"Community not found"`
@@ -206,7 +204,6 @@ type CommunityParticipantsData struct {
 	Participants []GroupParticipant `json:"participants"`
 	Count        int                `json:"count"`
 }
-
 
 func NewCommunityErrorResponse(code int, errorCode, message, details string) *CommunityResponse {
 	return &CommunityResponse{

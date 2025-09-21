@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type UploadMediaRequest struct {
 	MediaType string `json:"media_type" binding:"required" example:"image"`
 	Data      string `json:"data" binding:"required" example:"base64_encoded_data"`
@@ -72,7 +71,6 @@ func (r CompressMediaRequest) Validate() error {
 	}
 	return nil
 }
-
 
 type MediaErrorResponse struct {
 	Code    string `json:"code" example:"MEDIA_UPLOAD_FAILED"`
@@ -162,7 +160,6 @@ type MediaConvertData struct {
 	ConvertedSize int64     `json:"converted_size"`
 	Timestamp     time.Time `json:"timestamp"`
 }
-
 
 func NewMediaErrorResponse(code int, errorCode, message, details string) *MediaResponse {
 	return &MediaResponse{

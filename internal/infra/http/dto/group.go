@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type CreateGroupRequest struct {
 	Name         string   `json:"name" binding:"required" example:"My Group"`
 	Description  string   `json:"description,omitempty" example:"This is my group"`
@@ -160,7 +159,6 @@ func (r GetInviteInfoRequest) Validate() error {
 	return nil
 }
 
-
 type GroupErrorResponse struct {
 	Code    string `json:"code" example:"GROUP_NOT_FOUND"`
 	Message string `json:"message" example:"Group not found"`
@@ -240,7 +238,6 @@ type GroupActionData struct {
 	Participants []string  `json:"participants,omitempty"`
 	Timestamp    time.Time `json:"timestamp"`
 }
-
 
 func NewGroupErrorResponse(code int, errorCode, message, details string) *GroupResponse {
 	return &GroupResponse{
@@ -354,7 +351,6 @@ func NewInviteLinkResponse(groupJID, inviteLink, inviteCode string) *InviteLinkR
 		},
 	}
 }
-
 
 type UpdateParticipantsRequest struct {
 	GroupJID     string   `json:"group_jid" binding:"required" example:"120363025246125486@g.us"`

@@ -25,7 +25,6 @@ const (
 	ErrorCodeConflict         = "CONFLICT"
 )
 
-
 type BaseResponse struct {
 	Success   bool        `json:"success"`
 	Code      int         `json:"code"`
@@ -44,7 +43,6 @@ type ActionResponse struct {
 	Error     *ErrorInfo  `json:"error,omitempty"`
 	Timestamp time.Time   `json:"timestamp"`
 }
-
 
 func NewSuccessResponse(code int, data interface{}) *BaseResponse {
 	return &BaseResponse{

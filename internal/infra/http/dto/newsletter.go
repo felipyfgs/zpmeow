@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type CreateNewsletterRequest struct {
 	Name        string `json:"name" binding:"required" example:"My Newsletter"`
 	Description string `json:"description,omitempty" example:"This is my newsletter"`
@@ -68,7 +67,6 @@ func (r UnsubscribeNewsletterRequest) Validate() error {
 	}
 	return nil
 }
-
 
 type NewsletterErrorResponse struct {
 	Code    string `json:"code" example:"NEWSLETTER_NOT_FOUND"`
@@ -132,7 +130,6 @@ type NewsletterActionData struct {
 	Message       string    `json:"message,omitempty"`
 	Timestamp     time.Time `json:"timestamp"`
 }
-
 
 func NewNewsletterErrorResponse(code int, errorCode, message, details string) *NewsletterResponse {
 	return &NewsletterResponse{

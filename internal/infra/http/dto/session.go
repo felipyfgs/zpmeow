@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type CreateSessionRequest struct {
 	Name   string `json:"name" binding:"required" example:"my-session"`
 	ApiKey string `json:"api_key,omitempty" example:"sk-1234567890abcdef"`
@@ -82,7 +81,6 @@ func (r PairCodeRequest) Validate() error {
 	}
 	return nil
 }
-
 
 type ErrorInfo struct {
 	Code    string `json:"code" example:"SESSION_NOT_FOUND"`
@@ -161,7 +159,6 @@ type PairData struct {
 	Message   string    `json:"message,omitempty"`
 	Timestamp time.Time `json:"timestamp"`
 }
-
 
 func NewSessionErrorResponse(code int, errorCode, message, details string) *SessionResponse {
 	return &SessionResponse{
@@ -298,7 +295,6 @@ func NewSessionListErrorResponse(code int, errorCode, message, details string) *
 		},
 	}
 }
-
 
 type SessionCreateData struct {
 	SessionID string       `json:"session_id,omitempty"`

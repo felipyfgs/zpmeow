@@ -18,7 +18,6 @@ type IDGenerator interface {
 
 var defaultGenerator IDGenerator = &counterIDGenerator{counter: 0}
 
-
 type counterIDGenerator struct {
 	counter int
 }

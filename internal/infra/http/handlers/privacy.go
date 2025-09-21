@@ -168,7 +168,6 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *gin.Context) {
 		currentSettings.CallsAddMe = req.CallsAddMe
 	}
 
-
 	data := &dto.PrivacySettingsData{
 		SessionID:         sessionID,
 		LastSeen:          currentSettings.LastSeen,

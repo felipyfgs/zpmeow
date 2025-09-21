@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type CheckContactRequest struct {
 	Phones []string `json:"phones" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
 }
@@ -135,7 +134,6 @@ func (r SetContactPresenceRequest) Validate() error {
 	return fmt.Errorf("invalid state, must be one of: %s", strings.Join(validStates, ", "))
 }
 
-
 type ContactErrorResponse struct {
 	Code    string `json:"code" example:"CONTACT_NOT_FOUND"`
 	Message string `json:"message" example:"Contact not found"`
@@ -247,7 +245,6 @@ type ContactAvatarResponse struct {
 	Data    *AvatarInfo           `json:"data,omitempty"`
 	Error   *ContactErrorResponse `json:"error,omitempty"`
 }
-
 
 func NewContactErrorResponse(code int, errorCode, message, details string) *ContactResponse {
 	return &ContactResponse{

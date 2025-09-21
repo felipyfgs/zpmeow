@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type SetWebhookRequest struct {
 	URL    string   `json:"url" binding:"required" example:"https://example.com/webhook"`
 	Events []string `json:"events,omitempty" example:"[\"message\", \"status\"]"`
@@ -96,10 +95,10 @@ type WebhookResponseData struct {
 }
 
 type WebhookListResponse struct {
-	Success bool                  `json:"success"`
-	Code    int                   `json:"code"`
-	Data    *WebhookListData      `json:"data,omitempty"`
-	Error   *ErrorInfo `json:"error,omitempty"`
+	Success bool             `json:"success"`
+	Code    int              `json:"code"`
+	Data    *WebhookListData `json:"data,omitempty"`
+	Error   *ErrorInfo       `json:"error,omitempty"`
 }
 
 type WebhookListData struct {
@@ -108,10 +107,10 @@ type WebhookListData struct {
 }
 
 type WebhookTestResponse struct {
-	Success bool                  `json:"success"`
-	Code    int                   `json:"code"`
-	Data    *WebhookTestData      `json:"data,omitempty"`
-	Error   *ErrorInfo `json:"error,omitempty"`
+	Success bool             `json:"success"`
+	Code    int              `json:"code"`
+	Data    *WebhookTestData `json:"data,omitempty"`
+	Error   *ErrorInfo       `json:"error,omitempty"`
 }
 
 type WebhookTestData struct {
@@ -122,7 +121,6 @@ type WebhookTestData struct {
 	Message      string    `json:"message,omitempty"`
 	Timestamp    time.Time `json:"timestamp"`
 }
-
 
 func NewWebhookErrorResponse(code int, errorCode, message, details string) *WebhookResponse {
 	return &WebhookResponse{
@@ -201,7 +199,6 @@ func NewWebhookTestErrorResponse(code int, errorCode, message, details string) *
 	}
 }
 
-
 type WebhookEvent struct {
 	Type      string                 `json:"type" example:"message"`
 	SessionID string                 `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440000"`
@@ -239,12 +236,12 @@ type StandardWebhookData = WebhookResponseData
 type StandardWebhookResponse = WebhookResponse
 
 type SupportedEventsResponse struct {
-	Success bool                  `json:"success"`
-	Code    int                   `json:"code"`
-	Status  int                   `json:"status,omitempty"`
-	Message string                `json:"message,omitempty"`
-	Data    *SupportedEventsData  `json:"data,omitempty"`
-	Error   *ErrorInfo `json:"error,omitempty"`
+	Success bool                 `json:"success"`
+	Code    int                  `json:"code"`
+	Status  int                  `json:"status,omitempty"`
+	Message string               `json:"message,omitempty"`
+	Data    *SupportedEventsData `json:"data,omitempty"`
+	Error   *ErrorInfo           `json:"error,omitempty"`
 }
 
 type SupportedEventsData struct {

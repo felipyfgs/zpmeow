@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 type SendTextRequest struct {
 	Phone string `json:"phone" binding:"required" example:"5511999999999"`
 	Body  string `json:"body" binding:"required" example:"Hello, World!"`
@@ -209,7 +208,6 @@ func (r SendContactRequest) IsMultipleContacts() bool {
 	return len(r.Contacts) > 0
 }
 
-
 type MarkAsReadRequest struct {
 	Phone      string   `json:"phone" binding:"required" example:"5511999999999"`
 	MessageIDs []string `json:"message_ids" binding:"required" example:"[\"msg_123\", \"msg_456\"]"`
@@ -231,7 +229,6 @@ type EditMessageRequest struct {
 	MessageID string `json:"message_id" binding:"required" example:"msg_123"`
 	NewText   string `json:"new_text" binding:"required" example:"Updated message text"`
 }
-
 
 type ButtonData struct {
 	ID   string `json:"id" binding:"required" example:"btn_1"`
@@ -365,7 +362,6 @@ type MessageDownloadMediaRequest struct {
 	MessageID string `json:"message_id" binding:"required" example:"msg_123"`
 }
 
-
 type MessageErrorResponse struct {
 	Code    string `json:"code" example:"INVALID_PHONE"`
 	Message string `json:"message" example:"Invalid phone number format"`
@@ -471,7 +467,6 @@ type MessageMediaDownloadResponse struct {
 	Data      []byte `json:"data"`
 	Size      int    `json:"size"`
 }
-
 
 func NewMessageErrorResponse(code int, errorCode, message, details string) *MessageResponse {
 	return &MessageResponse{

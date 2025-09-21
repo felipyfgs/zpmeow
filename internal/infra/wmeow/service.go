@@ -432,7 +432,6 @@ func (m *MeowService) DownloadMedia(ctx context.Context, sessionID, messageID st
 		return nil, "", fmt.Errorf("client not connected for session %s", sessionID)
 	}
 
-
 	m.logger.Debugf("Downloading media for message %s in session %s", messageID, sessionID)
 
 	return []byte{}, "application/octet-stream", nil
@@ -814,7 +813,6 @@ func (m *MeowService) CreateGroup(ctx context.Context, sessionID, name string, p
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
 
-
 	m.logger.Debugf("Group '%s' created successfully: %s for session %s",
 		name, groupInfo.JID.String(), sessionID)
 
@@ -852,7 +850,6 @@ func (m *MeowService) ListGroups(ctx context.Context, sessionID string) ([]ports
 		for _, participant := range group.Participants {
 			result.Participants = append(result.Participants, participant.JID.String())
 		}
-
 
 		results = append(results, result)
 	}
@@ -896,7 +893,6 @@ func (m *MeowService) GetGroupInfo(ctx context.Context, sessionID, groupJID stri
 	for _, participant := range groupInfo.Participants {
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
-
 
 	m.logger.Debugf("Retrieved group info for %s in session %s", groupJID, sessionID)
 
@@ -942,7 +938,6 @@ func (m *MeowService) JoinGroup(ctx context.Context, sessionID, inviteLink strin
 	for _, participant := range groupInfo.Participants {
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
-
 
 	m.logger.Debugf("Successfully joined group %s via invite link for session %s",
 		groupInfo.JID.String(), sessionID)
@@ -999,7 +994,6 @@ func (m *MeowService) JoinGroupWithInvite(ctx context.Context, sessionID, groupJ
 	for _, participant := range groupInfo.Participants {
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
-
 
 	m.logger.Debugf("Successfully joined group %s via specific invite for session %s",
 		groupJIDParsed.String(), sessionID)
@@ -1791,7 +1785,6 @@ func (m *MeowService) GetInviteInfo(ctx context.Context, sessionID, inviteLink s
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
 
-
 	m.logger.Debugf("Retrieved invite info for group %s from link for session %s",
 		groupInfo.JID.String(), sessionID)
 
@@ -1837,7 +1830,6 @@ func (m *MeowService) GetGroupInfoFromInvite(ctx context.Context, sessionID, gro
 	for _, participant := range groupInfo.Participants {
 		result.Participants = append(result.Participants, participant.JID.String())
 	}
-
 
 	m.logger.Debugf("Retrieved group info from specific invite for group %s in session %s",
 		groupInfo.JID.String(), sessionID)
@@ -2633,7 +2625,6 @@ func (m *MeowService) UpdateBlocklist(ctx context.Context, sessionID string, act
 	return nil
 }
 
-
 func sendMessageToJID(client *whatsmeow.Client, to string, message *waProto.Message) (*whatsmeow.SendResponse, error) {
 	jid, err := parsePhoneToJID(to)
 	if err != nil {
@@ -2695,7 +2686,6 @@ func uploadMedia(client *whatsmeow.Client, data []byte, mediaType whatsmeow.Medi
 	resp, err := client.Upload(context.Background(), data, mediaType)
 	return &resp, err
 }
-
 
 func sendTextMessage(client *whatsmeow.Client, to, text string) (*whatsmeow.SendResponse, error) {
 	if err := validateMessageInput(client, to); err != nil {
