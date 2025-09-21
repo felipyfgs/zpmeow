@@ -342,6 +342,19 @@ func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// ReactToMessage godoc
+// @Summary React to message
+// @Description Adds an emoji reaction to a WhatsApp message
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.ReactToMessageRequest true "React to message request"
+// @Success 200 {object} dto.MessageResponse "Reaction added successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to add reaction"
+// @Router /session/{sessionId}/message/react [post]
 func (h *MessageHandler) ReactToMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
