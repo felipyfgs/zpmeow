@@ -43,6 +43,19 @@ func (h *WebhookHandler) resolveSessionID(c *gin.Context, sessionIDOrName string
 	return session.SessionID().Value(), nil
 }
 
+// SetWebhook godoc
+// @Summary Set webhook URL
+// @Description Sets or updates the webhook URL and events for a session
+// @Tags Webhooks
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.RegisterWebhookRequest true "Webhook configuration"
+// @Success 200 {object} dto.WebhookResponse "Webhook set successfully"
+// @Failure 400 {object} dto.WebhookResponse "Invalid request data"
+// @Failure 404 {object} dto.WebhookResponse "Session not found"
+// @Failure 500 {object} dto.WebhookResponse "Failed to set webhook"
+// @Router /session/{sessionId}/webhook [post]
 func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 
@@ -148,6 +161,17 @@ func (h *WebhookHandler) SetWebhook(c *gin.Context) {
 	})
 }
 
+// GetWebhook godoc
+// @Summary Get webhook configuration
+// @Description Retrieves the current webhook URL and events for a session
+// @Tags Webhooks
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.WebhookResponse "Webhook configuration"
+// @Failure 404 {object} dto.WebhookResponse "Session not found"
+// @Failure 500 {object} dto.WebhookResponse "Failed to get webhook"
+// @Router /session/{sessionId}/webhook [get]
 func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 	sessionIDOrName := c.Param("sessionId")
 
@@ -205,6 +229,16 @@ func (h *WebhookHandler) GetWebhook(c *gin.Context) {
 	})
 }
 
+// ListEvents godoc
+// @Summary List supported webhook events
+// @Description Retrieves a list of all supported webhook events
+// @Tags Webhooks
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} dto.SupportedEventsResponse "Supported events list"
+// @Failure 500 {object} dto.SupportedEventsResponse "Failed to get events"
+// @Router /session/{sessionId}/webhooks/events [get]
 func (h *WebhookHandler) ListEvents(c *gin.Context) {
 	events, err := h.webhookApp.ListEvents(c.Request.Context())
 	if err != nil {

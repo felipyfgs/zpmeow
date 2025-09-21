@@ -308,6 +308,19 @@ func (h *ChatHandler) SetDisappearingTimer(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// ListChats godoc
+// @Summary List chats
+// @Description Retrieves a list of chats for a session
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.ListChatsRequest false "List chats request"
+// @Success 200 {object} dto.ChatResponse "Chats list"
+// @Failure 400 {object} dto.ChatResponse "Invalid request data"
+// @Failure 404 {object} dto.ChatResponse "Session not found"
+// @Failure 500 {object} dto.ChatResponse "Failed to list chats"
+// @Router /session/{sessionId}/chat/list [post]
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
