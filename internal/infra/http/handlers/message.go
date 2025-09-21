@@ -465,6 +465,19 @@ func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// EditMessage godoc
+// @Summary Edit message
+// @Description Edits a previously sent WhatsApp message
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Param request body dto.EditMessageRequest true "Edit message request"
+// @Success 200 {object} dto.MessageResponse "Message edited successfully"
+// @Failure 400 {object} dto.MessageResponse "Invalid request data"
+// @Failure 404 {object} dto.MessageResponse "Session not found"
+// @Failure 500 {object} dto.MessageResponse "Failed to edit message"
+// @Router /session/{sessionId}/message/edit [post]
 func (h *MessageHandler) EditMessage(c *gin.Context) {
 	sessionID := c.Param("sessionId")
 
