@@ -9,6 +9,8 @@ import (
 
 	"zpmeow/internal/application/ports"
 	"zpmeow/internal/domain/session"
+	"zpmeow/internal/infra/chatwoot"
+	"zpmeow/internal/infra/database/repository"
 	"zpmeow/internal/infra/logging"
 
 	"go.mau.fi/whatsmeow"
@@ -39,14 +41,16 @@ type NewsletterInfo = ports.NewsletterInfo
 type PrivacySettings = ports.PrivacySettings
 
 type MeowService struct {
-	clients       map[string]*WameowClient
-	sessions      session.Repository
-	logger        logging.Logger
-	container     *sqlstore.Container
-	waLogger      waLog.Logger
-	mu            sync.RWMutex
-	messageSender *messageSender
-	mimeHelper    *mimeTypeHelper
+	clients             map[string]*WameowClient
+	sessions            session.Repository
+	logger              logging.Logger
+	container           *sqlstore.Container
+	waLogger            waLog.Logger
+	mu                  sync.RWMutex
+	messageSender       *messageSender
+	mimeHelper          *mimeTypeHelper
+	chatwootIntegration *chatwoot.Integration
+	chatwootRepo        *repository.ChatwootRepository
 }
 
 func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository) WameowService {
@@ -58,6 +62,20 @@ func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessio
 		waLogger:      waLogger,
 		messageSender: NewMessageSender(),
 		mimeHelper:    NewMimeTypeHelper(),
+	}
+}
+
+func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository) WameowService {
+	return &MeowService{
+		clients:             make(map[string]*WameowClient),
+		sessions:            sessionRepo,
+		logger:              logging.GetLogger().Sub("wameow"),
+		container:           container,
+		waLogger:            waLogger,
+		messageSender:       NewMessageSender(),
+		mimeHelper:          NewMimeTypeHelper(),
+		chatwootIntegration: chatwootIntegration,
+		chatwootRepo:        chatwootRepo,
 	}
 }
 
@@ -126,7 +144,13 @@ func (m *MeowService) getOrCreateClient(sessionID string) *WameowClient {
 
 func (m *MeowService) createNewClient(sessionID string) *WameowClient {
 	sessionConfig := m.loadSessionConfiguration(sessionID)
-	eventProcessor := NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions)
+
+	var eventProcessor *EventProcessor
+	if m.chatwootIntegration != nil && m.chatwootRepo != nil {
+		eventProcessor = NewEventProcessorWithChatwoot(sessionID, sessionConfig.webhookURL, m.sessions, m.chatwootIntegration, m.chatwootRepo)
+	} else {
+		eventProcessor = NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions)
+	}
 
 	client, err := NewWameowClientWithDeviceJID(
 		sessionID,
@@ -531,7 +555,85 @@ func (m *MeowService) DownloadMedia(ctx context.Context, sessionID, messageID st
 
 	m.logger.Debugf("Downloading media for message %s in session %s", messageID, sessionID)
 
-	return []byte{}, "application/octet-stream", nil
+	// Busca a mensagem no histórico para obter informações de mídia
+	mediaMessage, err := m.findMediaMessage(ctx, client, messageID)
+	if err != nil {
+		m.logger.Errorf("Failed to find media message %s: %v", messageID, err)
+		return nil, "", fmt.Errorf("failed to find media message: %w", err)
+	}
+
+	if mediaMessage == nil {
+		return nil, "", fmt.Errorf("media message not found")
+	}
+
+	// Download da mídia usando whatsmeow
+	data, err := client.GetClient().Download(ctx, mediaMessage)
+	if err != nil {
+		m.logger.Errorf("Failed to download media for message %s: %v", messageID, err)
+		return nil, "", fmt.Errorf("failed to download media: %w", err)
+	}
+
+	// Determina o MIME type baseado no tipo de mensagem
+	mimeType := m.getMimeTypeFromMessage(mediaMessage)
+
+	m.logger.Debugf("Successfully downloaded media for message %s, size: %d bytes, mime: %s",
+		messageID, len(data), mimeType)
+
+	return data, mimeType, nil
+}
+
+// findMediaMessage busca uma mensagem de mídia no cache
+func (m *MeowService) findMediaMessage(ctx context.Context, client *WameowClient, messageID string) (whatsmeow.DownloadableMessage, error) {
+	// Busca no cache de mídia do EventProcessor
+	if client.eventHandler != nil && client.eventHandler.mediaCache != nil {
+		if mediaMsg, exists := client.eventHandler.mediaCache[messageID]; exists {
+			if downloadable, ok := mediaMsg.(whatsmeow.DownloadableMessage); ok {
+				m.logger.Debugf("Found media message in cache for %s", messageID)
+				return downloadable, nil
+			}
+		}
+	}
+
+	m.logger.Warnf("Media message not found in cache for message %s", messageID)
+	return nil, fmt.Errorf("media message not found in cache")
+}
+
+// getMimeTypeFromMessage determina o MIME type baseado no tipo de mensagem
+func (m *MeowService) getMimeTypeFromMessage(msg whatsmeow.DownloadableMessage) string {
+	if msg == nil {
+		return "application/octet-stream"
+	}
+
+	// Verifica o tipo específico da mensagem e extrai o MIME type
+	switch v := msg.(type) {
+	case *waProto.AudioMessage:
+		if v.Mimetype != nil {
+			return *v.Mimetype
+		}
+		return "audio/ogg"
+	case *waProto.ImageMessage:
+		if v.Mimetype != nil {
+			return *v.Mimetype
+		}
+		return "image/jpeg"
+	case *waProto.VideoMessage:
+		if v.Mimetype != nil {
+			return *v.Mimetype
+		}
+		return "video/mp4"
+	case *waProto.DocumentMessage:
+		if v.Mimetype != nil {
+			return *v.Mimetype
+		}
+		return "application/octet-stream"
+	case *waProto.StickerMessage:
+		if v.Mimetype != nil {
+			return *v.Mimetype
+		}
+		return "image/webp"
+	default:
+		return "application/octet-stream"
+	}
 }
 
 func (m *MeowService) ReactToMessage(ctx context.Context, sessionID, phone, messageID, emoji string) error {
@@ -632,13 +734,20 @@ func (m *MeowService) sendAudioMessage(client *whatsmeow.Client, to string, data
 		return nil, err
 	}
 
+	m.logger.Infof("🎵 PREPARING AUDIO MESSAGE to=%s size=%d mime=%s ptt=%v", to, len(data), mimeType, ptt)
+
 	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaAudio)
 	if err != nil {
+		m.logger.Errorf("❌ FAILED TO UPLOAD AUDIO: %v", err)
 		return nil, err
 	}
 
+	m.logger.Infof("✅ AUDIO UPLOADED SUCCESSFULLY url=%s length=%d", uploaded.URL, uploaded.FileLength)
+
 	builder := m.getMessageBuilder()
 	message := builder.BuildAudioMessage(uploaded, mimeType, ptt)
+
+	m.logger.Infof("🚀 SENDING AUDIO MESSAGE TO WHATSAPP mime=%s ptt=%v", mimeType, ptt)
 
 	return m.messageSender.SendToJID(client, to, message)
 }

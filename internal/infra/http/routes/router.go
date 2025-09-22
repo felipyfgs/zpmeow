@@ -20,6 +20,7 @@ type HandlerDependencies struct {
 	CommunityHandler  *handlers.CommunityHandler
 	NewsletterHandler *handlers.NewsletterHandler
 	WebhookHandler    *handlers.WebhookHandler
+	ChatwootHandler   *handlers.ChatwootHandler
 }
 
 func SetupRoutes(
@@ -171,6 +172,14 @@ func SetupRoutes(
 
 	webhooks := sessionAPIGroup.Group("/webhooks")
 	webhooks.Get("/events", handlers.WebhookHandler.ListEvents)
+
+	// Chatwoot integration routes (simplified)
+	chatwoot := sessionAPIGroup.Group("/chatwoot")
+	chatwoot.Post("/set", handlers.ChatwootHandler.SetChatwootConfig)
+	chatwoot.Get("/find", handlers.ChatwootHandler.GetChatwootConfig)
+
+	// Chatwoot webhook route (public, no auth required)
+	app.Post("/chatwoot/webhook/:sessionId", handlers.ChatwootHandler.ReceiveChatwootWebhook)
 
 	app.Get("/swagger/swagger-config.json", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

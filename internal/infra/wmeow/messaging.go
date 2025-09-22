@@ -63,9 +63,16 @@ func NewMimeTypeHelper() *mimeTypeHelper {
 }
 
 func (h *mimeTypeHelper) GetOptimalAudioMimeType(originalMimeType string, isPTT bool) string {
-	if isPTT && (originalMimeType == "audio/mpeg" || originalMimeType == "audio/mp3") {
+	// Para mensagens PTT (Push-to-Talk), WhatsApp prefere OGG/Opus
+	if isPTT {
+		// Se já é OGG, mantém
+		if originalMimeType == "audio/ogg" || originalMimeType == "audio/ogg; codecs=opus" {
+			return "audio/ogg; codecs=opus"
+		}
+		// Para outros formatos em PTT, converte para OGG/Opus
 		return "audio/ogg; codecs=opus"
 	}
+	// Para áudio normal (não PTT), mantém o formato original
 	return originalMimeType
 }
 
@@ -125,6 +132,12 @@ func (b *MessageBuilder) BuildImageMessage(uploaded *whatsmeow.UploadResponse, c
 
 func (b *MessageBuilder) BuildAudioMessage(uploaded *whatsmeow.UploadResponse, mimeType string, ptt bool) *waE2E.Message {
 	finalMimeType := b.mimeHelper.GetOptimalAudioMimeType(mimeType, ptt)
+
+	// Log para debug
+	if mimeType != finalMimeType {
+		fmt.Printf("🔄 MIME TYPE CONVERTED: %s -> %s (PTT: %v)\n", mimeType, finalMimeType, ptt)
+	}
+
 	return &waE2E.Message{
 		AudioMessage: &waE2E.AudioMessage{
 			URL:           &uploaded.URL,

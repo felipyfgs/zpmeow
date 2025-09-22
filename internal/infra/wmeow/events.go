@@ -3,10 +3,15 @@ package wmeow
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"zpmeow/internal/domain/session"
+	"zpmeow/internal/infra/chatwoot"
+	"zpmeow/internal/infra/database/models"
+	"zpmeow/internal/infra/database/repository"
 	"zpmeow/internal/infra/logging"
 	"zpmeow/internal/infra/webhooks"
 
@@ -14,11 +19,14 @@ import (
 )
 
 type EventProcessor struct {
-	sessionID        string
-	webhookURL       string
-	sessionManager   *sessionManager
-	logger           logging.Logger
-	subscribedEvents []string
+	sessionID           string
+	webhookURL          string
+	sessionManager      *sessionManager
+	logger              logging.Logger
+	subscribedEvents    []string
+	chatwootIntegration *chatwoot.Integration
+	chatwootRepo        *repository.ChatwootRepository
+	mediaCache          map[string]interface{} // Cache para mensagens de mídia
 
 	receiptMutex   sync.Mutex
 	receiptCount   int
@@ -142,6 +150,23 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 	return ep
 }
 
+func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository) *EventProcessor {
+	logger := logging.GetLogger().Sub("events").Sub(sessionID)
+	ep := &EventProcessor{
+		sessionID:           sessionID,
+		webhookURL:          webhookURL,
+		sessionManager:      NewSessionManager(sessionRepo, logger),
+		logger:              logger,
+		subscribedEvents:    []string{},
+		chatwootIntegration: chatwootIntegration,
+		chatwootRepo:        chatwootRepo,
+	}
+
+	ep.loadSubscribedEvents()
+
+	return ep
+}
+
 func (ep *EventProcessor) shouldProcessEvent(eventType string) bool {
 	if len(ep.subscribedEvents) == 0 {
 		return true // Process all events if none specified
@@ -228,28 +253,300 @@ func (ep *EventProcessor) HandleEvent(evt interface{}) {
 
 func (ep *EventProcessor) handleMessage(evt interface{}) {
 	msg := evt.(*events.Message)
-	ep.logger.Infof("Message received from %s in session %s", msg.Info.Sender, ep.sessionID)
+	ep.logger.Infof("📨 [MESSAGE DEBUG] Message received from %s in session %s (ID: %s, IsFromMe: %v)", msg.Info.Sender, ep.sessionID, msg.Info.ID, msg.Info.IsFromMe)
 
-	if ep.webhookURL == "" {
-		ep.logger.Warnf("No webhook URL configured for session %s, skipping Message event", ep.sessionID)
+	// Processar integração Chatwoot primeiro
+	ep.logger.Infof("📨 [MESSAGE DEBUG] Starting Chatwoot processing for session %s", ep.sessionID)
+	ep.processChatwootMessage(msg)
+
+	// Depois enviar para webhook externo se configurado
+	if ep.webhookURL != "" {
+		normalizedMsg := ep.normalizeMessage(msg)
+
+		webhookPayload := map[string]interface{}{
+			"event":     "Message",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      normalizedMsg,
+		}
+
+		ep.logger.Infof("Sending Message event to webhook: %s", ep.webhookURL)
+		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send Message webhook: %v", err)
+		} else {
+			ep.logger.Infof("Successfully sent Message event")
+		}
+	} else {
+		ep.logger.Warnf("No webhook URL configured for session %s, skipping external webhook", ep.sessionID)
+	}
+}
+
+func (ep *EventProcessor) processChatwootMessage(msg *events.Message) {
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Starting processChatwootMessage for session %s", ep.sessionID)
+
+	if ep.chatwootIntegration == nil || ep.chatwootRepo == nil {
+		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] Chatwoot integration not available for session %s (integration=%v, repo=%v)", ep.sessionID, ep.chatwootIntegration != nil, ep.chatwootRepo != nil)
 		return
 	}
 
-	normalizedMsg := ep.normalizeMessage(msg)
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Checking Chatwoot config for session %s", ep.sessionID)
 
-	webhookPayload := map[string]interface{}{
-		"event":     "Message",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      normalizedMsg,
+	// Verificar se há configuração Chatwoot ativa para esta sessão
+	config, err := ep.chatwootRepo.GetBySessionID(context.Background(), ep.sessionID)
+	if err != nil {
+		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] No Chatwoot config found for session %s: %v", ep.sessionID, err)
+		return
 	}
 
-	ep.logger.Infof("Sending Message event to webhook: %s", ep.webhookURL)
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send Message webhook: %v", err)
+	if config == nil {
+		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] Chatwoot config is nil for session %s", ep.sessionID)
+		return
+	}
+
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Found Chatwoot config for session %s: enabled=%v, url=%s, accountId=%s", ep.sessionID, config.Enabled, getStringValue(config.URL), getStringValue(config.AccountID))
+
+	if !config.Enabled {
+		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] Chatwoot integration disabled for session %s", ep.sessionID)
+		return
+	}
+
+	// Verificar se a integração já está registrada, se não, registrar
+	isEnabled := ep.chatwootIntegration.IsEnabled(ep.sessionID)
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Chatwoot integration enabled status for session %s: %v", ep.sessionID, isEnabled)
+
+	if !isEnabled {
+		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Registering Chatwoot integration for session %s", ep.sessionID)
+		chatwootConfig := ep.dbModelToChatwootConfig(config)
+		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Converted config: enabled=%v, url=%s, accountId=%s", chatwootConfig.Enabled, chatwootConfig.URL, chatwootConfig.AccountID)
+
+		if err := ep.chatwootIntegration.RegisterInstance(ep.sessionID, chatwootConfig); err != nil {
+			ep.logger.Errorf("🔍 [CHATWOOT DEBUG] Failed to register Chatwoot instance for session %s: %v", ep.sessionID, err)
+			return
+		}
+		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Successfully registered Chatwoot integration for session %s", ep.sessionID)
+	}
+
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Processing message for Chatwoot integration in session %s", ep.sessionID)
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Message details: ID=%s, From=%s, IsFromMe=%v", msg.Info.ID, msg.Info.Sender.String(), msg.Info.IsFromMe)
+
+	// Converter mensagem WhatsApp para formato Chatwoot
+	chatwootMsg := ep.convertToCharwootMessage(msg)
+	if chatwootMsg == nil {
+		ep.logger.Errorf("🔍 [CHATWOOT DEBUG] Failed to convert WhatsApp message to Chatwoot format")
+		return
+	}
+
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Converted message: From=%s, Body=%s, Type=%s, Timestamp=%d", chatwootMsg.From, chatwootMsg.Body, chatwootMsg.Type, chatwootMsg.Timestamp)
+
+	// Enviar para Chatwoot
+	ctx := context.Background()
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Sending message to Chatwoot for session %s", ep.sessionID)
+
+	if err := ep.chatwootIntegration.ProcessMessage(ctx, ep.sessionID, chatwootMsg); err != nil {
+		ep.logger.Errorf("🔍 [CHATWOOT DEBUG] Failed to process message in Chatwoot: %v", err)
 	} else {
-		ep.logger.Infof("Successfully sent Message event")
+		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Successfully processed message in Chatwoot for session %s", ep.sessionID)
 	}
+}
+
+func (ep *EventProcessor) convertToCharwootMessage(msg *events.Message) *chatwoot.WhatsAppMessage {
+	if msg == nil {
+		return nil
+	}
+
+	// Detectar tipo de mensagem e extrair conteúdo
+	msgType, text, mediaURL, mimeType, fileName := ep.extractMessageContent(msg)
+
+	return &chatwoot.WhatsAppMessage{
+		ID:        msg.Info.ID,
+		From:      msg.Info.Sender.String(),
+		To:        "", // Será preenchido pela integração
+		Body:      text,
+		Type:      msgType,
+		Timestamp: msg.Info.Timestamp.Unix(),
+		MediaURL:  mediaURL,
+		MimeType:  mimeType,
+		FileName:  fileName,
+	}
+}
+
+// extractMessageContent extrai o tipo e conteúdo da mensagem
+func (ep *EventProcessor) extractMessageContent(msg *events.Message) (msgType, text, mediaURL, mimeType, fileName string) {
+	// Mensagem de texto
+	if msg.Message.Conversation != nil {
+		return "text", *msg.Message.Conversation, "", "", ""
+	}
+
+	// Mensagem de texto estendida
+	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
+		return "text", *msg.Message.ExtendedTextMessage.Text, "", "", ""
+	}
+
+	// Mensagem de imagem
+	if msg.Message.ImageMessage != nil {
+		caption := ""
+		if msg.Message.ImageMessage.Caption != nil {
+			caption = *msg.Message.ImageMessage.Caption
+		}
+		mimeType := ""
+		if msg.Message.ImageMessage.Mimetype != nil {
+			mimeType = *msg.Message.ImageMessage.Mimetype
+		}
+
+		// Armazena a mensagem de mídia para download posterior
+		ep.storeMediaMessage(msg.Info.ID, msg.Message.ImageMessage)
+
+		return "image", caption, "", mimeType, ""
+	}
+
+	// Mensagem de áudio
+	if msg.Message.AudioMessage != nil {
+		caption := ""
+		mimeType := ""
+		if msg.Message.AudioMessage.Mimetype != nil {
+			mimeType = *msg.Message.AudioMessage.Mimetype
+		}
+
+		// Armazena a mensagem de mídia para download posterior
+		ep.storeMediaMessage(msg.Info.ID, msg.Message.AudioMessage)
+
+		// Verifica se é PTT (Push to Talk)
+		if msg.Message.AudioMessage.PTT != nil && *msg.Message.AudioMessage.PTT {
+			return "ptt", caption, "", mimeType, ""
+		}
+		return "audio", caption, "", mimeType, ""
+	}
+
+	// Mensagem de vídeo
+	if msg.Message.VideoMessage != nil {
+		caption := ""
+		if msg.Message.VideoMessage.Caption != nil {
+			caption = *msg.Message.VideoMessage.Caption
+		}
+		mimeType := ""
+		if msg.Message.VideoMessage.Mimetype != nil {
+			mimeType = *msg.Message.VideoMessage.Mimetype
+		}
+
+		// Armazena a mensagem de mídia para download posterior
+		ep.storeMediaMessage(msg.Info.ID, msg.Message.VideoMessage)
+
+		return "video", caption, "", mimeType, ""
+	}
+
+	// Mensagem de documento
+	if msg.Message.DocumentMessage != nil {
+		caption := ""
+		if msg.Message.DocumentMessage.Caption != nil {
+			caption = *msg.Message.DocumentMessage.Caption
+		}
+		mimeType := ""
+		if msg.Message.DocumentMessage.Mimetype != nil {
+			mimeType = *msg.Message.DocumentMessage.Mimetype
+		}
+		fileName := ""
+		if msg.Message.DocumentMessage.FileName != nil {
+			fileName = *msg.Message.DocumentMessage.FileName
+		}
+
+		// Armazena a mensagem de mídia para download posterior
+		ep.storeMediaMessage(msg.Info.ID, msg.Message.DocumentMessage)
+
+		return "document", caption, "", mimeType, fileName
+	}
+
+	// Mensagem de sticker
+	if msg.Message.StickerMessage != nil {
+		mimeType := ""
+		if msg.Message.StickerMessage.Mimetype != nil {
+			mimeType = *msg.Message.StickerMessage.Mimetype
+		}
+
+		// Armazena a mensagem de mídia para download posterior
+		ep.storeMediaMessage(msg.Info.ID, msg.Message.StickerMessage)
+
+		return "sticker", "", "", mimeType, ""
+	}
+
+	// Mensagem de localização
+	if msg.Message.LocationMessage != nil {
+		return "location", "", "", "", ""
+	}
+
+	// Mensagem de contato
+	if msg.Message.ContactMessage != nil {
+		return "contact", "", "", "", ""
+	}
+
+	// Tipo desconhecido - fallback para texto
+	return "text", "", "", "", ""
+}
+
+// storeMediaMessage armazena uma mensagem de mídia para download posterior
+func (ep *EventProcessor) storeMediaMessage(messageID string, mediaMsg interface{}) {
+	if ep.mediaCache == nil {
+		ep.mediaCache = make(map[string]interface{})
+	}
+	ep.mediaCache[messageID] = mediaMsg
+
+	ep.logger.Debugf("Stored media message for download: message_id=%s, type=%T", messageID, mediaMsg)
+}
+
+// dbModelToChatwootConfig converte modelo do banco para configuração Chatwoot
+func (ep *EventProcessor) dbModelToChatwootConfig(model *models.ChatwootModel) *chatwoot.ChatwootConfig {
+	// Obtém o host público da variável de ambiente
+	publicHost := os.Getenv("PUBLIC_HOST")
+	if publicHost == "" {
+		publicHost = "localhost:8080" // Fallback
+	}
+
+	// Adiciona esquema se não estiver presente
+	webhookURL := publicHost
+	if !strings.HasPrefix(publicHost, "http://") && !strings.HasPrefix(publicHost, "https://") {
+		webhookURL = fmt.Sprintf("http://%s", publicHost)
+	}
+
+	config := &chatwoot.ChatwootConfig{
+		Enabled:                 model.Enabled,
+		SignMsg:                 model.SignMsg,
+		SignDelimiter:           model.SignDelimiter,
+		Number:                  model.Number,
+		ReopenConversation:      model.ReopenConversation,
+		ConversationPending:     model.ConversationPending,
+		MergeBrazilContacts:     model.MergeBrazilContacts,
+		ImportContacts:          model.ImportContacts,
+		ImportMessages:          model.ImportMessages,
+		DaysLimitImportMessages: model.DaysLimitImportMessages,
+		AutoCreate:              model.AutoCreate,
+		Organization:            model.Organization,
+		Logo:                    model.Logo,
+		IgnoreJids:              []string(model.IgnoreJids),
+		WebhookURL:              fmt.Sprintf("%s/chatwoot/webhook/%s", webhookURL, ep.sessionID),
+	}
+
+	// Campos opcionais
+	if model.AccountID != nil {
+		config.AccountID = *model.AccountID
+	}
+	if model.Token != nil {
+		config.Token = *model.Token
+	}
+	if model.URL != nil {
+		config.URL = *model.URL
+	}
+	if model.NameInbox != nil {
+		config.NameInbox = *model.NameInbox
+	}
+
+	return config
+}
+
+// getStringValue retorna o valor de um ponteiro string ou string vazia se for nil
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message {
