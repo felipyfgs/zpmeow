@@ -155,7 +155,6 @@ func (ep *EventProcessor) shouldProcessEvent(eventType string) bool {
 	return false
 }
 
-
 func (ep *EventProcessor) logEventWithThrottling(eventType string, details string) {
 	if eventType == "Receipt" {
 		ep.receiptMutex.Lock()
@@ -202,7 +201,6 @@ func (ep *EventProcessor) UpdateWebhookURL(webhookURL string) {
 	ep.webhookURL = webhookURL
 	ep.logger.Infof("Updated webhook URL: %s", webhookURL)
 }
-
 
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)

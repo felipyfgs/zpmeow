@@ -2884,7 +2884,6 @@ func parsePhoneToJID(phone string) (waTypes.JID, error) {
 	return parser.ParseToJID(phone)
 }
 
-
 func (m *MeowService) sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.ContactData) (*whatsmeow.SendResponse, error) {
 	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {
 		return nil, err

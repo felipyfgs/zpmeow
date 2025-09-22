@@ -77,7 +77,6 @@ func (r *RedisService) Close() error {
 	return nil
 }
 
-
 func (r *RedisService) GetSession(ctx context.Context, sessionID string) (*session.Session, error) {
 	key := ports.SessionKeyPrefix + sessionID
 
@@ -176,7 +175,6 @@ func (r *RedisService) DeleteSessionByName(ctx context.Context, name string) err
 	return nil
 }
 
-
 func (r *RedisService) GetQRCode(ctx context.Context, sessionID string) (string, error) {
 	key := ports.QRCodeKeyPrefix + sessionID
 
@@ -237,7 +235,6 @@ func (r *RedisService) SetQRCodeBase64(ctx context.Context, sessionID string, qr
 
 	return nil
 }
-
 
 func (r *RedisService) GetDeviceJID(ctx context.Context, sessionID string) (string, error) {
 	key := ports.DeviceJIDKeyPrefix + sessionID
@@ -317,7 +314,6 @@ func (r *RedisService) DeleteSessionStatus(ctx context.Context, sessionID string
 	r.logger.Debugf("Deleted session status for session %s from cache", sessionID)
 	return nil
 }
-
 
 func (r *RedisService) Ping(ctx context.Context) error {
 	if err := r.client.Ping(ctx).Err(); err != nil {

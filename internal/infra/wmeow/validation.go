@@ -151,5 +151,3 @@ func IsConnectionError(err error) bool {
 	var connErr *ConnectionError
 	return errors.As(err, &connErr)
 }
-
-

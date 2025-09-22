@@ -15,7 +15,6 @@ func NewNoOpCacheService() ports.CacheService {
 	return &NoOpCacheService{}
 }
 
-
 func (n *NoOpCacheService) GetSession(ctx context.Context, sessionID string) (*session.Session, error) {
 	return nil, ports.NewCacheError("get", "session:"+sessionID, fmt.Errorf("cache is disabled"))
 }
@@ -40,7 +39,6 @@ func (n *NoOpCacheService) DeleteSessionByName(ctx context.Context, name string)
 	return nil
 }
 
-
 func (n *NoOpCacheService) GetQRCode(ctx context.Context, sessionID string) (string, error) {
 	return "", ports.NewCacheError("get", "qr:"+sessionID, fmt.Errorf("cache is disabled"))
 }
@@ -60,7 +58,6 @@ func (n *NoOpCacheService) GetQRCodeBase64(ctx context.Context, sessionID string
 func (n *NoOpCacheService) SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string) error {
 	return nil
 }
-
 
 func (n *NoOpCacheService) GetDeviceJID(ctx context.Context, sessionID string) (string, error) {
 	return "", ports.NewCacheError("get", "device_jid:"+sessionID, fmt.Errorf("cache is disabled"))
@@ -85,7 +82,6 @@ func (n *NoOpCacheService) SetSessionStatus(ctx context.Context, sessionID strin
 func (n *NoOpCacheService) DeleteSessionStatus(ctx context.Context, sessionID string) error {
 	return nil
 }
-
 
 func (n *NoOpCacheService) Ping(ctx context.Context) error {
 	return fmt.Errorf("cache is disabled")

@@ -28,7 +28,6 @@ func SetupRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 ) {
 
-
 	app.Use(func(c *fiber.Ctx) error {
 		if c.Path() == "/swagger/doc.json" {
 			host := c.Hostname()

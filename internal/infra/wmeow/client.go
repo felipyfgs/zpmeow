@@ -46,7 +46,6 @@ type WameowClient struct {
 	connManager    *connectionManager
 }
 
-
 func NewWameowClient(sessionID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler *EventProcessor, sessionRepo session.Repository) (*WameowClient, error) {
 	return NewWameowClientWithDeviceJID(sessionID, "", container, waLogger, eventHandler, sessionRepo)
 }
