@@ -376,6 +376,8 @@ Send an audio file with optional PTT (Push-to-Talk) mode.
 **Parameters:**
 - `audio` (string, required): Audio data in base64, data URL, or HTTP/HTTPS URL
 - `ptt` (boolean, optional): Enable Push-to-Talk mode (default: false)
+  - When `true`: Audio is sent as voice message (PTT) with `audio/ogg; codecs=opus` MIME type
+  - When `false`: Audio is sent as regular audio file with original MIME type
 
 **Response:**
 ```json

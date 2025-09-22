@@ -16,7 +16,7 @@ import (
 type EventProcessor struct {
 	sessionID        string
 	webhookURL       string
-	sessionRepo      session.Repository
+	sessionManager   *sessionManager
 	logger           logging.Logger
 	subscribedEvents []string
 
@@ -28,53 +28,53 @@ type EventProcessor struct {
 
 var eventTypeMapping = map[string]string{
 	// Messages
-	"*events.Message":                     "Message",
-	"*events.UndecryptableMessage":        "UndecryptableMessage",
-	"*events.Receipt":                     "Receipt",
-	"*events.MediaRetry":                  "MediaRetry",
-	"*events.MediaRetryError":             "MediaRetryError",
+	"*events.Message":              "Message",
+	"*events.UndecryptableMessage": "UndecryptableMessage",
+	"*events.Receipt":              "Receipt",
+	"*events.MediaRetry":           "MediaRetry",
+	"*events.MediaRetryError":      "MediaRetryError",
 
 	// Groups
-	"*events.GroupInfo":                   "GroupInfo",
-	"*events.JoinedGroup":                 "JoinedGroup",
+	"*events.GroupInfo":   "GroupInfo",
+	"*events.JoinedGroup": "JoinedGroup",
 
 	// Contacts and Profiles
-	"*events.Contact":                     "Contact",
-	"*events.Picture":                     "Picture",
-	"*events.BusinessName":                "BusinessName",
-	"*events.PushName":                    "PushName",
-	"*events.PushNameSetting":             "PushNameSetting",
+	"*events.Contact":         "Contact",
+	"*events.Picture":         "Picture",
+	"*events.BusinessName":    "BusinessName",
+	"*events.PushName":        "PushName",
+	"*events.PushNameSetting": "PushNameSetting",
 
 	// Chat Management
-	"*events.Archive":                     "Archive",
-	"*events.Pin":                         "Pin",
-	"*events.Mute":                        "Mute",
-	"*events.Star":                        "Star",
-	"*events.DeleteChat":                  "DeleteChat",
-	"*events.ClearChat":                   "ClearChat",
-	"*events.DeleteForMe":                 "DeleteForMe",
-	"*events.MarkChatAsRead":              "MarkChatAsRead",
+	"*events.Archive":        "Archive",
+	"*events.Pin":            "Pin",
+	"*events.Mute":           "Mute",
+	"*events.Star":           "Star",
+	"*events.DeleteChat":     "DeleteChat",
+	"*events.ClearChat":      "ClearChat",
+	"*events.DeleteForMe":    "DeleteForMe",
+	"*events.MarkChatAsRead": "MarkChatAsRead",
 
 	// Blocklist
-	"*events.Blocklist":                   "Blocklist",
-	"*events.BlocklistChange":             "BlocklistChange",
+	"*events.Blocklist":       "Blocklist",
+	"*events.BlocklistChange": "BlocklistChange",
 
 	// Labels
-	"*events.LabelAssociationChat":        "LabelAssociationChat",
-	"*events.LabelAssociationMessage":     "LabelAssociationMessage",
-	"*events.LabelEdit":                   "LabelEdit",
+	"*events.LabelAssociationChat":    "LabelAssociationChat",
+	"*events.LabelAssociationMessage": "LabelAssociationMessage",
+	"*events.LabelEdit":               "LabelEdit",
 
 	// Connection Events
-	"*events.Connected":                   "Connected",
-	"*events.Disconnected":                "Disconnected",
-	"*events.ConnectFailure":              "ConnectFailure",
-	"*events.KeepAliveRestored":           "KeepAliveRestored",
-	"*events.KeepAliveTimeout":            "KeepAliveTimeout",
-	"*events.LoggedOut":                   "LoggedOut",
-	"*events.ClientOutdated":              "ClientOutdated",
-	"*events.TemporaryBan":                "TemporaryBan",
-	"*events.StreamError":                 "StreamError",
-	"*events.StreamReplaced":              "StreamReplaced",
+	"*events.Connected":         "Connected",
+	"*events.Disconnected":      "Disconnected",
+	"*events.ConnectFailure":    "ConnectFailure",
+	"*events.KeepAliveRestored": "KeepAliveRestored",
+	"*events.KeepAliveTimeout":  "KeepAliveTimeout",
+	"*events.LoggedOut":         "LoggedOut",
+	"*events.ClientOutdated":    "ClientOutdated",
+	"*events.TemporaryBan":      "TemporaryBan",
+	"*events.StreamError":       "StreamError",
+	"*events.StreamReplaced":    "StreamReplaced",
 
 	// Pairing
 	"*events.PairSuccess":                 "PairSuccess",
@@ -83,49 +83,49 @@ var eventTypeMapping = map[string]string{
 	"*events.QRScannedWithoutMultidevice": "QRScannedWithoutMultidevice",
 
 	// Settings
-	"*events.PrivacySettings":             "PrivacySettings",
-	"*events.UserAbout":                   "UserAbout",
-	"*events.UnarchiveChatsSetting":       "UnarchiveChatsSetting",
-	"*events.UserStatusMute":              "UserStatusMute",
+	"*events.PrivacySettings":       "PrivacySettings",
+	"*events.UserAbout":             "UserAbout",
+	"*events.UnarchiveChatsSetting": "UnarchiveChatsSetting",
+	"*events.UserStatusMute":        "UserStatusMute",
 
 	// Sync Events
-	"*events.AppState":                    "AppState",
-	"*events.AppStateSyncComplete":        "AppStateSyncComplete",
-	"*events.HistorySync":                 "HistorySync",
-	"*events.OfflineSyncCompleted":        "OfflineSyncCompleted",
-	"*events.OfflineSyncPreview":          "OfflineSyncPreview",
+	"*events.AppState":             "AppState",
+	"*events.AppStateSyncComplete": "AppStateSyncComplete",
+	"*events.HistorySync":          "HistorySync",
+	"*events.OfflineSyncCompleted": "OfflineSyncCompleted",
+	"*events.OfflineSyncPreview":   "OfflineSyncPreview",
 
 	// Calls
-	"*events.CallOffer":                   "CallOffer",
-	"*events.CallAccept":                  "CallAccept",
-	"*events.CallTerminate":               "CallTerminate",
-	"*events.CallOfferNotice":             "CallOfferNotice",
-	"*events.CallRelayLatency":            "CallRelayLatency",
-	"*events.CallPreAccept":               "CallPreAccept",
-	"*events.CallReject":                  "CallReject",
-	"*events.CallTransport":               "CallTransport",
-	"*events.UnknownCallEvent":            "UnknownCallEvent",
+	"*events.CallOffer":        "CallOffer",
+	"*events.CallAccept":       "CallAccept",
+	"*events.CallTerminate":    "CallTerminate",
+	"*events.CallOfferNotice":  "CallOfferNotice",
+	"*events.CallRelayLatency": "CallRelayLatency",
+	"*events.CallPreAccept":    "CallPreAccept",
+	"*events.CallReject":       "CallReject",
+	"*events.CallTransport":    "CallTransport",
+	"*events.UnknownCallEvent": "UnknownCallEvent",
 
 	// Presence
-	"*events.Presence":                    "Presence",
-	"*events.ChatPresence":                "ChatPresence",
+	"*events.Presence":     "Presence",
+	"*events.ChatPresence": "ChatPresence",
 
 	// Security
-	"*events.IdentityChange":              "IdentityChange",
-	"*events.CATRefreshError":             "CATRefreshError",
+	"*events.IdentityChange":  "IdentityChange",
+	"*events.CATRefreshError": "CATRefreshError",
 
 	// Newsletters
-	"*events.NewsletterJoin":              "NewsletterJoin",
-	"*events.NewsletterLeave":             "NewsletterLeave",
-	"*events.NewsletterMuteChange":        "NewsletterMuteChange",
-	"*events.NewsletterLiveUpdate":        "NewsletterLiveUpdate",
-	"*events.NewsletterMessageMeta":       "NewsletterMessageMeta",
+	"*events.NewsletterJoin":        "NewsletterJoin",
+	"*events.NewsletterLeave":       "NewsletterLeave",
+	"*events.NewsletterMuteChange":  "NewsletterMuteChange",
+	"*events.NewsletterLiveUpdate":  "NewsletterLiveUpdate",
+	"*events.NewsletterMessageMeta": "NewsletterMessageMeta",
 
 	// Other Platforms
-	"*events.FBMessage":                   "FBMessage",
+	"*events.FBMessage": "FBMessage",
 
 	// Special
-	"*events.ManualLoginReconnect":        "ManualLoginReconnect",
+	"*events.ManualLoginReconnect": "ManualLoginReconnect",
 }
 
 var eventHandlers = map[string]func(*EventProcessor, interface{}){
@@ -145,11 +145,12 @@ var eventHandlers = map[string]func(*EventProcessor, interface{}){
 }
 
 func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Repository) *EventProcessor {
+	logger := logging.GetLogger().Sub("events").Sub(sessionID)
 	ep := &EventProcessor{
 		sessionID:        sessionID,
 		webhookURL:       webhookURL,
-		sessionRepo:      sessionRepo,
-		logger:           logging.GetLogger().Sub("events").Sub(sessionID),
+		sessionManager:   NewSessionManager(sessionRepo, logger),
+		logger:           logger,
 		subscribedEvents: []string{},
 	}
 
@@ -158,8 +159,43 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 	return ep
 }
 
+// Helper methods for event processing
+func (ep *EventProcessor) shouldProcessEvent(eventType string) bool {
+	if len(ep.subscribedEvents) == 0 {
+		return true // Process all events if none specified
+	}
+
+	for _, subscribedEvent := range ep.subscribedEvents {
+		if subscribedEvent == "All" || subscribedEvent == eventType {
+			return true
+		}
+	}
+	return false
+}
+
+// Removed unused sendWebhook method - using global sendWebhook function instead
+
+func (ep *EventProcessor) logEventWithThrottling(eventType string, details string) {
+	// Throttle frequent events like receipts
+	if eventType == "Receipt" {
+		ep.receiptMutex.Lock()
+		ep.receiptCount++
+		now := time.Now()
+
+		if now.Sub(ep.lastReceiptLog) > 30*time.Second {
+			ep.logger.Debugf("Processed %d receipt events in last 30s", ep.receiptCount)
+			ep.receiptCount = 0
+			ep.lastReceiptLog = now
+		}
+		ep.receiptMutex.Unlock()
+		return
+	}
+
+	ep.logger.Debugf("Event %s: %s", eventType, details)
+}
+
 func (ep *EventProcessor) loadSubscribedEvents() {
-	sessionEntity, err := ep.sessionRepo.GetByID(context.Background(), ep.sessionID)
+	sessionEntity, err := ep.sessionManager.GetSession(ep.sessionID)
 	if err != nil {
 		ep.logger.Warnf("Failed to load session for events: %v", err)
 		ep.subscribedEvents = []string{"All"}
@@ -182,38 +218,29 @@ func (ep *EventProcessor) UpdateSubscribedEvents(events []string) {
 	ep.logger.Infof("Updated subscribed events: %v", ep.subscribedEvents)
 }
 
-func (ep *EventProcessor) isSubscribedToEvent(eventType string) bool {
-	if len(ep.subscribedEvents) == 0 {
-		return false
-	}
-
-	for _, subscribedEvent := range ep.subscribedEvents {
-		if subscribedEvent == "All" {
-			return true
-		}
-		if subscribedEvent == eventType {
-			return true
-		}
-	}
-
-	return false
+func (ep *EventProcessor) UpdateWebhookURL(webhookURL string) {
+	ep.webhookURL = webhookURL
+	ep.logger.Infof("Updated webhook URL: %s", webhookURL)
 }
+
+// Removed: isSubscribedToEvent - replaced by shouldProcessEvent helper method
 
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)
 
 	systemEventType, exists := eventTypeMapping[eventType]
 	if !exists {
-		// Only log unmapped events that might be important
 		if !isCommonUnmappedEvent(eventType) {
 			ep.logger.Debugf("Unmapped event: %s", eventType)
 		}
 		return
 	}
 
-	if !ep.isSubscribedToEvent(systemEventType) {
+	if !ep.shouldProcessEvent(systemEventType) {
 		return
 	}
+
+	ep.logEventWithThrottling(systemEventType, fmt.Sprintf("Processing %s", systemEventType))
 
 	if handler, exists := eventHandlers[eventType]; exists {
 		handler(ep, evt)
@@ -226,16 +253,66 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 	msg := evt.(*events.Message)
 	ep.logger.Infof("Message received from %s in session %s", msg.Info.Sender, ep.sessionID)
 
+	if ep.webhookURL == "" {
+		ep.logger.Warnf("No webhook URL configured for session %s, skipping Message event", ep.sessionID)
+		return
+	}
+
+	// Normalize the message to ensure consistent text message format
+	normalizedMsg := ep.normalizeMessage(msg)
+
 	webhookPayload := map[string]interface{}{
 		"event":     "Message",
 		"sessionID": ep.sessionID,
 		"timestamp": time.Now().Unix(),
-		"data":      msg,
+		"data":      normalizedMsg,
 	}
 
+	ep.logger.Infof("Sending Message event to webhook: %s", ep.webhookURL)
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		ep.logger.Errorf("Failed to send Message webhook: %v", err)
+	} else {
+		ep.logger.Infof("Successfully sent Message event")
 	}
+}
+
+// normalizeMessage normalizes text messages to ensure consistent format
+// Converts extendedTextMessage to conversation format for consistency
+func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message {
+	// Create a copy of the message to avoid modifying the original
+	normalizedMsg := *msg
+
+	// Check if this is an extendedTextMessage that should be normalized to conversation
+	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
+		text := *msg.Message.ExtendedTextMessage.Text
+
+		// Log the normalization for debugging
+		ep.logger.Debugf("Normalizing extendedTextMessage to conversation format for session %s: %s", ep.sessionID, text)
+
+		// Create a new message with conversation format and remove extendedTextMessage
+		normalizedMsg.Message.Conversation = &text
+		normalizedMsg.Message.ExtendedTextMessage = nil
+
+		// Update the raw message as well if it exists
+		if normalizedMsg.RawMessage != nil {
+			// Handle DeviceSentMessage structure
+			if normalizedMsg.RawMessage.DeviceSentMessage != nil &&
+				normalizedMsg.RawMessage.DeviceSentMessage.Message != nil {
+				if normalizedMsg.RawMessage.DeviceSentMessage.Message.ExtendedTextMessage != nil {
+					normalizedMsg.RawMessage.DeviceSentMessage.Message.Conversation = &text
+					normalizedMsg.RawMessage.DeviceSentMessage.Message.ExtendedTextMessage = nil
+				}
+			}
+
+			// Handle direct ExtendedTextMessage in RawMessage
+			if normalizedMsg.RawMessage.ExtendedTextMessage != nil {
+				normalizedMsg.RawMessage.Conversation = &text
+				normalizedMsg.RawMessage.ExtendedTextMessage = nil
+			}
+		}
+	}
+
+	return &normalizedMsg
 }
 
 func (ep *EventProcessor) handleConnected(evt interface{}) {
@@ -392,6 +469,11 @@ func init() {
 }
 
 func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
+	if ep.webhookURL == "" {
+		ep.logger.Warnf("No webhook URL configured for session %s, skipping event %s", ep.sessionID, eventType)
+		return
+	}
+
 	webhookPayload := map[string]interface{}{
 		"event":     eventType,
 		"sessionID": ep.sessionID,
@@ -399,9 +481,11 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 		"data":      evt,
 	}
 
-	ep.logger.Infof("Sending generic event: %s", eventType)
+	ep.logger.Infof("Sending generic event: %s to webhook: %s", eventType, ep.webhookURL)
 	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send generic webhook: %v", err)
+		ep.logger.Errorf("Failed to send generic webhook for event %s: %v", eventType, err)
+	} else {
+		ep.logger.Infof("Successfully sent generic event: %s", eventType)
 	}
 }
 
@@ -444,11 +528,21 @@ func isCommonUnmappedEvent(eventType string) bool {
 
 func sendWebhook(url string, data interface{}) error {
 	if url == "" {
-		return nil
+		return fmt.Errorf("webhook URL is empty")
 	}
+
+	logger := logging.GetLogger().Sub("webhook-sender")
+	logger.Infof("Attempting to send webhook to: %s", url)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	return globalWebhookService.SendWebhook(ctx, url, "whatsapp_event", "", data)
+	err := globalWebhookService.SendWebhook(ctx, url, "whatsapp_event", "", data)
+	if err != nil {
+		logger.Errorf("Failed to send webhook to %s: %v", url, err)
+		return err
+	}
+
+	logger.Infof("Successfully sent webhook to: %s", url)
+	return nil
 }

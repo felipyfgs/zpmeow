@@ -29,6 +29,7 @@ type SendMediaRequest struct {
 	MediaType string `json:"media_type" binding:"required" example:"image"`
 	MediaURL  string `json:"media_url" binding:"required" example:"data:image/jpeg;base64,/9j/4AAQ..."`
 	Caption   string `json:"caption,omitempty" example:"Check this out!"`
+	PTT       bool   `json:"ptt,omitempty" example:"false"` // For audio messages
 }
 
 func (r SendMediaRequest) Validate() error {

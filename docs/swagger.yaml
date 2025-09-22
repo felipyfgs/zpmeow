@@ -1202,6 +1202,10 @@ definitions:
       phone:
         example: "5511999999999"
         type: string
+      ptt:
+        description: For audio messages
+        example: false
+        type: boolean
     required:
     - media_type
     - media_url

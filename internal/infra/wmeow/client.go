@@ -20,8 +20,7 @@ import (
 type WameowClient struct {
 	sessionID    string
 	client       *whatsmeow.Client
-	eventHandler EventHandler
-	sessionRepo  session.Repository
+	eventHandler *EventProcessor
 	logger       logging.Logger
 	waLogger     waLog.Logger
 
@@ -40,24 +39,21 @@ type WameowClient struct {
 	killChannel   chan bool
 	qrStopChannel chan bool
 
-	maxRetries    int
-	retryCount    int
-	retryInterval time.Duration
+	retryConfig *RetryConfig
 
-	sessionHelper    *SessionHelper
-	qrHelper         *QRCodeHelper
-	connectionHelper *ConnectionHelper
+	// Injected dependencies
+	sessionManager *sessionManager
+	qrGenerator    *qrCodeGenerator
+	connManager    *connectionManager
 }
 
-type EventHandler interface {
-	HandleEvent(interface{})
-}
+// EventHandler interface is now defined in interfaces.go
 
-func NewWameowClient(sessionID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler EventHandler, sessionRepo session.Repository) (*WameowClient, error) {
+func NewWameowClient(sessionID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler *EventProcessor, sessionRepo session.Repository) (*WameowClient, error) {
 	return NewWameowClientWithDeviceJID(sessionID, "", container, waLogger, eventHandler, sessionRepo)
 }
 
-func NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler EventHandler, sessionRepo session.Repository) (*WameowClient, error) {
+func NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler *EventProcessor, sessionRepo session.Repository) (*WameowClient, error) {
 	if waLogger == nil {
 		waLogger = waLog.Noop
 	}
@@ -80,29 +76,22 @@ func NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID string, container
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	sessionHelper := NewSessionHelper(sessionRepo, appLogger)
-	qrHelper := NewQRCodeHelper(appLogger)
-	connectionHelper := NewConnectionHelper(appLogger)
-
 	client := &WameowClient{
-		sessionID:        sessionID,
-		client:           waClient,
-		eventHandler:     eventHandler,
-		sessionRepo:      sessionRepo,
-		logger:           appLogger,
-		waLogger:         waLogger,
-		status:           session.StatusDisconnected,
-		lastActivity:     time.Now(),
-		ctx:              ctx,
-		cancel:           cancel,
-		killChannel:      make(chan bool, 1),
-		qrStopChannel:    make(chan bool, 1),
-		maxRetries:       5,
-		retryCount:       0,
-		retryInterval:    30 * time.Second,
-		sessionHelper:    sessionHelper,
-		qrHelper:         qrHelper,
-		connectionHelper: connectionHelper,
+		sessionID:      sessionID,
+		client:         waClient,
+		eventHandler:   eventHandler,
+		logger:         appLogger,
+		waLogger:       waLogger,
+		status:         session.StatusDisconnected,
+		lastActivity:   time.Now(),
+		ctx:            ctx,
+		cancel:         cancel,
+		killChannel:    make(chan bool, 1),
+		qrStopChannel:  make(chan bool, 1),
+		retryConfig:    DefaultRetryConfig(),
+		sessionManager: NewSessionManager(sessionRepo, appLogger),
+		qrGenerator:    NewQRCodeGenerator(appLogger),
+		connManager:    NewConnectionManager(appLogger),
 	}
 
 	if eventHandler != nil {
@@ -116,17 +105,29 @@ func (c *WameowClient) Connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if err := ValidateClientAndStore(c.client, c.sessionID, c.logger); err != nil {
+	if err := ValidateClientAndStore(c.client, c.sessionID); err != nil {
 		return err
 	}
 
 	if c.client.IsConnected() {
 		c.logger.Debugf("Client already connected for session %s", c.sessionID)
+		// Ensure session status is also connected in the domain
+		c.setStatus(session.StatusConnected)
+		c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnected)
+		return nil
+	}
+
+	// Check current session status before changing to connecting
+	sessionEntity, err := c.sessionManager.GetSession(c.sessionID)
+	if err == nil && sessionEntity.IsConnected() {
+		c.logger.Debugf("Session %s already connected in domain, skipping status change", c.sessionID)
+		c.setStatus(session.StatusConnected)
+		go c.startClientLoop()
 		return nil
 	}
 
 	c.setStatus(session.StatusConnecting)
-	c.sessionHelper.UpdateSessionStatus(c.sessionID, session.StatusConnecting)
+	c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnecting)
 
 	go c.startClientLoop()
 
@@ -150,7 +151,7 @@ func (c *WameowClient) Disconnect() error {
 	c.logger.Debugf("WameowClient.Disconnect: QR loop stopped for session %s", c.sessionID)
 
 	c.logger.Debugf("WameowClient.Disconnect: Calling SafeDisconnect for session %s", c.sessionID)
-	c.connectionHelper.SafeDisconnect(c.client, c.sessionID)
+	c.connManager.SafeDisconnect(c.client, c.sessionID)
 	c.logger.Debugf("WameowClient.Disconnect: SafeDisconnect completed for session %s", c.sessionID)
 
 	c.logger.Debugf("WameowClient.Disconnect: Cancelling context for session %s", c.sessionID)
@@ -167,7 +168,7 @@ func (c *WameowClient) Disconnect() error {
 
 	c.logger.Debugf("WameowClient.Disconnect: Updating session status in database for session %s", c.sessionID)
 	go func() {
-		c.sessionHelper.UpdateSessionStatus(c.sessionID, session.StatusDisconnected)
+		c.sessionManager.UpdateStatus(c.sessionID, session.StatusDisconnected)
 		c.logger.Debugf("WameowClient.Disconnect: Database update completed for session %s", c.sessionID)
 	}()
 
@@ -342,7 +343,7 @@ func (c *WameowClient) handleExistingDeviceConnection() {
 	if err != nil {
 		c.logger.Errorf("Failed to connect client for session %s: %v", c.sessionID, err)
 		c.setStatus(session.StatusDisconnected)
-		c.sessionHelper.UpdateSessionStatus(c.sessionID, session.StatusDisconnected)
+		c.sessionManager.UpdateStatus(c.sessionID, session.StatusDisconnected)
 		return
 	}
 
@@ -351,11 +352,11 @@ func (c *WameowClient) handleExistingDeviceConnection() {
 	if c.client.IsConnected() {
 		c.logger.Infof("Successfully connected session %s", c.sessionID)
 		c.setStatus(session.StatusConnected)
-		c.sessionHelper.UpdateSessionStatus(c.sessionID, session.StatusConnected)
+		c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnected)
 	} else {
 		c.logger.Warnf("Connection attempt completed but client not connected for session %s", c.sessionID)
 		c.setStatus(session.StatusDisconnected)
-		c.sessionHelper.UpdateSessionStatus(c.sessionID, session.StatusDisconnected)
+		c.sessionManager.UpdateStatus(c.sessionID, session.StatusDisconnected)
 	}
 }
 
@@ -384,7 +385,7 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 			if !ok {
 				c.logger.Infof("QR channel closed for session %s", c.sessionID)
 				c.setStatus(session.StatusDisconnected)
-				c.sessionHelper.UpdateSessionQRCode(c.sessionID, "")
+				c.sessionManager.UpdateQRCode(c.sessionID, "")
 				return
 			}
 
@@ -392,14 +393,14 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 			case "code":
 				c.mu.Lock()
 				c.qrCode = evt.Code
-				c.qrCodeBase64 = c.qrHelper.GenerateQRCodeImage(evt.Code)
+				c.qrCodeBase64 = c.qrGenerator.GenerateQRCodeImage(evt.Code)
 				c.mu.Unlock()
 
-				c.qrHelper.DisplayQRCodeInTerminal(evt.Code, c.sessionID)
+				c.qrGenerator.DisplayQRCodeInTerminal(evt.Code, c.sessionID)
 				c.logger.Infof("QR code generated for session %s", c.sessionID)
 				c.setStatus(session.StatusConnecting)
 
-				c.sessionHelper.UpdateSessionQRCode(c.sessionID, evt.Code)
+				c.sessionManager.UpdateQRCode(c.sessionID, evt.Code)
 
 			case "success":
 				c.logger.Infof("QR code scanned successfully for session %s", c.sessionID)
@@ -417,7 +418,7 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 
 				c.setStatus(session.StatusDisconnected)
 
-				c.sessionHelper.UpdateSessionQRCode(c.sessionID, "")
+				c.sessionManager.UpdateQRCode(c.sessionID, "")
 				return
 
 			default:
@@ -444,15 +445,7 @@ func (c *WameowClient) stopQRLoop() {
 }
 
 func (c *WameowClient) persistQRSuccess() {
-	if c.sessionRepo == nil {
-		c.logger.Warnf("No session repository available for session %s", c.sessionID)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	sessionEntity, err := c.sessionRepo.GetByID(ctx, c.sessionID)
+	sessionEntity, err := c.sessionManager.GetSession(c.sessionID)
 	if err != nil {
 		c.logger.Errorf("Failed to get session %s from database: %v", c.sessionID, err)
 		return
@@ -464,11 +457,6 @@ func (c *WameowClient) persistQRSuccess() {
 	}
 
 	if deviceJID != "" {
-		if err := c.sessionRepo.ValidateDeviceUniqueness(ctx, c.sessionID, deviceJID); err != nil {
-			c.logger.Errorf("Device uniqueness validation failed for session %s: %v", c.sessionID, err)
-			return
-		}
-
 		c.logger.Infof("Assigning device JID %s to session %s", deviceJID, c.sessionID)
 		err := sessionEntity.Authenticate(deviceJID)
 		if err != nil {
@@ -483,10 +471,8 @@ func (c *WameowClient) persistQRSuccess() {
 		return
 	}
 
-	if err := c.sessionRepo.Update(ctx, sessionEntity); err != nil {
-		c.logger.Errorf("Failed to update session %s in database after QR scan: %v", c.sessionID, err)
-		return
-	}
+	// Update through session manager
+	c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnected)
 
 	c.logger.Infof("Successfully updated session %s in database after QR scan: JID=%s, Status=%s", c.sessionID, deviceJID, session.StatusConnected)
 }

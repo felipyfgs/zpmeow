@@ -143,6 +143,11 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 		h.logger.Warnf("Failed to update session subscriptions for %s: %v", sessionID, err)
 	}
 
+	err = h.wmeowService.UpdateSessionWebhook(sessionID, req.URL)
+	if err != nil {
+		h.logger.Warnf("Failed to update session webhook URL for %s: %v", sessionID, err)
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(dto.StandardWebhookCreateResponse{
 		Success: true,
 		Code:    fiber.StatusCreated,

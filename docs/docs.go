@@ -8074,6 +8074,11 @@ const docTemplate = `{
                 "phone": {
                     "type": "string",
                     "example": "5511999999999"
+                },
+                "ptt": {
+                    "description": "For audio messages",
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },

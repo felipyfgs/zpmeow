@@ -231,7 +231,7 @@ func (h *MessageHandler) SendMedia(c *fiber.Ctx) error {
 	case "image":
 		sendResp, err = h.wmeowService.SendImageMessage(ctx, sessionID, req.Phone, mediaData, req.Caption, "image/jpeg")
 	case "audio":
-		sendResp, err = h.wmeowService.SendAudioMessage(ctx, sessionID, req.Phone, mediaData, "audio/mpeg")
+		sendResp, err = h.wmeowService.SendAudioMessageWithPTT(ctx, sessionID, req.Phone, mediaData, "audio/mpeg", req.PTT)
 	case "video":
 		sendResp, err = h.wmeowService.SendVideoMessage(ctx, sessionID, req.Phone, mediaData, req.Caption, "video/mp4")
 	case "document":
@@ -264,7 +264,7 @@ func (h *MessageHandler) SendMedia(c *fiber.Ctx) error {
 	case "image":
 		response = dto.NewImageResponse(true, fiber.StatusOK, req.Phone, messageID, "", req.Caption, true)
 	case "audio":
-		response = dto.NewAudioResponse(true, fiber.StatusOK, req.Phone, messageID, "", false, true)
+		response = dto.NewAudioResponse(true, fiber.StatusOK, req.Phone, messageID, "", req.PTT, true)
 	case "video":
 		response = dto.NewVideoResponse(true, fiber.StatusOK, req.Phone, messageID, "", req.Caption, false, true)
 	case "document":
@@ -875,7 +875,7 @@ func (h *MessageHandler) SendAudio(c *fiber.Ctx) error {
 	}
 
 	ctx := c.Context()
-	sendResp, err := h.wmeowService.SendAudioMessage(ctx, sessionID, req.Phone, audioData, "audio/mpeg")
+	sendResp, err := h.wmeowService.SendAudioMessageWithPTT(ctx, sessionID, req.Phone, audioData, "audio/mpeg", req.PTT)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewMessageErrorResponse(
 			fiber.StatusInternalServerError,

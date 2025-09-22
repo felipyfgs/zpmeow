@@ -55,6 +55,7 @@ type MessageSender interface {
 	SendMediaMessage(ctx context.Context, sessionID, phone string, media MediaMessage) (*whatsmeow.SendResponse, error)
 	SendImageMessage(ctx context.Context, sessionID, phone string, data []byte, caption, mimeType string) (*whatsmeow.SendResponse, error)
 	SendAudioMessage(ctx context.Context, sessionID, phone string, data []byte, mimeType string) (*whatsmeow.SendResponse, error)
+	SendAudioMessageWithPTT(ctx context.Context, sessionID, phone string, data []byte, mimeType string, ptt bool) (*whatsmeow.SendResponse, error)
 	SendVideoMessage(ctx context.Context, sessionID, phone string, data []byte, caption, mimeType string) (*whatsmeow.SendResponse, error)
 	SendDocumentMessage(ctx context.Context, sessionID, phone string, data []byte, filename, caption, mimeType string) (*whatsmeow.SendResponse, error)
 	SendStickerMessage(ctx context.Context, sessionID, phone string, data []byte, mimeType string) (*whatsmeow.SendResponse, error)

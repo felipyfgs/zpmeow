@@ -39,27 +39,34 @@ type NewsletterInfo = ports.NewsletterInfo
 type PrivacySettings = ports.PrivacySettings
 
 type MeowService struct {
-	clients   map[string]*WameowClient
-	sessions  session.Repository
-	logger    logging.Logger
-	container *sqlstore.Container
-	waLogger  waLog.Logger
-	mu        sync.RWMutex
+	clients       map[string]*WameowClient
+	sessions      session.Repository
+	logger        logging.Logger
+	container     *sqlstore.Container
+	waLogger      waLog.Logger
+	mu            sync.RWMutex
+	messageSender *messageSender
+	mimeHelper    *mimeTypeHelper
 }
 
 func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository) WameowService {
 	return &MeowService{
-		clients:   make(map[string]*WameowClient),
-		sessions:  sessionRepo,
-		logger:    logging.GetLogger().Sub("wameow"),
-		container: container,
-		waLogger:  waLogger,
+		clients:       make(map[string]*WameowClient),
+		sessions:      sessionRepo,
+		logger:        logging.GetLogger().Sub("wameow"),
+		container:     container,
+		waLogger:      waLogger,
+		messageSender: NewMessageSender(),
+		mimeHelper:    NewMimeTypeHelper(),
 	}
 }
 
 func (m *MeowService) StartClient(sessionID string) error {
 	m.logger.Infof("Starting client for session %s", sessionID)
 	client := m.getOrCreateClient(sessionID)
+	if client == nil {
+		return fmt.Errorf("failed to create or get client for session %s", sessionID)
+	}
 	return client.Connect()
 }
 
@@ -114,29 +121,21 @@ func (m *MeowService) getOrCreateClient(sessionID string) *WameowClient {
 		return client
 	}
 
-	sessionEntity, err := m.sessions.GetByID(context.Background(), sessionID)
-	var expectedDeviceJID string
-	var webhookURL string
-	if err == nil {
-		deviceJIDString := sessionEntity.GetDeviceJIDString()
-		m.logger.Debugf("Session %s device JID from entity: '%s'", sessionID, deviceJIDString)
-		if deviceJIDString != "" {
-			expectedDeviceJID = deviceJIDString
-			m.logger.Infof("Creating client for session %s with expected device JID: %s", sessionID, expectedDeviceJID)
-		} else {
-			m.logger.Warnf("Session %s has empty device JID string", sessionID)
-		}
-		webhookURL = sessionEntity.GetWebhookEndpointString()
-		if webhookURL != "" {
-			m.logger.Infof("Creating client for session %s with webhook URL: %s", sessionID, webhookURL)
-		}
-	} else {
-		m.logger.Errorf("Failed to get session %s: %v", sessionID, err)
-	}
+	return m.createNewClient(sessionID)
+}
 
-	eventProcessor := NewEventProcessor(sessionID, webhookURL, m.sessions)
+func (m *MeowService) createNewClient(sessionID string) *WameowClient {
+	sessionConfig := m.loadSessionConfiguration(sessionID)
+	eventProcessor := NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions)
 
-	client, err := NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID, m.container, m.waLogger, eventProcessor, m.sessions)
+	client, err := NewWameowClientWithDeviceJID(
+		sessionID,
+		sessionConfig.deviceJID,
+		m.container,
+		m.waLogger,
+		eventProcessor,
+		m.sessions,
+	)
 	if err != nil {
 		m.logger.Errorf("Failed to create WameowClient for session %s: %v", sessionID, err)
 		return nil
@@ -146,29 +145,118 @@ func (m *MeowService) getOrCreateClient(sessionID string) *WameowClient {
 	return client
 }
 
+type sessionConfiguration struct {
+	deviceJID  string
+	webhookURL string
+}
+
+func (m *MeowService) loadSessionConfiguration(sessionID string) sessionConfiguration {
+	config := sessionConfiguration{}
+
+	sessionEntity, err := m.sessions.GetByID(context.Background(), sessionID)
+	if err != nil {
+		m.logger.Errorf("Failed to get session %s: %v", sessionID, err)
+		return config
+	}
+
+	config.deviceJID = m.extractDeviceJID(sessionEntity, sessionID)
+	config.webhookURL = m.extractWebhookURL(sessionEntity, sessionID)
+
+	return config
+}
+
+func (m *MeowService) extractDeviceJID(sessionEntity interface{}, sessionID string) string {
+	if sessionEntity == nil {
+		return ""
+	}
+
+	// Type assertion to access GetDeviceJIDString method
+	if session, ok := sessionEntity.(interface{ GetDeviceJIDString() string }); ok {
+		deviceJIDString := session.GetDeviceJIDString()
+		m.logger.Debugf("Session %s device JID from entity: '%s'", sessionID, deviceJIDString)
+
+		if deviceJIDString != "" {
+			m.logger.Infof("Creating client for session %s with expected device JID: %s", sessionID, deviceJIDString)
+			return deviceJIDString
+		} else {
+			m.logger.Warnf("Session %s has empty device JID string", sessionID)
+		}
+	}
+
+	return ""
+}
+
+func (m *MeowService) extractWebhookURL(sessionEntity interface{}, sessionID string) string {
+	if sessionEntity == nil {
+		return ""
+	}
+
+	// Type assertion to access GetWebhookEndpointString method
+	if session, ok := sessionEntity.(interface{ GetWebhookEndpointString() string }); ok {
+		webhookURL := session.GetWebhookEndpointString()
+		if webhookURL != "" {
+			m.logger.Infof("Creating client for session %s with webhook URL: %s", sessionID, webhookURL)
+		}
+		return webhookURL
+	}
+
+	return ""
+}
+
 func (m *MeowService) validateAndGetClient(sessionID string) (*WameowClient, error) {
-	if sessionID == "" {
-		return nil, fmt.Errorf("session ID cannot be empty")
+	if err := m.validateSessionID(sessionID); err != nil {
+		return nil, err
 	}
 
 	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	if err := m.validateClientExists(client, sessionID); err != nil {
+		return nil, err
 	}
 
 	return client, nil
 }
 
 func (m *MeowService) validateAndGetClientForSending(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	client, err := m.validateAndGetClient(sessionID)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := m.validateClientConnection(client, sessionID); err != nil {
+		return nil, err
+	}
+
 	return client, nil
+}
+
+func (m *MeowService) validateSessionID(sessionID string) error {
+	if sessionID == "" {
+		return fmt.Errorf("session ID cannot be empty")
+	}
+	return nil
+}
+
+func (m *MeowService) validateClientConnection(client *WameowClient, sessionID string) error {
+	if !client.IsConnected() {
+		return fmt.Errorf("client not connected for session %s", sessionID)
+	}
+	return nil
+}
+
+func (m *MeowService) validateClientExists(client *WameowClient, sessionID string) error {
+	if client == nil {
+		return fmt.Errorf("client not found for session %s", sessionID)
+	}
+	return nil
+}
+
+// Helper methods for creating utilities
+func (m *MeowService) getValidator() *messageValidator {
+	return NewMessageValidator()
+}
+
+func (m *MeowService) getMessageBuilder() *MessageBuilder {
+	return NewMessageBuilder()
 }
 
 func (m *MeowService) validateButtons(buttons []ButtonData) error {
@@ -509,7 +597,152 @@ func (m *MeowService) SendTextMessage(ctx context.Context, sessionID, phone, tex
 	if err != nil {
 		return nil, err
 	}
-	return sendTextMessage(client.GetClient(), phone, text)
+	return m.sendTextMessage(client.GetClient(), phone, text)
+}
+
+func (m *MeowService) sendTextMessage(client *whatsmeow.Client, to, text string) (*whatsmeow.SendResponse, error) {
+	validator := m.getValidator()
+	if err := validator.ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	builder := m.getMessageBuilder()
+	message, err := builder.BuildTextMessage(text)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendImageMessage(client *whatsmeow.Client, to string, data []byte, caption string) (*whatsmeow.SendResponse, error) {
+	validator := m.getValidator()
+	if err := validator.ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := m.getMessageBuilder()
+	message := builder.BuildImageMessage(uploaded, caption)
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendAudioMessage(client *whatsmeow.Client, to string, data []byte, mimeType string, ptt bool) (*whatsmeow.SendResponse, error) {
+	validator := m.getValidator()
+	if err := validator.ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaAudio)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := m.getMessageBuilder()
+	message := builder.BuildAudioMessage(uploaded, mimeType, ptt)
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendVideoMessage(client *whatsmeow.Client, to string, data []byte, caption, mimeType string) (*whatsmeow.SendResponse, error) {
+	validator := m.getValidator()
+	if err := validator.ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaVideo)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := m.getMessageBuilder()
+	message := builder.BuildVideoMessage(uploaded, caption, mimeType)
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendDocumentMessage(client *whatsmeow.Client, to string, data []byte, filename, caption, mimeType string) (*whatsmeow.SendResponse, error) {
+	validator := m.getValidator()
+	if err := validator.ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaDocument)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := m.getMessageBuilder()
+	message := builder.BuildDocumentMessage(uploaded, filename, caption, mimeType)
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendStickerMessage(client *whatsmeow.Client, to string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
+	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	uploaded, err := m.messageSender.CreateMediaMessage(client, data, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
+	if mimeType == "" {
+		mimeType = m.mimeHelper.GetDefaultStickerMimeType()
+	}
+
+	message := &waProto.Message{
+		StickerMessage: &waProto.StickerMessage{
+			URL:           &uploaded.URL,
+			DirectPath:    &uploaded.DirectPath,
+			MediaKey:      uploaded.MediaKey,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    &uploaded.FileLength,
+			Mimetype:      &mimeType,
+		},
+	}
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendLocationMessage(client *whatsmeow.Client, to string, latitude, longitude float64, name, address string) (*whatsmeow.SendResponse, error) {
+	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	message := &waProto.Message{
+		LocationMessage: &waProto.LocationMessage{
+			DegreesLatitude:  &latitude,
+			DegreesLongitude: &longitude,
+			Name:             &name,
+			Address:          &address,
+		},
+	}
+
+	return m.messageSender.SendToJID(client, to, message)
+}
+
+func (m *MeowService) sendContactMessage(client *whatsmeow.Client, to, name, phone string) (*whatsmeow.SendResponse, error) {
+	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {
+		return nil, err
+	}
+
+	vcard := fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", name, phone)
+	message := &waProto.Message{
+		ContactMessage: &waProto.ContactMessage{
+			DisplayName: &name,
+			Vcard:       &vcard,
+		},
+	}
+
+	return m.messageSender.SendToJID(client, to, message)
 }
 
 func (m *MeowService) SendMediaMessage(ctx context.Context, sessionID, phone string, media ports.MediaMessage) (*whatsmeow.SendResponse, error) {
@@ -520,13 +753,13 @@ func (m *MeowService) SendMediaMessage(ctx context.Context, sessionID, phone str
 
 	switch media.Type {
 	case "image":
-		return sendImageMessage(client.GetClient(), phone, media.Data, media.Caption)
+		return m.sendImageMessage(client.GetClient(), phone, media.Data, media.Caption)
 	case "audio":
-		return sendAudioMessage(client.GetClient(), phone, media.Data, media.MimeType)
+		return m.sendAudioMessage(client.GetClient(), phone, media.Data, media.MimeType, true) // Default PTT to true
 	case "video":
-		return sendVideoMessage(client.GetClient(), phone, media.Data, media.Caption, media.MimeType)
+		return m.sendVideoMessage(client.GetClient(), phone, media.Data, media.Caption, media.MimeType)
 	case "document":
-		return sendDocumentMessage(client.GetClient(), phone, media.Data, media.Filename, media.Caption, media.MimeType)
+		return m.sendDocumentMessage(client.GetClient(), phone, media.Data, media.Filename, media.Caption, media.MimeType)
 	default:
 		return nil, fmt.Errorf("unsupported media type: %s", media.Type)
 	}
@@ -537,7 +770,7 @@ func (m *MeowService) SendImageMessage(ctx context.Context, sessionID, phone str
 	if err != nil {
 		return nil, err
 	}
-	return sendImageMessage(client.GetClient(), phone, data, caption)
+	return m.sendImageMessage(client.GetClient(), phone, data, caption)
 }
 
 func (m *MeowService) SendAudioMessage(ctx context.Context, sessionID, phone string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
@@ -545,7 +778,15 @@ func (m *MeowService) SendAudioMessage(ctx context.Context, sessionID, phone str
 	if err != nil {
 		return nil, err
 	}
-	return sendAudioMessage(client.GetClient(), phone, data, mimeType)
+	return m.sendAudioMessage(client.GetClient(), phone, data, mimeType, true) // Default PTT to true
+}
+
+func (m *MeowService) SendAudioMessageWithPTT(ctx context.Context, sessionID, phone string, data []byte, mimeType string, ptt bool) (*whatsmeow.SendResponse, error) {
+	client, err := m.validateAndGetClientForSending(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	return m.sendAudioMessage(client.GetClient(), phone, data, mimeType, ptt)
 }
 
 func (m *MeowService) SendVideoMessage(ctx context.Context, sessionID, phone string, data []byte, caption, mimeType string) (*whatsmeow.SendResponse, error) {
@@ -553,7 +794,7 @@ func (m *MeowService) SendVideoMessage(ctx context.Context, sessionID, phone str
 	if err != nil {
 		return nil, err
 	}
-	return sendVideoMessage(client.GetClient(), phone, data, caption, mimeType)
+	return m.sendVideoMessage(client.GetClient(), phone, data, caption, mimeType)
 }
 
 func (m *MeowService) SendDocumentMessage(ctx context.Context, sessionID, phone string, data []byte, filename, caption, mimeType string) (*whatsmeow.SendResponse, error) {
@@ -561,7 +802,7 @@ func (m *MeowService) SendDocumentMessage(ctx context.Context, sessionID, phone 
 	if err != nil {
 		return nil, err
 	}
-	return sendDocumentMessage(client.GetClient(), phone, data, filename, caption, mimeType)
+	return m.sendDocumentMessage(client.GetClient(), phone, data, filename, caption, mimeType)
 }
 
 func (m *MeowService) SendStickerMessage(ctx context.Context, sessionID, phone string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
@@ -569,7 +810,7 @@ func (m *MeowService) SendStickerMessage(ctx context.Context, sessionID, phone s
 	if err != nil {
 		return nil, err
 	}
-	return sendStickerMessage(client.GetClient(), phone, data, mimeType)
+	return m.sendStickerMessage(client.GetClient(), phone, data, mimeType)
 }
 
 func (m *MeowService) SendContactsMessage(ctx context.Context, sessionID, phone string, contacts []ContactData) (*whatsmeow.SendResponse, error) {
@@ -577,7 +818,7 @@ func (m *MeowService) SendContactsMessage(ctx context.Context, sessionID, phone 
 	if err != nil {
 		return nil, err
 	}
-	return sendContactsMessage(client.GetClient(), phone, contacts)
+	return m.sendContactsMessage(client.GetClient(), phone, contacts)
 }
 
 func (m *MeowService) SendLocationMessage(ctx context.Context, sessionID, phone string, latitude, longitude float64, name, address string) (*whatsmeow.SendResponse, error) {
@@ -585,7 +826,7 @@ func (m *MeowService) SendLocationMessage(ctx context.Context, sessionID, phone 
 	if err != nil {
 		return nil, err
 	}
-	return sendLocationMessage(client.GetClient(), phone, latitude, longitude, name, address)
+	return m.sendLocationMessage(client.GetClient(), phone, latitude, longitude, name, address)
 }
 
 func (m *MeowService) MarkAsRead(ctx context.Context, sessionID, phone string, messageIDs []string) error {
@@ -2159,11 +2400,6 @@ func (m *MeowService) SetGroupMemberAddMode(ctx context.Context, sessionID, grou
 	return nil
 }
 
-func (m *MeowService) UpdateSessionWebhook(sessionID, webhookURL string) error {
-	m.logger.Infof("Updated webhook URL for session %s", sessionID)
-	return nil
-}
-
 func (m *MeowService) UpdateSessionSubscriptions(sessionID string, events []string) error {
 	m.logger.Infof("Updating event subscriptions for session %s to: %v", sessionID, events)
 
@@ -2172,13 +2408,22 @@ func (m *MeowService) UpdateSessionSubscriptions(sessionID string, events []stri
 		return fmt.Errorf("failed to get client for session %s", sessionID)
 	}
 
-	if eventProcessor, ok := client.eventHandler.(*EventProcessor); ok {
-		eventProcessor.UpdateSubscribedEvents(events)
-		m.logger.Infof("Successfully updated event subscriptions for session %s", sessionID)
-	} else {
-		m.logger.Warnf("EventHandler for session %s is not an EventProcessor", sessionID)
-		return fmt.Errorf("invalid event handler type for session %s", sessionID)
+	client.eventHandler.UpdateSubscribedEvents(events)
+	m.logger.Infof("Successfully updated event subscriptions for session %s", sessionID)
+
+	return nil
+}
+
+func (m *MeowService) UpdateSessionWebhook(sessionID string, webhookURL string) error {
+	m.logger.Infof("Updating webhook URL for session %s to: %s", sessionID, webhookURL)
+
+	client := m.getOrCreateClient(sessionID)
+	if client == nil {
+		return fmt.Errorf("failed to get client for session %s", sessionID)
 	}
+
+	client.eventHandler.UpdateWebhookURL(webhookURL)
+	m.logger.Infof("Successfully updated webhook URL for session %s", sessionID)
 
 	return nil
 }
@@ -2640,252 +2885,17 @@ func (m *MeowService) UpdateBlocklist(ctx context.Context, sessionID string, act
 	return nil
 }
 
-func sendMessageToJID(client *whatsmeow.Client, to string, message *waProto.Message) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
-}
-
-func createMediaMessage(client *whatsmeow.Client, data []byte, mediaType whatsmeow.MediaType) (*whatsmeow.UploadResponse, error) {
-	return uploadMedia(client, data, mediaType)
-}
-
-func validateMessageInput(client *whatsmeow.Client, to string) error {
-	if client == nil {
-		return fmt.Errorf("client cannot be nil")
-	}
-	if to == "" {
-		return fmt.Errorf("recipient cannot be empty")
-	}
-	return nil
-}
-
+// Legacy functions - these have been replaced by the new message utilities
+// Keeping parsePhoneToJID for backward compatibility
 func parsePhoneToJID(phone string) (waTypes.JID, error) {
-	phone = strings.TrimSpace(phone)
-	if phone == "" {
-		return waTypes.EmptyJID, fmt.Errorf("phone number cannot be empty")
-	}
-
-	if phone[0] == '+' {
-		phone = phone[1:]
-	}
-
-	var digits strings.Builder
-	for _, r := range phone {
-		if r >= '0' && r <= '9' {
-			digits.WriteRune(r)
-		}
-	}
-	formattedPhone := digits.String()
-
-	if formattedPhone == "" {
-		return waTypes.EmptyJID, fmt.Errorf("phone number cannot be empty")
-	}
-
-	if len(formattedPhone) < 7 || len(formattedPhone) > 15 {
-		return waTypes.EmptyJID, fmt.Errorf("phone number must be between 7 and 15 digits")
-	}
-
-	if formattedPhone[0] == '0' {
-		return waTypes.EmptyJID, fmt.Errorf("phone number should not start with 0")
-	}
-
-	return waTypes.NewJID(formattedPhone, waTypes.DefaultUserServer), nil
+	parser := NewPhoneParser()
+	return parser.ParseToJID(phone)
 }
 
-func uploadMedia(client *whatsmeow.Client, data []byte, mediaType whatsmeow.MediaType) (*whatsmeow.UploadResponse, error) {
-	resp, err := client.Upload(context.Background(), data, mediaType)
-	return &resp, err
-}
+// Removed: sendTextMessage - replaced by MeowService.sendTextMessage method
 
-func sendTextMessage(client *whatsmeow.Client, to, text string) (*whatsmeow.SendResponse, error) {
-	if err := validateMessageInput(client, to); err != nil {
-		return nil, err
-	}
-
-	if text == "" {
-		return nil, fmt.Errorf("text cannot be empty")
-	}
-
-	message := &waProto.Message{
-		Conversation: &text,
-	}
-
-	return sendMessageToJID(client, to, message)
-}
-
-func sendImageMessage(client *whatsmeow.Client, to string, data []byte, caption string) (*whatsmeow.SendResponse, error) {
-	if err := validateMessageInput(client, to); err != nil {
-		return nil, err
-	}
-
-	if len(data) == 0 {
-		return nil, fmt.Errorf("image data cannot be empty")
-	}
-
-	uploaded, err := createMediaMessage(client, data, whatsmeow.MediaImage)
-	if err != nil {
-		return nil, err
-	}
-
-	mimeType := "image/jpeg"
-	message := &waProto.Message{
-		ImageMessage: &waProto.ImageMessage{
-			Caption:       &caption,
-			URL:           &uploaded.URL,
-			DirectPath:    &uploaded.DirectPath,
-			MediaKey:      uploaded.MediaKey,
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    &uploaded.FileLength,
-			Mimetype:      &mimeType,
-		},
-	}
-
-	return sendMessageToJID(client, to, message)
-}
-
-func sendAudioMessage(client *whatsmeow.Client, to string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
-	if err := validateMessageInput(client, to); err != nil {
-		return nil, err
-	}
-
-	if len(data) == 0 {
-		return nil, fmt.Errorf("audio data cannot be empty")
-	}
-
-	uploaded, err := createMediaMessage(client, data, whatsmeow.MediaAudio)
-	if err != nil {
-		return nil, err
-	}
-
-	message := &waProto.Message{
-		AudioMessage: &waProto.AudioMessage{
-			URL:           &uploaded.URL,
-			DirectPath:    &uploaded.DirectPath,
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      &mimeType,
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    &uploaded.FileLength,
-		},
-	}
-
-	return sendMessageToJID(client, to, message)
-}
-
-func sendVideoMessage(client *whatsmeow.Client, to string, data []byte, caption, mimeType string) (*whatsmeow.SendResponse, error) {
-	if err := validateMessageInput(client, to); err != nil {
-		return nil, err
-	}
-
-	if len(data) == 0 {
-		return nil, fmt.Errorf("video data cannot be empty")
-	}
-
-	uploaded, err := createMediaMessage(client, data, whatsmeow.MediaVideo)
-	if err != nil {
-		return nil, err
-	}
-
-	message := &waProto.Message{
-		VideoMessage: &waProto.VideoMessage{
-			Caption:       &caption,
-			URL:           &uploaded.URL,
-			DirectPath:    &uploaded.DirectPath,
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      &mimeType,
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    &uploaded.FileLength,
-		},
-	}
-
-	return sendMessageToJID(client, to, message)
-}
-
-func sendDocumentMessage(client *whatsmeow.Client, to string, data []byte, filename, caption, mimeType string) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
-		return nil, err
-	}
-
-	uploaded, err := uploadMedia(client, data, whatsmeow.MediaDocument)
-	if err != nil {
-		return nil, err
-	}
-
-	message := &waProto.Message{
-		DocumentMessage: &waProto.DocumentMessage{
-			URL:           &uploaded.URL,
-			DirectPath:    &uploaded.DirectPath,
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      &mimeType,
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    &uploaded.FileLength,
-			FileName:      &filename,
-			Caption:       &caption,
-		},
-	}
-
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
-}
-
-func sendStickerMessage(client *whatsmeow.Client, to string, data []byte, mimeType string) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
-		return nil, err
-	}
-
-	uploaded, err := uploadMedia(client, data, whatsmeow.MediaImage)
-	if err != nil {
-		return nil, err
-	}
-
-	message := &waProto.Message{
-		StickerMessage: &waProto.StickerMessage{
-			URL:           &uploaded.URL,
-			DirectPath:    &uploaded.DirectPath,
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      &mimeType,
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    &uploaded.FileLength,
-		},
-	}
-
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
-}
-
-func sendContactMessage(client *whatsmeow.Client, to, contactName, contactPhone string) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
-		return nil, err
-	}
-
-	vcard := fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL;type=CELL;type=VOICE;waid=%s:+%s\nEND:VCARD", contactName, contactPhone, contactPhone)
-
-	message := &waProto.Message{
-		ContactMessage: &waProto.ContactMessage{
-			DisplayName: &contactName,
-			Vcard:       &vcard,
-		},
-	}
-
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
-}
-
-func sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.ContactData) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
+func (m *MeowService) sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.ContactData) (*whatsmeow.SendResponse, error) {
+	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {
 		return nil, err
 	}
 
@@ -2898,7 +2908,7 @@ func sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.C
 	}
 
 	if len(contacts) == 1 {
-		return sendContactMessage(client, to, contacts[0].Name, contacts[0].Phone)
+		return m.sendContactMessage(client, to, contacts[0].Name, contacts[0].Phone)
 	}
 
 	var contactMessages []*waProto.ContactMessage
@@ -2920,25 +2930,5 @@ func sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.C
 		},
 	}
 
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
-}
-
-func sendLocationMessage(client *whatsmeow.Client, to string, latitude, longitude float64, name, address string) (*whatsmeow.SendResponse, error) {
-	jid, err := parsePhoneToJID(to)
-	if err != nil {
-		return nil, err
-	}
-
-	message := &waProto.Message{
-		LocationMessage: &waProto.LocationMessage{
-			DegreesLatitude:  &latitude,
-			DegreesLongitude: &longitude,
-			Name:             &name,
-			Address:          &address,
-		},
-	}
-
-	resp, err := client.SendMessage(context.Background(), jid, message)
-	return &resp, err
+	return m.messageSender.SendToJID(client, to, message)
 }
