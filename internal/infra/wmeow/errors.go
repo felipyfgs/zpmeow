@@ -1,6 +1,5 @@
 package wmeow
 
-// Validation errors
 type ValidationError struct {
 	Field   string
 	Message string
@@ -17,7 +16,6 @@ func NewValidationError(field, message string) *ValidationError {
 	}
 }
 
-// Connection errors
 type ConnectionError struct {
 	SessionID string
 	Operation string

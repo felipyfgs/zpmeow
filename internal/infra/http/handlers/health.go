@@ -60,7 +60,6 @@ func (h *HealthHandler) sendSuccessResponse(c *fiber.Ctx, status, message, versi
 func (h *HealthHandler) checkDependencies() map[string]string {
 	dependencies := make(map[string]string)
 
-	// Check database
 	if h.db != nil {
 		if err := database.HealthCheck(h.db); err != nil {
 			dependencies["database"] = "unhealthy: " + err.Error()
@@ -71,7 +70,6 @@ func (h *HealthHandler) checkDependencies() map[string]string {
 		dependencies["database"] = "not configured"
 	}
 
-	// Check cache
 	if h.cache != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()

@@ -28,7 +28,6 @@ func RequestValidationMiddleware() fiber.Handler {
 				})
 			}
 
-			// Check request size (10MB limit)
 			if len(c.Body()) > 10*1024*1024 {
 				return c.Status(fiber.StatusRequestEntityTooLarge).JSON(fiber.Map{
 					"error":   "Request too large",
@@ -149,8 +148,6 @@ func MethodOverrideMiddleware() fiber.Handler {
 		if string(c.Method()) == "POST" {
 			override := c.Get("X-HTTP-Method-Override")
 			if override != "" {
-				// Note: Fiber doesn't allow direct method override like Gin
-				// This would need custom implementation if required
 				c.Set("X-Original-Method", string(c.Method()))
 				c.Set("X-Override-Method", override)
 			}

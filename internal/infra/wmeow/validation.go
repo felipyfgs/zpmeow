@@ -8,7 +8,6 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 )
 
-// messageValidator implements MessageValidator interface
 type messageValidator struct{}
 
 func NewMessageValidator() *messageValidator {
@@ -50,7 +49,6 @@ func (v *messageValidator) ValidateMessageInput(client *whatsmeow.Client, to str
 	return v.ValidateRecipient(to)
 }
 
-// phoneParser implements PhoneParser interface
 type phoneParser struct{}
 
 func NewPhoneParser() *phoneParser {
@@ -76,12 +74,10 @@ func (p *phoneParser) NormalizePhoneNumber(phone string) (string, error) {
 		return "", NewValidationError("phone", "cannot be empty")
 	}
 
-	// Remove leading plus sign
 	if phone[0] == '+' {
 		phone = phone[1:]
 	}
 
-	// Extract only digits
 	var digits strings.Builder
 	for _, r := range phone {
 		if r >= '0' && r <= '9' {
@@ -109,7 +105,6 @@ func (p *phoneParser) ValidatePhoneNumber(phone string) error {
 	return nil
 }
 
-// Client and store validation
 func ValidateClientAndStore(client *whatsmeow.Client, sessionID string) error {
 	if client == nil {
 		return NewValidationError("client", "WhatsApp client is nil for session "+sessionID)
@@ -122,7 +117,6 @@ func ValidateClientAndStore(client *whatsmeow.Client, sessionID string) error {
 	return nil
 }
 
-// Session validation
 func ValidateSessionID(sessionID string) error {
 	if strings.TrimSpace(sessionID) == "" {
 		return NewValidationError("session_id", "cannot be empty")
@@ -130,12 +124,10 @@ func ValidateSessionID(sessionID string) error {
 	return nil
 }
 
-// Device registration check
 func IsDeviceRegistered(client *whatsmeow.Client) bool {
 	return client != nil && client.Store != nil && client.Store.ID != nil
 }
 
-// Common validation helpers
 func ValidateNonEmpty(value, fieldName string) error {
 	if strings.TrimSpace(value) == "" {
 		return NewValidationError(fieldName, "cannot be empty")
@@ -150,7 +142,6 @@ func ValidateNonNil(value interface{}, fieldName string) error {
 	return nil
 }
 
-// Error checking helpers
 func IsValidationError(err error) bool {
 	var validationErr *ValidationError
 	return errors.As(err, &validationErr)
@@ -161,6 +152,4 @@ func IsConnectionError(err error) bool {
 	return errors.As(err, &connErr)
 }
 
-// Removed unused parseJID function - use PhoneParser.ParseToJID() instead
 
-// Legacy function removed - use NewPhoneParser().ParseToJID() instead

@@ -41,13 +41,11 @@ type WameowClient struct {
 
 	retryConfig *RetryConfig
 
-	// Injected dependencies
 	sessionManager *sessionManager
 	qrGenerator    *qrCodeGenerator
 	connManager    *connectionManager
 }
 
-// EventHandler interface is now defined in interfaces.go
 
 func NewWameowClient(sessionID string, container *sqlstore.Container, waLogger waLog.Logger, eventHandler *EventProcessor, sessionRepo session.Repository) (*WameowClient, error) {
 	return NewWameowClientWithDeviceJID(sessionID, "", container, waLogger, eventHandler, sessionRepo)
@@ -111,13 +109,11 @@ func (c *WameowClient) Connect() error {
 
 	if c.client.IsConnected() {
 		c.logger.Debugf("Client already connected for session %s", c.sessionID)
-		// Ensure session status is also connected in the domain
 		c.setStatus(session.StatusConnected)
 		c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnected)
 		return nil
 	}
 
-	// Check current session status before changing to connecting
 	sessionEntity, err := c.sessionManager.GetSession(c.sessionID)
 	if err == nil && sessionEntity.IsConnected() {
 		c.logger.Debugf("Session %s already connected in domain, skipping status change", c.sessionID)
@@ -471,7 +467,6 @@ func (c *WameowClient) persistQRSuccess() {
 		return
 	}
 
-	// Update through session manager
 	c.sessionManager.UpdateStatus(c.sessionID, session.StatusConnected)
 
 	c.logger.Infof("Successfully updated session %s in database after QR scan: JID=%s, Status=%s", c.sessionID, deviceJID, session.StatusConnected)

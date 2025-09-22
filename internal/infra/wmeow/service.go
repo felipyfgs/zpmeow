@@ -170,7 +170,6 @@ func (m *MeowService) extractDeviceJID(sessionEntity interface{}, sessionID stri
 		return ""
 	}
 
-	// Type assertion to access GetDeviceJIDString method
 	if session, ok := sessionEntity.(interface{ GetDeviceJIDString() string }); ok {
 		deviceJIDString := session.GetDeviceJIDString()
 		m.logger.Debugf("Session %s device JID from entity: '%s'", sessionID, deviceJIDString)
@@ -191,7 +190,6 @@ func (m *MeowService) extractWebhookURL(sessionEntity interface{}, sessionID str
 		return ""
 	}
 
-	// Type assertion to access GetWebhookEndpointString method
 	if session, ok := sessionEntity.(interface{ GetWebhookEndpointString() string }); ok {
 		webhookURL := session.GetWebhookEndpointString()
 		if webhookURL != "" {
@@ -250,7 +248,6 @@ func (m *MeowService) validateClientExists(client *WameowClient, sessionID strin
 	return nil
 }
 
-// Helper methods for creating utilities
 func (m *MeowService) getValidator() *messageValidator {
 	return NewMessageValidator()
 }
@@ -434,21 +431,18 @@ func (m *MeowService) deviceExistsInDatabase(deviceJID string) bool {
 		return false
 	}
 
-	// Parse the deviceJID to get the JID object
 	jid, err := waTypes.ParseJID(deviceJID)
 	if err != nil {
 		m.logger.Errorf("Failed to parse device JID %s: %v", deviceJID, err)
 		return false
 	}
 
-	// Try to get the specific device from the container
 	device, err := m.container.GetDevice(context.Background(), jid)
 	if err != nil {
 		m.logger.Debugf("Device %s not found in container: %v", deviceJID, err)
 		return false
 	}
 
-	// Check if device exists and has valid ID
 	if device != nil && device.ID != nil {
 		m.logger.Debugf("Device %s found in container", deviceJID)
 		return true
@@ -2885,14 +2879,11 @@ func (m *MeowService) UpdateBlocklist(ctx context.Context, sessionID string, act
 	return nil
 }
 
-// Legacy functions - these have been replaced by the new message utilities
-// Keeping parsePhoneToJID for backward compatibility
 func parsePhoneToJID(phone string) (waTypes.JID, error) {
 	parser := NewPhoneParser()
 	return parser.ParseToJID(phone)
 }
 
-// Removed: sendTextMessage - replaced by MeowService.sendTextMessage method
 
 func (m *MeowService) sendContactsMessage(client *whatsmeow.Client, to string, contacts []ports.ContactData) (*whatsmeow.SendResponse, error) {
 	if err := m.getValidator().ValidateMessageInput(client, to); err != nil {

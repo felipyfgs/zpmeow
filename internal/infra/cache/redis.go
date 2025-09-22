@@ -14,14 +14,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// RedisService implements the CacheService interface using Redis
 type RedisService struct {
 	client *redis.Client
 	config config.CacheConfigProvider
 	logger logging.Logger
 }
 
-// NewRedisService creates a new Redis cache service
 func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error) {
 	logger := logging.GetLogger().Sub("cache")
 
@@ -30,7 +28,6 @@ func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error)
 		return NewNoOpCacheService(), nil
 	}
 
-	// Parse Redis URL or build from components
 	var opts *redis.Options
 	var err error
 
@@ -47,7 +44,6 @@ func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error)
 		}
 	}
 
-	// Apply additional configuration
 	opts.PoolSize = cfg.GetPoolSize()
 	opts.MinIdleConns = cfg.GetMinIdleConns()
 	opts.MaxRetries = cfg.GetMaxRetries()
@@ -58,7 +54,6 @@ func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error)
 
 	client := redis.NewClient(opts)
 
-	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -75,7 +70,6 @@ func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error)
 	}, nil
 }
 
-// Close closes the Redis connection
 func (r *RedisService) Close() error {
 	if r.client != nil {
 		return r.client.Close()
@@ -83,7 +77,6 @@ func (r *RedisService) Close() error {
 	return nil
 }
 
-// Session Cache Implementation
 
 func (r *RedisService) GetSession(ctx context.Context, sessionID string) (*session.Session, error) {
 	key := ports.SessionKeyPrefix + sessionID
@@ -101,7 +94,6 @@ func (r *RedisService) GetSession(ctx context.Context, sessionID string) (*sessi
 		return nil, ports.NewCacheError("unmarshal", key, err)
 	}
 
-	// Session retrieved from cache successfully
 	return &sess, nil
 }
 
@@ -121,7 +113,6 @@ func (r *RedisService) SetSession(ctx context.Context, sessionID string, sess *s
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// Session cached successfully
 	return nil
 }
 
@@ -152,7 +143,6 @@ func (r *RedisService) GetSessionByName(ctx context.Context, name string) (*sess
 		return nil, ports.NewCacheError("unmarshal", key, err)
 	}
 
-	// Session retrieved by name from cache successfully
 	return &sess, nil
 }
 
@@ -172,7 +162,6 @@ func (r *RedisService) SetSessionByName(ctx context.Context, name string, sess *
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// Session cached by name successfully
 	return nil
 }
 
@@ -187,7 +176,6 @@ func (r *RedisService) DeleteSessionByName(ctx context.Context, name string) err
 	return nil
 }
 
-// QR Code Cache Implementation
 
 func (r *RedisService) GetQRCode(ctx context.Context, sessionID string) (string, error) {
 	key := ports.QRCodeKeyPrefix + sessionID
@@ -200,7 +188,6 @@ func (r *RedisService) GetQRCode(ctx context.Context, sessionID string) (string,
 		return "", ports.NewCacheError("get", key, err)
 	}
 
-	// QR code retrieved from cache successfully
 	return data, nil
 }
 
@@ -212,7 +199,6 @@ func (r *RedisService) SetQRCode(ctx context.Context, sessionID string, qrCode s
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// QR code cached successfully
 	return nil
 }
 
@@ -238,7 +224,6 @@ func (r *RedisService) GetQRCodeBase64(ctx context.Context, sessionID string) (s
 		return "", ports.NewCacheError("get", key, err)
 	}
 
-	// QR code base64 retrieved from cache successfully
 	return data, nil
 }
 
@@ -250,11 +235,9 @@ func (r *RedisService) SetQRCodeBase64(ctx context.Context, sessionID string, qr
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// QR code base64 cached successfully
 	return nil
 }
 
-// Credential Cache Implementation
 
 func (r *RedisService) GetDeviceJID(ctx context.Context, sessionID string) (string, error) {
 	key := ports.DeviceJIDKeyPrefix + sessionID
@@ -267,7 +250,6 @@ func (r *RedisService) GetDeviceJID(ctx context.Context, sessionID string) (stri
 		return "", ports.NewCacheError("get", key, err)
 	}
 
-	// Device JID retrieved from cache successfully
 	return data, nil
 }
 
@@ -282,7 +264,6 @@ func (r *RedisService) SetDeviceJID(ctx context.Context, sessionID string, devic
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// Device JID cached successfully
 	return nil
 }
 
@@ -309,7 +290,6 @@ func (r *RedisService) GetSessionStatus(ctx context.Context, sessionID string) (
 	}
 
 	status := session.Status(data)
-	// Session status retrieved from cache successfully
 	return status, nil
 }
 
@@ -324,7 +304,6 @@ func (r *RedisService) SetSessionStatus(ctx context.Context, sessionID string, s
 		return ports.NewCacheError("set", key, err)
 	}
 
-	// Session status cached successfully
 	return nil
 }
 
@@ -339,7 +318,6 @@ func (r *RedisService) DeleteSessionStatus(ctx context.Context, sessionID string
 	return nil
 }
 
-// Health Check Implementation
 
 func (r *RedisService) Ping(ctx context.Context) error {
 	if err := r.client.Ping(ctx).Err(); err != nil {
@@ -349,18 +327,15 @@ func (r *RedisService) Ping(ctx context.Context) error {
 }
 
 func (r *RedisService) GetStats(ctx context.Context) (ports.CacheStats, error) {
-	// Parse Redis info response (simplified)
 	stats := ports.CacheStats{
 		Connected: true,
 		Version:   "Redis",
 	}
 
-	// Get database size
 	dbSize, err := r.client.DBSize(ctx).Result()
 	if err == nil {
 		stats.TotalKeys = dbSize
 	}
 
-	// Cache stats retrieved successfully
 	return stats, nil
 }

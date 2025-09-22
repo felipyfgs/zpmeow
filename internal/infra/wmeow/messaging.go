@@ -8,7 +8,6 @@ import (
 	"go.mau.fi/whatsmeow/proto/waE2E"
 )
 
-// mediaUploader implements MediaUploader interface
 type mediaUploader struct{}
 
 func NewMediaUploader() *mediaUploader {
@@ -20,7 +19,6 @@ func (u *mediaUploader) UploadMedia(client *whatsmeow.Client, data []byte, media
 	return &resp, err
 }
 
-// messageSender handles low-level message sending operations
 type messageSender struct {
 	validator *messageValidator
 	parser    *phoneParser
@@ -41,7 +39,6 @@ func (s *messageSender) SendToJID(client *whatsmeow.Client, to string, message i
 		return nil, fmt.Errorf("invalid phone number: %w", err)
 	}
 
-	// Type assertion to ensure message is the correct type
 	waMessage, ok := message.(*waE2E.Message)
 	if !ok {
 		return nil, NewValidationError("message", "invalid message type")
@@ -59,7 +56,6 @@ func (s *messageSender) CreateMediaMessage(client *whatsmeow.Client, data []byte
 	return s.uploader.UploadMedia(client, data, mediaType)
 }
 
-// mimeTypeHelper implements MimeTypeHelper interface
 type mimeTypeHelper struct{}
 
 func NewMimeTypeHelper() *mimeTypeHelper {
@@ -89,7 +85,6 @@ func (h *mimeTypeHelper) GetDefaultStickerMimeType() string {
 	return "image/webp"
 }
 
-// Message builders for common message types
 type MessageBuilder struct {
 	validator  *messageValidator
 	mimeHelper *mimeTypeHelper

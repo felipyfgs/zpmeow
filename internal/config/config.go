@@ -282,7 +282,6 @@ func loadCacheConfig() CacheConfig {
 		StatusTTL:     getDurationEnvOrDefault("CACHE_STATUS_TTL", 5*time.Minute),
 	}
 
-	// Build Redis URL if not provided
 	if cfg.RedisURL == "" {
 		if cfg.RedisPassword != "" {
 			cfg.RedisURL = fmt.Sprintf("redis://:%s@%s:%s/%d", cfg.RedisPassword, cfg.RedisHost, cfg.RedisPort, cfg.RedisDB)

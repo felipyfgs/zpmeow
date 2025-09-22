@@ -9,8 +9,6 @@ import (
 	"github.com/gofiber/swagger"
 )
 
-// HandlerDependencies organized in the specified order:
-// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 type HandlerDependencies struct {
 	HealthHandler     *handlers.HealthHandler
 	SessionHandler    *handlers.SessionHandler
@@ -30,7 +28,6 @@ func SetupRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 ) {
 
-	// Recovery middleware is built into Fiber
 
 	app.Use(func(c *fiber.Ctx) error {
 		if c.Path() == "/swagger/doc.json" {
@@ -54,12 +51,9 @@ func SetupRoutes(
 	sessionGroup.Get("/:sessionId/status", handlers.SessionHandler.GetSessionStatus)
 	sessionGroup.Put("/:sessionId/webhook", handlers.SessionHandler.UpdateSessionWebhook)
 
-	// Session API routes organized in the specified order:
-	// Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	sessionAPIGroup := app.Group("/session/:sessionId")
 	sessionAPIGroup.Use(authMiddleware.AuthenticateSession())
 
-	// 1. Messages
 	sessionAPIGroup.Post("/message/send/text", handlers.MessageHandler.SendText)
 	sessionAPIGroup.Post("/message/send/image", handlers.MessageHandler.SendImage)
 	sessionAPIGroup.Post("/message/send/video", handlers.MessageHandler.SendVideo)
@@ -78,14 +72,12 @@ func SetupRoutes(
 	sessionAPIGroup.Post("/message/edit", handlers.MessageHandler.EditMessage)
 	sessionAPIGroup.Post("/message/delete", handlers.MessageHandler.DeleteMessage)
 
-	// 2. Privacy
 	privacy := sessionAPIGroup.Group("/privacy")
 	privacy.Put("/set", handlers.PrivacyHandler.SetAllPrivacySettings)
 	privacy.Post("/find", handlers.PrivacyHandler.FindPrivacySettings)
 	privacy.Get("/blocklist", handlers.PrivacyHandler.GetBlocklist)
 	privacy.Put("/blocklist", handlers.PrivacyHandler.UpdateBlocklist)
 
-	// 3. Contacts
 	contacts := sessionAPIGroup.Group("/contacts")
 	contacts.Post("/check", handlers.ContactHandler.CheckUser)
 	contacts.Post("/info", handlers.ContactHandler.GetUserInfo)
@@ -99,7 +91,6 @@ func SetupRoutes(
 	presence.Post("/contact", handlers.ContactHandler.GetUserInfo)
 	presence.Post("/subscribe", handlers.ContactHandler.CheckUser)
 
-	// 4. Chat
 	chat := sessionAPIGroup.Group("/chat")
 	chat.Post("/presence", handlers.ChatHandler.SetPresence)
 	chat.Get("/history", handlers.ChatHandler.GetChatHistory)
@@ -117,12 +108,10 @@ func SetupRoutes(
 	chat.Post("/archive", handlers.ChatHandler.ArchiveChat)
 	chat.Post("/disappearing-timer", handlers.ChatHandler.SetDisappearingTimer)
 
-	// Chat presence endpoints
 	chatPresence := sessionAPIGroup.Group("/presences")
 	chatPresence.Post("/typing", handlers.ChatHandler.SetPresence)
 	chatPresence.Post("/recording", handlers.ChatHandler.SetPresence)
 
-	// 5. Groups
 	group := sessionAPIGroup.Group("/group")
 	group.Post("/create", handlers.GroupHandler.CreateGroup)
 	group.Get("/list", handlers.GroupHandler.ListGroups)
@@ -152,14 +141,12 @@ func SetupRoutes(
 	requests.Post("/list", handlers.GroupHandler.GetGroupRequestParticipants)
 	requests.Post("/update", handlers.GroupHandler.UpdateGroupRequestParticipants)
 
-	// 6. Communities
 	community := sessionAPIGroup.Group("/community")
 	community.Post("/link", handlers.CommunityHandler.LinkGroup)
 	community.Post("/unlink", handlers.CommunityHandler.UnlinkGroup)
 	community.Post("/subgroups", handlers.CommunityHandler.GetSubGroups)
 	community.Post("/participants", handlers.CommunityHandler.GetLinkedGroupsParticipants)
 
-	// 7. Newsletters
 	newsletter := sessionAPIGroup.Group("/newsletter")
 	newsletter.Post("", handlers.NewsletterHandler.CreateNewsletter)
 	newsletter.Get("/list", handlers.NewsletterHandler.ListNewsletters)
@@ -179,7 +166,6 @@ func SetupRoutes(
 	newsletter.Post("/upload", handlers.NewsletterHandler.UploadNewsletterMedia)
 	newsletter.Get("/invite/:inviteKey", handlers.NewsletterHandler.GetNewsletterByInvite)
 
-	// 8. Webhooks
 	webhook := sessionAPIGroup.Group("/webhook")
 	webhook.Post("", handlers.WebhookHandler.SetWebhook)
 	webhook.Get("", handlers.WebhookHandler.GetWebhook)
@@ -187,7 +173,6 @@ func SetupRoutes(
 	webhooks := sessionAPIGroup.Group("/webhooks")
 	webhooks.Get("/events", handlers.WebhookHandler.ListEvents)
 
-	// Configuração do Swagger para desabilitar ordenação das tags
 	app.Get("/swagger/swagger-config.json", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"tagsSorter":       nil,
@@ -195,7 +180,6 @@ func SetupRoutes(
 		})
 	})
 
-	// Swagger route
 	app.Get("/swagger/*", swagger.New(swagger.Config{
 		URL:                      "/swagger/doc.json",
 		ConfigURL:                "/swagger/swagger-config.json",

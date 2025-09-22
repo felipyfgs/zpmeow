@@ -116,13 +116,11 @@ func (a *AuthMiddleware) AuthenticateAny() fiber.Handler {
 }
 
 func (a *AuthMiddleware) extractAPIKey(c *fiber.Ctx) string {
-	// Try X-API-Key header first (preferred)
 	apiKey := c.Get("X-API-Key")
 	if apiKey != "" {
 		return apiKey
 	}
 
-	// Fallback to Authorization header
 	authHeader := c.Get("Authorization")
 	if authHeader != "" {
 		return authHeader

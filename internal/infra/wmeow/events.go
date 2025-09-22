@@ -20,32 +20,27 @@ type EventProcessor struct {
 	logger           logging.Logger
 	subscribedEvents []string
 
-	// Receipt batching for performance
 	receiptMutex   sync.Mutex
 	receiptCount   int
 	lastReceiptLog time.Time
 }
 
 var eventTypeMapping = map[string]string{
-	// Messages
 	"*events.Message":              "Message",
 	"*events.UndecryptableMessage": "UndecryptableMessage",
 	"*events.Receipt":              "Receipt",
 	"*events.MediaRetry":           "MediaRetry",
 	"*events.MediaRetryError":      "MediaRetryError",
 
-	// Groups
 	"*events.GroupInfo":   "GroupInfo",
 	"*events.JoinedGroup": "JoinedGroup",
 
-	// Contacts and Profiles
 	"*events.Contact":         "Contact",
 	"*events.Picture":         "Picture",
 	"*events.BusinessName":    "BusinessName",
 	"*events.PushName":        "PushName",
 	"*events.PushNameSetting": "PushNameSetting",
 
-	// Chat Management
 	"*events.Archive":        "Archive",
 	"*events.Pin":            "Pin",
 	"*events.Mute":           "Mute",
@@ -55,16 +50,13 @@ var eventTypeMapping = map[string]string{
 	"*events.DeleteForMe":    "DeleteForMe",
 	"*events.MarkChatAsRead": "MarkChatAsRead",
 
-	// Blocklist
 	"*events.Blocklist":       "Blocklist",
 	"*events.BlocklistChange": "BlocklistChange",
 
-	// Labels
 	"*events.LabelAssociationChat":    "LabelAssociationChat",
 	"*events.LabelAssociationMessage": "LabelAssociationMessage",
 	"*events.LabelEdit":               "LabelEdit",
 
-	// Connection Events
 	"*events.Connected":         "Connected",
 	"*events.Disconnected":      "Disconnected",
 	"*events.ConnectFailure":    "ConnectFailure",
@@ -76,26 +68,22 @@ var eventTypeMapping = map[string]string{
 	"*events.StreamError":       "StreamError",
 	"*events.StreamReplaced":    "StreamReplaced",
 
-	// Pairing
 	"*events.PairSuccess":                 "PairSuccess",
 	"*events.PairError":                   "PairError",
 	"*events.QR":                          "QR",
 	"*events.QRScannedWithoutMultidevice": "QRScannedWithoutMultidevice",
 
-	// Settings
 	"*events.PrivacySettings":       "PrivacySettings",
 	"*events.UserAbout":             "UserAbout",
 	"*events.UnarchiveChatsSetting": "UnarchiveChatsSetting",
 	"*events.UserStatusMute":        "UserStatusMute",
 
-	// Sync Events
 	"*events.AppState":             "AppState",
 	"*events.AppStateSyncComplete": "AppStateSyncComplete",
 	"*events.HistorySync":          "HistorySync",
 	"*events.OfflineSyncCompleted": "OfflineSyncCompleted",
 	"*events.OfflineSyncPreview":   "OfflineSyncPreview",
 
-	// Calls
 	"*events.CallOffer":        "CallOffer",
 	"*events.CallAccept":       "CallAccept",
 	"*events.CallTerminate":    "CallTerminate",
@@ -106,25 +94,20 @@ var eventTypeMapping = map[string]string{
 	"*events.CallTransport":    "CallTransport",
 	"*events.UnknownCallEvent": "UnknownCallEvent",
 
-	// Presence
 	"*events.Presence":     "Presence",
 	"*events.ChatPresence": "ChatPresence",
 
-	// Security
 	"*events.IdentityChange":  "IdentityChange",
 	"*events.CATRefreshError": "CATRefreshError",
 
-	// Newsletters
 	"*events.NewsletterJoin":        "NewsletterJoin",
 	"*events.NewsletterLeave":       "NewsletterLeave",
 	"*events.NewsletterMuteChange":  "NewsletterMuteChange",
 	"*events.NewsletterLiveUpdate":  "NewsletterLiveUpdate",
 	"*events.NewsletterMessageMeta": "NewsletterMessageMeta",
 
-	// Other Platforms
 	"*events.FBMessage": "FBMessage",
 
-	// Special
 	"*events.ManualLoginReconnect": "ManualLoginReconnect",
 }
 
@@ -159,7 +142,6 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 	return ep
 }
 
-// Helper methods for event processing
 func (ep *EventProcessor) shouldProcessEvent(eventType string) bool {
 	if len(ep.subscribedEvents) == 0 {
 		return true // Process all events if none specified
@@ -173,10 +155,8 @@ func (ep *EventProcessor) shouldProcessEvent(eventType string) bool {
 	return false
 }
 
-// Removed unused sendWebhook method - using global sendWebhook function instead
 
 func (ep *EventProcessor) logEventWithThrottling(eventType string, details string) {
-	// Throttle frequent events like receipts
 	if eventType == "Receipt" {
 		ep.receiptMutex.Lock()
 		ep.receiptCount++
@@ -223,7 +203,6 @@ func (ep *EventProcessor) UpdateWebhookURL(webhookURL string) {
 	ep.logger.Infof("Updated webhook URL: %s", webhookURL)
 }
 
-// Removed: isSubscribedToEvent - replaced by shouldProcessEvent helper method
 
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)
@@ -258,7 +237,6 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 		return
 	}
 
-	// Normalize the message to ensure consistent text message format
 	normalizedMsg := ep.normalizeMessage(msg)
 
 	webhookPayload := map[string]interface{}{
@@ -276,26 +254,18 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 	}
 }
 
-// normalizeMessage normalizes text messages to ensure consistent format
-// Converts extendedTextMessage to conversation format for consistency
 func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message {
-	// Create a copy of the message to avoid modifying the original
 	normalizedMsg := *msg
 
-	// Check if this is an extendedTextMessage that should be normalized to conversation
 	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
 		text := *msg.Message.ExtendedTextMessage.Text
 
-		// Log the normalization for debugging
 		ep.logger.Debugf("Normalizing extendedTextMessage to conversation format for session %s: %s", ep.sessionID, text)
 
-		// Create a new message with conversation format and remove extendedTextMessage
 		normalizedMsg.Message.Conversation = &text
 		normalizedMsg.Message.ExtendedTextMessage = nil
 
-		// Update the raw message as well if it exists
 		if normalizedMsg.RawMessage != nil {
-			// Handle DeviceSentMessage structure
 			if normalizedMsg.RawMessage.DeviceSentMessage != nil &&
 				normalizedMsg.RawMessage.DeviceSentMessage.Message != nil {
 				if normalizedMsg.RawMessage.DeviceSentMessage.Message.ExtendedTextMessage != nil {
@@ -304,7 +274,6 @@ func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message 
 				}
 			}
 
-			// Handle direct ExtendedTextMessage in RawMessage
 			if normalizedMsg.RawMessage.ExtendedTextMessage != nil {
 				normalizedMsg.RawMessage.Conversation = &text
 				normalizedMsg.RawMessage.ExtendedTextMessage = nil
@@ -404,12 +373,10 @@ func (ep *EventProcessor) handleLoggedOut(evt interface{}) {
 func (ep *EventProcessor) handleReceipt(evt interface{}) {
 	receipt := evt.(*events.Receipt)
 
-	// Batch receipt logs to reduce verbosity
 	ep.receiptMutex.Lock()
 	ep.receiptCount++
 	now := time.Now()
 
-	// Log every 10 receipts or every 30 seconds, whichever comes first
 	shouldLog := ep.receiptCount%10 == 0 || now.Sub(ep.lastReceiptLog) > 30*time.Second
 	if shouldLog {
 		ep.logger.Debugf("Processed %d receipts for session %s (last 30s)", ep.receiptCount, ep.sessionID)
@@ -432,7 +399,6 @@ func (ep *EventProcessor) handleReceipt(evt interface{}) {
 
 func (ep *EventProcessor) handlePresence(evt interface{}) {
 	presence := evt.(*events.Presence)
-	// Removed verbose presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
 		"event":     "Presence",
@@ -448,7 +414,6 @@ func (ep *EventProcessor) handlePresence(evt interface{}) {
 
 func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 	chatPresence := evt.(*events.ChatPresence)
-	// Removed verbose chat presence logging - too frequent
 
 	webhookPayload := map[string]interface{}{
 		"event":     "ChatPresence",
@@ -489,7 +454,6 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 	}
 }
 
-// isCommonUnmappedEvent checks if an event type is commonly unmapped and can be ignored
 func isCommonUnmappedEvent(eventType string) bool {
 	commonUnmappedEvents := map[string]bool{
 		"*events.QR":                   true,

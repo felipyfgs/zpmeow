@@ -22,31 +22,24 @@ func NewSessionApp(sessionRepo session.Repository, domainService session.Service
 	}
 }
 
-// isUUID checks if a string looks like a UUID
 func isUUID(s string) bool {
-	// UUID pattern: 8-4-4-4-12 hexadecimal digits
 	uuidPattern := `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
 	matched, _ := regexp.MatchString(uuidPattern, s)
 	return matched
 }
 
 func (s *SessionApp) GetSession(ctx context.Context, sessionIDOrName string) (*session.Session, error) {
-	// Smart detection: try the most likely option first
 	if isUUID(sessionIDOrName) {
-		// Looks like UUID, try ID first
 		sess, err := s.sessionRepo.GetByID(ctx, sessionIDOrName)
 		if err == nil {
 			return sess, nil
 		}
-		// Fallback to name (edge case)
 		return s.sessionRepo.GetByName(ctx, sessionIDOrName)
 	} else {
-		// Looks like name, try name first
 		sess, err := s.sessionRepo.GetByName(ctx, sessionIDOrName)
 		if err == nil {
 			return sess, nil
 		}
-		// Fallback to ID (edge case)
 		return s.sessionRepo.GetByID(ctx, sessionIDOrName)
 	}
 }
@@ -121,25 +114,21 @@ func (w *WebhookApp) GetWebhook(ctx context.Context, sessionID string) (string, 
 
 func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 	events := []string{
-		// Messages
 		"Message",
 		"UndecryptableMessage",
 		"Receipt",
 		"MediaRetry",
 		"MediaRetryError",
 
-		// Groups
 		"GroupInfo",
 		"JoinedGroup",
 
-		// Contacts and Profiles
 		"Contact",
 		"Picture",
 		"BusinessName",
 		"PushName",
 		"PushNameSetting",
 
-		// Chat Management
 		"Archive",
 		"Pin",
 		"Mute",
@@ -149,16 +138,13 @@ func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 		"DeleteForMe",
 		"MarkChatAsRead",
 
-		// Blocklist
 		"Blocklist",
 		"BlocklistChange",
 
-		// Labels
 		"LabelAssociationChat",
 		"LabelAssociationMessage",
 		"LabelEdit",
 
-		// Connection Events
 		"Connected",
 		"Disconnected",
 		"ConnectFailure",
@@ -170,26 +156,22 @@ func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 		"StreamError",
 		"StreamReplaced",
 
-		// Pairing
 		"PairSuccess",
 		"PairError",
 		"QR",
 		"QRScannedWithoutMultidevice",
 
-		// Settings
 		"PrivacySettings",
 		"UserAbout",
 		"UnarchiveChatsSetting",
 		"UserStatusMute",
 
-		// Sync Events
 		"AppState",
 		"AppStateSyncComplete",
 		"HistorySync",
 		"OfflineSyncCompleted",
 		"OfflineSyncPreview",
 
-		// Calls
 		"CallOffer",
 		"CallAccept",
 		"CallTerminate",
@@ -200,28 +182,22 @@ func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 		"CallTransport",
 		"UnknownCallEvent",
 
-		// Presence
 		"Presence",
 		"ChatPresence",
 
-		// Security
 		"IdentityChange",
 		"CATRefreshError",
 
-		// Newsletters
 		"NewsletterJoin",
 		"NewsletterLeave",
 		"NewsletterMuteChange",
 		"NewsletterLiveUpdate",
 		"NewsletterMessageMeta",
 
-		// Other Platforms
 		"FBMessage",
 
-		// Special
 		"ManualLoginReconnect",
 
-		// All events
 		"All",
 	}
 	return events, nil

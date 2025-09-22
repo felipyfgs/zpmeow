@@ -35,15 +35,12 @@ func Logger() fiber.Handler {
 		start := time.Now()
 		path := c.Path()
 
-		// Skip logging for certain paths
 		if shouldSkipLogging(path) {
 			return c.Next()
 		}
 
-		// Process request
 		err := c.Next()
 
-		// Log after request is processed
 		latency := time.Since(start)
 		status := c.Response().StatusCode()
 
@@ -56,17 +53,14 @@ func Logger() fiber.Handler {
 			Level:    determineLogLevel(status),
 		}
 
-		// Add error if present
 		if err != nil {
 			entry.Error = err.Error()
 		}
 
-		// Add user agent for non-static resources
 		if !isStaticResource(path) {
 			entry.UserAgent = c.Get("User-Agent")
 		}
 
-		// Extract correlation ID from context
 		correlationID := GetCorrelationID(c.Context())
 
 		LogHTTPRequest(httpLogger, entry, correlationID)

@@ -1,20 +1,14 @@
-// Package main provides the entry point for the WhatsApp API server
-//
 // @title WhatsApp API Gateway
 // @version 1.0
 // @description A comprehensive REST API for WhatsApp Business integration built with Go and whatsmeow
 // @termsOfService http://swagger.io/terms/
-//
 // @contact.name API Support
 // @contact.url http://www.swagger.io/support
 // @contact.email support@swagger.io
-//
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-//
 // @host localhost:8080
 // @BasePath /
-//
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
@@ -99,7 +93,6 @@ func main() {
 		log.Fatalf("Failed to create whatsmeow container: %v", err)
 	}
 
-	// Initialize cache service
 	cacheService, err := cache.NewRedisService(cfg.GetCache())
 	if err != nil {
 		log.Fatalf("Failed to initialize cache service: %v", err)
@@ -112,7 +105,6 @@ func main() {
 		}
 	}()
 
-	// Initialize repositories
 	baseSessionRepo := repository.NewPostgresRepo(db)
 	sessionRepo := cache.NewCachedSessionRepository(baseSessionRepo, cacheService)
 
@@ -145,8 +137,6 @@ func main() {
 	appChatService := application.NewChatApp(sessionRepo, wmeowService)
 	appGroupService := application.NewGroupApp(sessionRepo, wmeowService)
 
-	// Initialize handlers in the specified order:
-	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	healthHandler := handlers.NewHealthHandlerWithCache(db, cacheService)
 	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
@@ -158,7 +148,6 @@ func main() {
 	newsletterHandler := handlers.NewNewsletterHandler(appSessionService, wmeowService)
 	webhookHandler := handlers.NewWebhookHandler(appSessionService, webhookAppService, wmeowService)
 
-	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -171,16 +160,12 @@ func main() {
 		},
 	})
 
-	// Add correlation ID middleware first
 	app.Use(middleware.CorrelationIDMiddleware())
 
-	// Add structured logging middleware
 	app.Use(middleware.Logger())
 
 	app.Use(middleware.CORS(cfg.GetCORS()))
 
-	// Handler dependencies in the specified order:
-	// Health, Sessions, Messages, Privacy, Chat, Contacts, Groups, Communities, Newsletters, Webhooks
 	handlerDeps := &routes.HandlerDependencies{
 		HealthHandler:     healthHandler,
 		SessionHandler:    sessionHandler,

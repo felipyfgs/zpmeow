@@ -9,12 +9,10 @@ import (
 	"zpmeow/internal/domain/common"
 )
 
-// WebhookEndpoint representa um endpoint de webhook
 type WebhookEndpoint struct {
 	url string
 }
 
-// NewWebhookEndpoint cria um novo endpoint de webhook
 func NewWebhookEndpoint(url string) (WebhookEndpoint, error) {
 	trimmed := strings.TrimSpace(url)
 	if trimmed == "" {
@@ -28,17 +26,14 @@ func NewWebhookEndpoint(url string) (WebhookEndpoint, error) {
 	return WebhookEndpoint{url: trimmed}, nil
 }
 
-// URL retorna a URL do webhook
 func (w WebhookEndpoint) URL() string {
 	return w.url
 }
 
-// Value retorna o valor do webhook
 func (w WebhookEndpoint) Value() string {
 	return w.url
 }
 
-// IsEmpty verifica se o endpoint está vazio
 func (w WebhookEndpoint) IsEmpty() bool {
 	return w.url == ""
 }
@@ -433,7 +428,6 @@ func (s *Session) MarkCreated() {
 	s.AddEvent(event)
 }
 
-// sessionJSON is a helper struct for JSON marshaling/unmarshaling
 type sessionJSON struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`
@@ -448,7 +442,6 @@ type sessionJSON struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-// MarshalJSON implements the json.Marshaler interface
 func (s *Session) MarshalJSON() ([]byte, error) {
 	return json.Marshal(sessionJSON{
 		ID:              s.id.Value(),
@@ -465,14 +458,12 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface
 func (s *Session) UnmarshalJSON(data []byte) error {
 	var sj sessionJSON
 	if err := json.Unmarshal(data, &sj); err != nil {
 		return err
 	}
 
-	// Reconstruct the Session from JSON data
 	sessionID, err := NewSessionID(sj.ID)
 	if err != nil {
 		return err
@@ -500,13 +491,11 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 
 	webhookEndpoint, err := NewWebhookEndpoint(sj.WebhookEndpoint)
 	if err != nil {
-		// Allow empty webhook endpoints
 		webhookEndpoint = WebhookEndpoint{}
 	}
 
 	apiKey, err := NewApiKey(sj.ApiKey)
 	if err != nil {
-		// Allow empty API keys
 		apiKey = ApiKey{}
 	}
 

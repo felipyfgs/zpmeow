@@ -17,7 +17,6 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 )
 
-// connectionManager implements ConnectionManager interface
 type connectionManager struct {
 	logger logging.Logger
 }
@@ -62,7 +61,6 @@ func (c *connectionManager) SafeDisconnect(client *whatsmeow.Client, sessionID s
 	client.Disconnect()
 }
 
-// qrCodeGenerator implements QRCodeGenerator interface
 type qrCodeGenerator struct {
 	logger logging.Logger
 }
@@ -99,7 +97,6 @@ func (q *qrCodeGenerator) DisplayQRCodeInTerminal(qrCode, sessionID string) {
 	qrterminal.Generate(qrCode, qrterminal.L, nil)
 }
 
-// sessionManager implements SessionStateManager interface
 type sessionManager struct {
 	sessionRepo session.Repository
 	logger      logging.Logger
@@ -129,14 +126,12 @@ func (s *sessionManager) UpdateStatus(sessionID string, status session.Status) {
 		return
 	}
 
-	// Check if status is already the same
 	currentStatus := sessionEntity.Status()
 	if currentStatus == status {
 		s.logger.Debugf("Session %s already has status %s, skipping update", sessionID, status)
 		return
 	}
 
-	// Validate status transition
 	if err := session.ValidateSessionStatus(currentStatus, status); err != nil {
 		s.logger.Warnf("Invalid status transition for session %s: %s -> %s: %v", sessionID, currentStatus, status, err)
 		return
@@ -192,7 +187,6 @@ func (s *sessionManager) GetSession(sessionID string) (*session.Session, error) 
 	return s.sessionRepo.GetByID(ctx, sessionID)
 }
 
-// Device store utilities
 func GetOrCreateDeviceStore(sessionID string, container *sqlstore.Container) *store.Device {
 	return GetDeviceStoreForSession(sessionID, "", container)
 }
@@ -201,7 +195,6 @@ func GetDeviceStoreForSession(sessionID, expectedDeviceJID string, container *sq
 	var deviceStore *store.Device
 
 	if expectedDeviceJID != "" {
-		// Try to get existing device store first
 		jid, err := waTypes.ParseJID(expectedDeviceJID)
 		if err != nil {
 			fmt.Printf("Failed to parse expected JID %s: %v, creating new device\n", expectedDeviceJID, err)
@@ -213,13 +206,11 @@ func GetDeviceStoreForSession(sessionID, expectedDeviceJID string, container *sq
 			}
 		}
 
-		// If we couldn't get the existing device, create a new one
 		if deviceStore == nil {
 			fmt.Printf("Device store not found for expected JID %s, creating new device\n", expectedDeviceJID)
 			deviceStore = container.NewDevice()
 		}
 	} else {
-		// Create new device store
 		deviceStore = container.NewDevice()
 	}
 
@@ -231,7 +222,6 @@ func GetDeviceStoreForSession(sessionID, expectedDeviceJID string, container *sq
 	return deviceStore
 }
 
-// Connection retry logic
 type RetryConfig struct {
 	MaxRetries    int
 	RetryInterval time.Duration
