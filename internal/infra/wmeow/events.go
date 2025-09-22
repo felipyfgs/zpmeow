@@ -27,10 +27,44 @@ type EventProcessor struct {
 }
 
 var eventTypeMapping = map[string]string{
+	// Messages
 	"*events.Message":                     "Message",
 	"*events.UndecryptableMessage":        "UndecryptableMessage",
 	"*events.Receipt":                     "Receipt",
 	"*events.MediaRetry":                  "MediaRetry",
+	"*events.MediaRetryError":             "MediaRetryError",
+
+	// Groups
+	"*events.GroupInfo":                   "GroupInfo",
+	"*events.JoinedGroup":                 "JoinedGroup",
+
+	// Contacts and Profiles
+	"*events.Contact":                     "Contact",
+	"*events.Picture":                     "Picture",
+	"*events.BusinessName":                "BusinessName",
+	"*events.PushName":                    "PushName",
+	"*events.PushNameSetting":             "PushNameSetting",
+
+	// Chat Management
+	"*events.Archive":                     "Archive",
+	"*events.Pin":                         "Pin",
+	"*events.Mute":                        "Mute",
+	"*events.Star":                        "Star",
+	"*events.DeleteChat":                  "DeleteChat",
+	"*events.ClearChat":                   "ClearChat",
+	"*events.DeleteForMe":                 "DeleteForMe",
+	"*events.MarkChatAsRead":              "MarkChatAsRead",
+
+	// Blocklist
+	"*events.Blocklist":                   "Blocklist",
+	"*events.BlocklistChange":             "BlocklistChange",
+
+	// Labels
+	"*events.LabelAssociationChat":        "LabelAssociationChat",
+	"*events.LabelAssociationMessage":     "LabelAssociationMessage",
+	"*events.LabelEdit":                   "LabelEdit",
+
+	// Connection Events
 	"*events.Connected":                   "Connected",
 	"*events.Disconnected":                "Disconnected",
 	"*events.ConnectFailure":              "ConnectFailure",
@@ -41,30 +75,57 @@ var eventTypeMapping = map[string]string{
 	"*events.TemporaryBan":                "TemporaryBan",
 	"*events.StreamError":                 "StreamError",
 	"*events.StreamReplaced":              "StreamReplaced",
+
+	// Pairing
 	"*events.PairSuccess":                 "PairSuccess",
 	"*events.PairError":                   "PairError",
 	"*events.QR":                          "QR",
 	"*events.QRScannedWithoutMultidevice": "QRScannedWithoutMultidevice",
+
+	// Settings
 	"*events.PrivacySettings":             "PrivacySettings",
-	"*events.PushNameSetting":             "PushNameSetting",
 	"*events.UserAbout":                   "UserAbout",
+	"*events.UnarchiveChatsSetting":       "UnarchiveChatsSetting",
+	"*events.UserStatusMute":              "UserStatusMute",
+
+	// Sync Events
 	"*events.AppState":                    "AppState",
 	"*events.AppStateSyncComplete":        "AppStateSyncComplete",
 	"*events.HistorySync":                 "HistorySync",
 	"*events.OfflineSyncCompleted":        "OfflineSyncCompleted",
 	"*events.OfflineSyncPreview":          "OfflineSyncPreview",
+
+	// Calls
 	"*events.CallOffer":                   "CallOffer",
 	"*events.CallAccept":                  "CallAccept",
 	"*events.CallTerminate":               "CallTerminate",
 	"*events.CallOfferNotice":             "CallOfferNotice",
 	"*events.CallRelayLatency":            "CallRelayLatency",
+	"*events.CallPreAccept":               "CallPreAccept",
+	"*events.CallReject":                  "CallReject",
+	"*events.CallTransport":               "CallTransport",
+	"*events.UnknownCallEvent":            "UnknownCallEvent",
+
+	// Presence
 	"*events.Presence":                    "Presence",
 	"*events.ChatPresence":                "ChatPresence",
+
+	// Security
 	"*events.IdentityChange":              "IdentityChange",
+	"*events.CATRefreshError":             "CATRefreshError",
+
+	// Newsletters
 	"*events.NewsletterJoin":              "NewsletterJoin",
 	"*events.NewsletterLeave":             "NewsletterLeave",
 	"*events.NewsletterMuteChange":        "NewsletterMuteChange",
 	"*events.NewsletterLiveUpdate":        "NewsletterLiveUpdate",
+	"*events.NewsletterMessageMeta":       "NewsletterMessageMeta",
+
+	// Other Platforms
+	"*events.FBMessage":                   "FBMessage",
+
+	// Special
+	"*events.ManualLoginReconnect":        "ManualLoginReconnect",
 }
 
 var eventHandlers = map[string]func(*EventProcessor, interface{}){

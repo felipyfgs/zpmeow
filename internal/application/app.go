@@ -121,18 +121,44 @@ func (w *WebhookApp) GetWebhook(ctx context.Context, sessionID string) (string, 
 
 func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 	events := []string{
+		// Messages
 		"Message",
 		"UndecryptableMessage",
 		"Receipt",
 		"MediaRetry",
-		"ReadReceipt",
+		"MediaRetryError",
 
+		// Groups
 		"GroupInfo",
 		"JoinedGroup",
-		"Picture",
-		"BlocklistChange",
-		"Blocklist",
 
+		// Contacts and Profiles
+		"Contact",
+		"Picture",
+		"BusinessName",
+		"PushName",
+		"PushNameSetting",
+
+		// Chat Management
+		"Archive",
+		"Pin",
+		"Mute",
+		"Star",
+		"DeleteChat",
+		"ClearChat",
+		"DeleteForMe",
+		"MarkChatAsRead",
+
+		// Blocklist
+		"Blocklist",
+		"BlocklistChange",
+
+		// Labels
+		"LabelAssociationChat",
+		"LabelAssociationMessage",
+		"LabelEdit",
+
+		// Connection Events
 		"Connected",
 		"Disconnected",
 		"ConnectFailure",
@@ -143,41 +169,59 @@ func (w *WebhookApp) ListEvents(ctx context.Context) ([]string, error) {
 		"TemporaryBan",
 		"StreamError",
 		"StreamReplaced",
+
+		// Pairing
 		"PairSuccess",
 		"PairError",
 		"QR",
 		"QRScannedWithoutMultidevice",
 
+		// Settings
 		"PrivacySettings",
-		"PushNameSetting",
 		"UserAbout",
+		"UnarchiveChatsSetting",
+		"UserStatusMute",
 
+		// Sync Events
 		"AppState",
 		"AppStateSyncComplete",
 		"HistorySync",
 		"OfflineSyncCompleted",
 		"OfflineSyncPreview",
 
+		// Calls
 		"CallOffer",
 		"CallAccept",
 		"CallTerminate",
 		"CallOfferNotice",
 		"CallRelayLatency",
+		"CallPreAccept",
+		"CallReject",
+		"CallTransport",
+		"UnknownCallEvent",
 
+		// Presence
 		"Presence",
 		"ChatPresence",
 
+		// Security
 		"IdentityChange",
-
 		"CATRefreshError",
 
+		// Newsletters
 		"NewsletterJoin",
 		"NewsletterLeave",
 		"NewsletterMuteChange",
 		"NewsletterLiveUpdate",
+		"NewsletterMessageMeta",
 
+		// Other Platforms
 		"FBMessage",
 
+		// Special
+		"ManualLoginReconnect",
+
+		// All events
 		"All",
 	}
 	return events, nil

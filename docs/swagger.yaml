@@ -294,8 +294,8 @@ definitions:
         type: string
       participants:
         example:
-        - '["5511999999999"'
-        - ' "5511888888888"]'
+        - "5511999999999"
+        - "5511888888888"
         items:
           type: string
         type: array
@@ -732,8 +732,8 @@ definitions:
     properties:
       message_ids:
         example:
-        - '["msg_123"'
-        - ' "msg_456"]'
+        - msg_123
+        - msg_456
         items:
           type: string
         type: array
@@ -1037,8 +1037,8 @@ definitions:
     properties:
       events:
         example:
-        - '["message"'
-        - ' "status"]'
+        - Message
+        - Connected
         items:
           type: string
         type: array
@@ -1243,9 +1243,9 @@ definitions:
         type: string
       options:
         example:
-        - '["Red"'
-        - ' "Blue"'
-        - ' "Green"]'
+        - Red
+        - Blue
+        - Green
         items:
           type: string
         type: array
@@ -1704,7 +1704,7 @@ definitions:
         type: string
       participants:
         example:
-        - '["5511999999999@s.whatsapp.net"]'
+        - 5511999999999@s.whatsapp.net
         items:
           type: string
         type: array
@@ -1723,7 +1723,7 @@ definitions:
         type: string
       participants:
         example:
-        - '["5511999999999@s.whatsapp.net"]'
+        - 5511999999999@s.whatsapp.net
         items:
           type: string
         type: array
@@ -1736,8 +1736,8 @@ definitions:
     properties:
       events:
         example:
-        - '["message"'
-        - ' "status"]'
+        - Message
+        - Connected
         items:
           type: string
         type: array

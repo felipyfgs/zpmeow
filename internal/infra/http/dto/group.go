@@ -10,7 +10,7 @@ import (
 type CreateGroupRequest struct {
 	Name         string   `json:"name" binding:"required" example:"My Group"`
 	Description  string   `json:"description,omitempty" example:"This is my group"`
-	Participants []string `json:"participants,omitempty" example:"[\"5511999999999\", \"5511888888888\"]"`
+	Participants []string `json:"participants,omitempty" example:"5511999999999,5511888888888"`
 }
 
 func (r CreateGroupRequest) Validate() error {
@@ -45,7 +45,7 @@ func (r UpdateGroupRequest) Validate() error {
 }
 
 type AddParticipantsRequest struct {
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999,5511888888888"`
 }
 
 func (r AddParticipantsRequest) Validate() error {
@@ -59,7 +59,7 @@ func (r AddParticipantsRequest) Validate() error {
 }
 
 type RemoveParticipantsRequest struct {
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999,5511888888888"`
 }
 
 func (r RemoveParticipantsRequest) Validate() error {
@@ -70,7 +70,7 @@ func (r RemoveParticipantsRequest) Validate() error {
 }
 
 type PromoteParticipantsRequest struct {
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999,5511888888888"`
 }
 
 func (r PromoteParticipantsRequest) Validate() error {
@@ -81,7 +81,7 @@ func (r PromoteParticipantsRequest) Validate() error {
 }
 
 type DemoteParticipantsRequest struct {
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999\", \"5511888888888\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999,5511888888888"`
 }
 
 func (r DemoteParticipantsRequest) Validate() error {
@@ -354,7 +354,7 @@ func NewInviteLinkResponse(groupJID, inviteLink, inviteCode string) *InviteLinkR
 
 type UpdateParticipantsRequest struct {
 	GroupJID     string   `json:"group_jid" binding:"required" example:"120363025246125486@g.us"`
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999@s.whatsapp.net\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999@s.whatsapp.net"`
 	Action       string   `json:"action" binding:"required" example:"add"`
 }
 
@@ -504,7 +504,7 @@ func (r GetGroupRequestsReq) Validate() error {
 
 type UpdateGroupRequestsReq struct {
 	GroupJID     string   `json:"group_jid" binding:"required" example:"120363025246125486@g.us"`
-	Participants []string `json:"participants" binding:"required" example:"[\"5511999999999@s.whatsapp.net\"]"`
+	Participants []string `json:"participants" binding:"required" example:"5511999999999@s.whatsapp.net"`
 	Action       string   `json:"action" binding:"required" example:"approve"`
 }
 

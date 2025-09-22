@@ -373,7 +373,7 @@ type SessionStatusResponseData struct {
 type UpdateWebhookRequest struct {
 	WebhookURL string   `json:"webhook_url" binding:"required" example:"https://example.com/webhook"`
 	URL        string   `json:"url,omitempty" example:"https://example.com/webhook"`
-	Events     []string `json:"events,omitempty" example:"[\"message\", \"status\"]"`
+	Events     []string `json:"events,omitempty" example:"Message,Connected"`
 }
 
 func (r UpdateWebhookRequest) Validate() error {

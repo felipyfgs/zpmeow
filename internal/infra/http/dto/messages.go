@@ -210,7 +210,7 @@ func (r SendContactRequest) IsMultipleContacts() bool {
 
 type MarkAsReadRequest struct {
 	Phone      string   `json:"phone" binding:"required" example:"5511999999999"`
-	MessageIDs []string `json:"message_ids" binding:"required" example:"[\"msg_123\", \"msg_456\"]"`
+	MessageIDs []string `json:"message_ids" binding:"required" example:"msg_123,msg_456"`
 }
 
 type ReactToMessageRequest struct {
@@ -327,7 +327,7 @@ func (r SendListMessageRequest) Validate() error {
 type SendPollMessageRequest struct {
 	Phone           string   `json:"phone" binding:"required" example:"5511999999999"`
 	Name            string   `json:"name" binding:"required" example:"What's your favorite color?"`
-	Options         []string `json:"options" binding:"required" example:"[\"Red\", \"Blue\", \"Green\"]"`
+	Options         []string `json:"options" binding:"required" example:"Red,Blue,Green"`
 	SelectableCount int      `json:"selectable_count,omitempty" example:"1"`
 }
 

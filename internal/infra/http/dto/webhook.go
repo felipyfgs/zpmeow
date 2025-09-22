@@ -9,7 +9,7 @@ import (
 
 type SetWebhookRequest struct {
 	URL    string   `json:"url" binding:"required" example:"https://example.com/webhook"`
-	Events []string `json:"events,omitempty" example:"[\"message\", \"status\"]"`
+	Events []string `json:"events,omitempty" example:"Message,Connected"`
 }
 
 func (r SetWebhookRequest) Validate() error {
@@ -60,7 +60,7 @@ type WebhookErrorResponse struct {
 
 type RegisterWebhookRequest struct {
 	URL    string   `json:"url" binding:"required" example:"https://example.com/webhook"`
-	Events []string `json:"events,omitempty" example:"[\"message\", \"status\"]"`
+	Events []string `json:"events,omitempty" example:"Message,Connected"`
 }
 
 func (r RegisterWebhookRequest) Validate() error {
@@ -76,7 +76,7 @@ func (r RegisterWebhookRequest) Validate() error {
 type WebhookInfo struct {
 	SessionID string    `json:"sessionID" example:"550e8400-e29b-41d4-a716-446655440000"`
 	URL       string    `json:"url" example:"https://example.com/webhook"`
-	Events    []string  `json:"events,omitempty" example:"[\"message\", \"status\"]"`
+	Events    []string  `json:"events,omitempty" example:"Message,Connected"`
 	IsActive  bool      `json:"is_active" example:"true"`
 	CreatedAt time.Time `json:"created_at" example:"2023-01-01T12:00:00Z"`
 	UpdatedAt time.Time `json:"updated_at" example:"2023-01-01T12:00:00Z"`

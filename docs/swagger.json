@@ -6753,8 +6753,8 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999\"",
-                        " \"5511888888888\"]"
+                        "5511999999999",
+                        "5511888888888"
                     ]
                 }
             }
@@ -7389,8 +7389,8 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"msg_123\"",
-                        " \"msg_456\"]"
+                        "msg_123",
+                        "msg_456"
                     ]
                 },
                 "phone": {
@@ -7839,8 +7839,8 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"message\"",
-                        " \"status\"]"
+                        "Message",
+                        "Connected"
                     ]
                 },
                 "url": {
@@ -8131,9 +8131,9 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"Red\"",
-                        " \"Blue\"",
-                        " \"Green\"]"
+                        "Red",
+                        "Blue",
+                        "Green"
                     ]
                 },
                 "phone": {
@@ -8798,7 +8798,7 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999@s.whatsapp.net\"]"
+                        "5511999999999@s.whatsapp.net"
                     ]
                 }
             }
@@ -8825,7 +8825,7 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999@s.whatsapp.net\"]"
+                        "5511999999999@s.whatsapp.net"
                     ]
                 }
             }
@@ -8842,8 +8842,8 @@
                         "type": "string"
                     },
                     "example": [
-                        "[\"message\"",
-                        " \"status\"]"
+                        "Message",
+                        "Connected"
                     ]
                 },
                 "url": {

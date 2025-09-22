@@ -6759,8 +6759,8 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999\"",
-                        " \"5511888888888\"]"
+                        "5511999999999",
+                        "5511888888888"
                     ]
                 }
             }
@@ -7395,8 +7395,8 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"msg_123\"",
-                        " \"msg_456\"]"
+                        "msg_123",
+                        "msg_456"
                     ]
                 },
                 "phone": {
@@ -7845,8 +7845,8 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"message\"",
-                        " \"status\"]"
+                        "Message",
+                        "Connected"
                     ]
                 },
                 "url": {
@@ -8137,9 +8137,9 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"Red\"",
-                        " \"Blue\"",
-                        " \"Green\"]"
+                        "Red",
+                        "Blue",
+                        "Green"
                     ]
                 },
                 "phone": {
@@ -8804,7 +8804,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999@s.whatsapp.net\"]"
+                        "5511999999999@s.whatsapp.net"
                     ]
                 }
             }
@@ -8831,7 +8831,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"5511999999999@s.whatsapp.net\"]"
+                        "5511999999999@s.whatsapp.net"
                     ]
                 }
             }
@@ -8848,8 +8848,8 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"message\"",
-                        " \"status\"]"
+                        "Message",
+                        "Connected"
                     ]
                 },
                 "url": {
