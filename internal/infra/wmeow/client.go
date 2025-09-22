@@ -57,7 +57,7 @@ func NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID string, container
 
 	appLogger := logging.GetLogger().Sub("wameow-client").Sub(sessionID)
 
-	deviceStore := GetDeviceStoreForSession(sessionID, expectedDeviceJID, container)
+	deviceStore := getDeviceStoreForSession(sessionID, expectedDeviceJID, container)
 	if deviceStore == nil {
 		return nil, fmt.Errorf("failed to create device store for session %s", sessionID)
 	}
@@ -85,7 +85,7 @@ func NewWameowClientWithDeviceJID(sessionID, expectedDeviceJID string, container
 		cancel:         cancel,
 		killChannel:    make(chan bool, 1),
 		qrStopChannel:  make(chan bool, 1),
-		retryConfig:    DefaultRetryConfig(),
+		retryConfig:    defaultRetryConfig(),
 		sessionManager: NewSessionManager(sessionRepo, appLogger),
 		qrGenerator:    NewQRCodeGenerator(appLogger),
 		connManager:    NewConnectionManager(appLogger),

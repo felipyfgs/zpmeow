@@ -41,7 +41,7 @@ func (s *messageSender) SendToJID(client *whatsmeow.Client, to string, message i
 
 	waMessage, ok := message.(*waE2E.Message)
 	if !ok {
-		return nil, NewValidationError("message", "invalid message type")
+		return nil, newValidationError("message", "invalid message type")
 	}
 
 	resp, err := client.SendMessage(context.Background(), jid, waMessage)

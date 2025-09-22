@@ -9,7 +9,7 @@ func (e ValidationError) Error() string {
 	return e.Field + ": " + e.Message
 }
 
-func NewValidationError(field, message string) *ValidationError {
+func newValidationError(field, message string) *ValidationError {
 	return &ValidationError{
 		Field:   field,
 		Message: message,
@@ -30,7 +30,7 @@ func (e ConnectionError) Unwrap() error {
 	return e.Cause
 }
 
-func NewConnectionError(sessionID, operation string, cause error) *ConnectionError {
+func newConnectionError(sessionID, operation string, cause error) *ConnectionError {
 	return &ConnectionError{
 		SessionID: sessionID,
 		Operation: operation,

@@ -29,7 +29,7 @@ func NewConnectionManager(logger logging.Logger) *connectionManager {
 
 func (c *connectionManager) SafeConnect(client *whatsmeow.Client, sessionID string) error {
 	if err := ValidateClientAndStore(client, sessionID); err != nil {
-		return NewConnectionError(sessionID, "connect", err)
+		return newConnectionError(sessionID, "connect", err)
 	}
 
 	if client.IsConnected() {
@@ -40,7 +40,7 @@ func (c *connectionManager) SafeConnect(client *whatsmeow.Client, sessionID stri
 	c.logger.Infof("Connecting client for session %s", sessionID)
 	err := client.Connect()
 	if err != nil {
-		return NewConnectionError(sessionID, "connect", err)
+		return newConnectionError(sessionID, "connect", err)
 	}
 
 	return nil
@@ -187,11 +187,9 @@ func (s *sessionManager) GetSession(sessionID string) (*session.Session, error) 
 	return s.sessionRepo.GetByID(ctx, sessionID)
 }
 
-func GetOrCreateDeviceStore(sessionID string, container *sqlstore.Container) *store.Device {
-	return GetDeviceStoreForSession(sessionID, "", container)
-}
+// Removed unused getOrCreateDeviceStore function
 
-func GetDeviceStoreForSession(sessionID, expectedDeviceJID string, container *sqlstore.Container) *store.Device {
+func getDeviceStoreForSession(sessionID, expectedDeviceJID string, container *sqlstore.Container) *store.Device {
 	var deviceStore *store.Device
 
 	if expectedDeviceJID != "" {
@@ -227,7 +225,7 @@ type RetryConfig struct {
 	RetryInterval time.Duration
 }
 
-func DefaultRetryConfig() *RetryConfig {
+func defaultRetryConfig() *RetryConfig {
 	return &RetryConfig{
 		MaxRetries:    5,
 		RetryInterval: 30 * time.Second,
@@ -236,7 +234,7 @@ func DefaultRetryConfig() *RetryConfig {
 
 func (c *connectionManager) ConnectWithRetry(client *whatsmeow.Client, sessionID string, config *RetryConfig) error {
 	if config == nil {
-		config = DefaultRetryConfig()
+		config = defaultRetryConfig()
 	}
 
 	var lastErr error

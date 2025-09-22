@@ -16,28 +16,28 @@ func NewMessageValidator() *messageValidator {
 
 func (v *messageValidator) ValidateClient(client *whatsmeow.Client) error {
 	if client == nil {
-		return NewValidationError("client", "cannot be nil")
+		return newValidationError("client", "cannot be nil")
 	}
 	return nil
 }
 
 func (v *messageValidator) ValidateRecipient(to string) error {
 	if strings.TrimSpace(to) == "" {
-		return NewValidationError("recipient", "cannot be empty")
+		return newValidationError("recipient", "cannot be empty")
 	}
 	return nil
 }
 
 func (v *messageValidator) ValidateTextContent(text string) error {
 	if strings.TrimSpace(text) == "" {
-		return NewValidationError("text", "cannot be empty")
+		return newValidationError("text", "cannot be empty")
 	}
 	return nil
 }
 
 func (v *messageValidator) ValidateMediaData(data []byte) error {
 	if len(data) == 0 {
-		return NewValidationError("media_data", "cannot be empty")
+		return newValidationError("media_data", "cannot be empty")
 	}
 	return nil
 }
@@ -71,7 +71,7 @@ func (p *phoneParser) ParseToJID(phone string) (waTypes.JID, error) {
 func (p *phoneParser) NormalizePhoneNumber(phone string) (string, error) {
 	phone = strings.TrimSpace(phone)
 	if phone == "" {
-		return "", NewValidationError("phone", "cannot be empty")
+		return "", newValidationError("phone", "cannot be empty")
 	}
 
 	if phone[0] == '+' {
@@ -87,7 +87,7 @@ func (p *phoneParser) NormalizePhoneNumber(phone string) (string, error) {
 
 	normalized := digits.String()
 	if normalized == "" {
-		return "", NewValidationError("phone", "must contain digits")
+		return "", newValidationError("phone", "must contain digits")
 	}
 
 	return normalized, nil
@@ -95,11 +95,11 @@ func (p *phoneParser) NormalizePhoneNumber(phone string) (string, error) {
 
 func (p *phoneParser) ValidatePhoneNumber(phone string) error {
 	if len(phone) < 7 || len(phone) > 15 {
-		return NewValidationError("phone", "must be between 7 and 15 digits")
+		return newValidationError("phone", "must be between 7 and 15 digits")
 	}
 
 	if phone[0] == '0' {
-		return NewValidationError("phone", "should not start with 0")
+		return newValidationError("phone", "should not start with 0")
 	}
 
 	return nil
@@ -107,11 +107,11 @@ func (p *phoneParser) ValidatePhoneNumber(phone string) error {
 
 func ValidateClientAndStore(client *whatsmeow.Client, sessionID string) error {
 	if client == nil {
-		return NewValidationError("client", "WhatsApp client is nil for session "+sessionID)
+		return newValidationError("client", "WhatsApp client is nil for session "+sessionID)
 	}
 
 	if client.Store == nil {
-		return NewValidationError("store", "WhatsApp client store is nil for session "+sessionID)
+		return newValidationError("store", "WhatsApp client store is nil for session "+sessionID)
 	}
 
 	return nil
@@ -119,7 +119,7 @@ func ValidateClientAndStore(client *whatsmeow.Client, sessionID string) error {
 
 func ValidateSessionID(sessionID string) error {
 	if strings.TrimSpace(sessionID) == "" {
-		return NewValidationError("session_id", "cannot be empty")
+		return newValidationError("session_id", "cannot be empty")
 	}
 	return nil
 }
@@ -130,14 +130,14 @@ func IsDeviceRegistered(client *whatsmeow.Client) bool {
 
 func ValidateNonEmpty(value, fieldName string) error {
 	if strings.TrimSpace(value) == "" {
-		return NewValidationError(fieldName, "cannot be empty")
+		return newValidationError(fieldName, "cannot be empty")
 	}
 	return nil
 }
 
 func ValidateNonNil(value interface{}, fieldName string) error {
 	if value == nil {
-		return NewValidationError(fieldName, "cannot be nil")
+		return newValidationError(fieldName, "cannot be nil")
 	}
 	return nil
 }

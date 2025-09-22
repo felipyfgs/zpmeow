@@ -18,7 +18,7 @@ type RetryConfig struct {
 	BackoffMultiplier float64
 }
 
-func DefaultRetryConfig() *RetryConfig {
+func defaultRetryConfig() *RetryConfig {
 	return &RetryConfig{
 		MaxRetries:        3,
 		InitialBackoff:    1 * time.Second,
@@ -34,7 +34,7 @@ type RetryStrategy struct {
 
 func NewRetryStrategy(config *RetryConfig) *RetryStrategy {
 	if config == nil {
-		config = DefaultRetryConfig()
+		config = defaultRetryConfig()
 	}
 
 	return &RetryStrategy{
