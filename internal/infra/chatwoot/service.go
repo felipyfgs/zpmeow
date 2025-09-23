@@ -12,7 +12,6 @@ import (
 	"net/textproto"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -38,11 +37,11 @@ type Service struct {
 
 // NewService cria uma nova instância do serviço Chatwoot
 func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService ports.WhatsAppService, sessionID string, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository) (*Service, error) {
-	if !config.Enabled {
+	if !config.IsActive {
 		return nil, fmt.Errorf("chatwoot integration is disabled")
 	}
 
-	client := NewClient(config.URL, config.Token, config.AccountID)
+	client := NewClient(config.URL, config.Token, config.AccountID, nil)
 
 	service := &Service{
 		client:          client,
@@ -441,7 +440,11 @@ func (s *Service) sendMediaAttachmentToChatwoot(ctx context.Context, conversatio
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			s.logger.Error("Failed to close response body", "error", closeErr)
+		}
+	}()
 
 	// Lê a resposta
 	respBody, err := io.ReadAll(resp.Body)
@@ -555,7 +558,8 @@ func (s *Service) setCache(key string, value interface{}) {
 
 // findOrCreateContact encontra ou cria um contato
 func (s *Service) findOrCreateContact(ctx context.Context, phoneNumber, name, avatarURL string, isGroup bool) (*Contact, error) {
-	cacheKey := fmt.Sprintf("contact:%s", phoneNumber)
+	cacheKeyBuilder := NewCacheKeyBuilder()
+	cacheKey := cacheKeyBuilder.ContactKey(phoneNumber)
 
 	// Verifica cache primeiro
 	if cached, exists := s.getFromCache(cacheKey); exists {
@@ -612,8 +616,10 @@ func (s *Service) findOrCreateContact(ctx context.Context, phoneNumber, name, av
 		req.AvatarURL = avatarURL
 	}
 
+	s.logger.Info("🚀 [CHATWOOT SERVICE DEBUG] Calling CreateContact API", "request", req)
 	contact, err := s.client.CreateContact(ctx, req)
 	if err != nil {
+		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] CreateContact failed", "error", err, "request", req)
 		// Se falhou por contato duplicado, tenta buscar novamente
 		if strings.Contains(err.Error(), "already been taken") || strings.Contains(err.Error(), "Identifier has already been taken") {
 			s.logger.Warn("Contact already exists, searching again", "phoneNumber", phoneNumber, "error", err)
@@ -648,7 +654,9 @@ func (s *Service) findOrCreateContact(ctx context.Context, phoneNumber, name, av
 	}
 
 	s.setCache(cacheKey, contact)
-	s.logger.Info("Created new contact", "name", name, "phone", phoneNumber, "id", contact.ID)
+	s.logger.Info("✅ [CHATWOOT SERVICE DEBUG] Successfully created contact",
+		"name", name, "phone", phoneNumber, "id", contact.ID,
+		"identifier", contact.Identifier, "contact_obj", contact)
 	return contact, nil
 }
 
@@ -759,7 +767,8 @@ func (s *Service) getPhoneNumberVariations(phoneNumber string) []string {
 
 // findOrCreateConversation encontra ou cria uma conversa
 func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact) (*Conversation, error) {
-	cacheKey := fmt.Sprintf("conversation:%d:%d", contact.ID, s.inbox.ID)
+	cacheKeyBuilder := NewCacheKeyBuilder()
+	cacheKey := cacheKeyBuilder.ConversationKey(contact.ID, s.inbox.ID)
 
 	// Verifica cache primeiro
 	if cached, exists := s.getFromCache(cacheKey); exists {
@@ -769,9 +778,10 @@ func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact
 	}
 
 	// Busca conversas existentes do contato
+	s.logger.Info("🔍 [CHATWOOT SERVICE DEBUG] Searching conversations for contact", "contactID", contact.ID)
 	conversations, err := s.client.ListContactConversations(ctx, contact.ID)
 	if err != nil {
-		s.logger.Error("Failed to list contact conversations", "error", err, "contactID", contact.ID)
+		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] Failed to list contact conversations", "error", err, "contactID", contact.ID)
 	}
 
 	// Procura por conversa aberta na inbox atual
@@ -786,21 +796,26 @@ func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact
 
 	// Cria nova conversa
 	req := ConversationCreateRequest{
-		ContactID: strconv.Itoa(contact.ID),
-		InboxID:   strconv.Itoa(s.inbox.ID),
+		ContactID: contact.ID,
+		InboxID:   s.inbox.ID,
 	}
 
 	if s.config.ConversationPending {
 		req.Status = string(ConversationStatusPending)
 	}
 
+	s.logger.Info("🚀 [CHATWOOT SERVICE DEBUG] Creating new conversation",
+		"contactID", contact.ID, "inboxID", s.inbox.ID, "request", req)
+
 	conversation, err := s.client.CreateConversation(ctx, req)
 	if err != nil {
+		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] Failed to create conversation", "error", err, "request", req)
 		return nil, fmt.Errorf("failed to create conversation: %w", err)
 	}
 
 	s.setCache(cacheKey, conversation)
-	s.logger.Info("Created new conversation", "contactID", contact.ID, "conversationID", conversation.ID)
+	s.logger.Info("✅ [CHATWOOT SERVICE DEBUG] Successfully created conversation",
+		"conversationID", conversation.ID, "contactID", contact.ID, "status", conversation.Status)
 	return conversation, nil
 }
 
@@ -815,7 +830,7 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"chat_name", msg.ChatName,
 		"timestamp", msg.Timestamp)
 
-	if !s.config.Enabled {
+	if !s.config.IsActive {
 		s.logger.Info("⏭️ Chatwoot integration disabled, skipping message")
 		return nil
 	}
@@ -902,9 +917,9 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 
 	// Cria mensagem no Chatwoot
 	msgReq := MessageCreateRequest{
-		Content:  content,
-		MsgType:  messageType,
-		SourceID: fmt.Sprintf("WAID:%s", msg.ID),
+		Content:     content,
+		MessageType: messageType,
+		SourceID:    fmt.Sprintf("WAID:%s", msg.ID),
 	}
 
 	// Define atributos de conteúdo
@@ -1033,16 +1048,37 @@ func (s *Service) extractPhoneNumber(jid string) string {
 
 // ProcessWebhook processa webhooks recebidos do Chatwoot
 func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) error {
-	if !s.config.Enabled {
+	if !s.config.IsActive {
 		return nil
+	}
+
+	// Extract message fields from the Message map
+	messageType := ""
+	content := ""
+	sourceID := ""
+	private := false
+
+	if payload.Message != nil {
+		if mt, ok := payload.Message["message_type"].(string); ok {
+			messageType = mt
+		}
+		if c, ok := payload.Message["content"].(string); ok {
+			content = c
+		}
+		if sid, ok := payload.Message["source_id"].(string); ok {
+			sourceID = sid
+		}
+		if p, ok := payload.Message["private"].(bool); ok {
+			private = p
+		}
 	}
 
 	s.logger.Info("🔄 Processing Chatwoot webhook",
 		"event", payload.Event,
-		"message_type", payload.MsgType,
-		"content", payload.Content,
-		"source_id", payload.SourceID,
-		"private", payload.Private)
+		"message_type", messageType,
+		"content", content,
+		"source_id", sourceID,
+		"private", private)
 
 	// Log detalhado do payload completo
 	s.logger.Info("📋 WEBHOOK PAYLOAD DETAILS",
@@ -1050,35 +1086,89 @@ func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) e
 		"conversation_exists", payload.Conversation != nil)
 
 	if payload.Contact != nil {
+		contactID := 0
+		contactName := ""
+		contactPhone := ""
+		contactIdentifier := ""
+
+		if id, ok := payload.Contact["id"].(float64); ok {
+			contactID = int(id)
+		}
+		if name, ok := payload.Contact["name"].(string); ok {
+			contactName = name
+		}
+		if phone, ok := payload.Contact["phone_number"].(string); ok {
+			contactPhone = phone
+		}
+		if identifier, ok := payload.Contact["identifier"].(string); ok {
+			contactIdentifier = identifier
+		}
+
 		s.logger.Info("👤 CONTACT DETAILS",
-			"id", payload.Contact.ID,
-			"name", payload.Contact.Name,
-			"phone", payload.Contact.PhoneNumber,
-			"identifier", payload.Contact.Identifier)
+			"id", contactID,
+			"name", contactName,
+			"phone", contactPhone,
+			"identifier", contactIdentifier)
 	}
 
 	if payload.Conversation != nil {
+		conversationID := 0
+		inboxID := 0
+
+		if id, ok := payload.Conversation["id"].(float64); ok {
+			conversationID = int(id)
+		}
+		if iid, ok := payload.Conversation["inbox_id"].(float64); ok {
+			inboxID = int(iid)
+		}
+
+		conversationStatus := ""
+		if status, ok := payload.Conversation["status"].(string); ok {
+			conversationStatus = status
+		}
+
 		s.logger.Info("💬 CONVERSATION DETAILS",
-			"id", payload.Conversation.ID,
-			"inbox_id", payload.Conversation.InboxID,
-			"status", payload.Conversation.Status)
+			"id", conversationID,
+			"inbox_id", inboxID,
+			"status", conversationStatus)
 	}
 
 	// Processa apenas mensagens de saída (outgoing) de agentes
-	if payload.Event == "message_created" && payload.MsgType == "outgoing" {
+	if payload.Event == "message_created" && messageType == "outgoing" {
 		s.logger.Info("✅ Processing outgoing message for WhatsApp")
 		return s.processOutgoingMessage(ctx, payload)
 	}
 
 	s.logger.Info("⏭️ Skipping webhook - not an outgoing message",
 		"event", payload.Event,
-		"message_type", payload.MsgType)
+		"message_type", messageType)
 	return nil
 }
 
 // processOutgoingMessage processa mensagens de saída do Chatwoot para WhatsApp
 func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPayload) error {
 	s.logger.Info("📤 PROCESSING OUTGOING MESSAGE")
+
+	// Extract message fields from the Message map
+	messageType := ""
+	content := ""
+	contentType := ""
+	attachments := []interface{}{}
+
+	if payload.Message != nil {
+		if mt, ok := payload.Message["message_type"].(string); ok {
+			messageType = mt
+		}
+		if c, ok := payload.Message["content"].(string); ok {
+			content = c
+		}
+		if ct, ok := payload.Message["content_type"].(string); ok {
+			contentType = ct
+		}
+		if att, ok := payload.Message["attachments"].([]interface{}); ok {
+			attachments = att
+		}
+	}
 
 	if payload.Conversation == nil || payload.Contact == nil {
 		s.logger.Error("❌ Missing conversation or contact in webhook payload",
@@ -1088,11 +1178,21 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 	}
 
 	// Extrai número de telefone do contato
-	phoneNumber := s.extractPhoneFromContact(payload.Contact)
+	phoneNumber := s.extractPhoneFromContactMap(payload.Contact)
+
+	contactPhone := ""
+	contactIdentifier := ""
+	if phone, ok := payload.Contact["phone_number"].(string); ok {
+		contactPhone = phone
+	}
+	if identifier, ok := payload.Contact["identifier"].(string); ok {
+		contactIdentifier = identifier
+	}
+
 	s.logger.Info("📞 EXTRACTED PHONE NUMBER",
 		"raw_phone", phoneNumber,
-		"contact_phone", payload.Contact.PhoneNumber,
-		"contact_identifier", payload.Contact.Identifier)
+		"contact_phone", contactPhone,
+		"contact_identifier", contactIdentifier)
 
 	if phoneNumber == "" {
 		s.logger.Error("❌ Could not extract phone number from contact")
@@ -1102,35 +1202,45 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 	// Remove o prefixo + do número se presente
 	cleanPhoneNumber := strings.TrimPrefix(phoneNumber, "+")
 
+	// Extract conversation ID
+	conversationID := 0
+	if payload.Conversation != nil {
+		if id, ok := payload.Conversation["id"].(float64); ok {
+			conversationID = int(id)
+		}
+	}
+
 	s.logger.Info("📨 SENDING MESSAGE TO WHATSAPP",
 		"to", cleanPhoneNumber,
-		"content", payload.Content,
+		"content", content,
 		"session_id", s.sessionID,
 		"whatsapp_service_available", s.whatsappService != nil,
-		"conversationID", payload.Conversation.ID,
-		"messageType", payload.MsgType)
+		"conversationID", conversationID,
+		"messageType", messageType)
 
 	// Envia mensagem via WhatsApp usando o serviço zpmeow
 	if s.whatsappService != nil {
+		// contentType and attachments already extracted above
+
 		s.logger.Info("🚀 CALLING WHATSAPP SERVICE",
 			"session_id", s.sessionID,
 			"to", cleanPhoneNumber,
-			"content", payload.Content,
-			"content_type", payload.ContentType,
-			"has_attachments", len(payload.Attachments) > 0)
+			"content", content,
+			"content_type", contentType,
+			"has_attachments", len(attachments) > 0)
 
 		// Determina o tipo de mensagem e envia adequadamente
 		var err error
 
 		// Verifica se há anexos na mensagem
-		if len(payload.Attachments) > 0 {
-			_, err = s.sendAttachmentMessage(ctx, cleanPhoneNumber, payload)
-		} else if payload.Content != "" {
-			_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, cleanPhoneNumber, payload.Content)
+		if len(attachments) > 0 {
+			_, err = s.sendAttachmentMessage(ctx, cleanPhoneNumber, content, attachments)
+		} else if content != "" {
+			_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, cleanPhoneNumber, content)
 		} else {
 			s.logger.Warn("⚠️ MESSAGE WITH NO CONTENT OR ATTACHMENTS",
 				"to", cleanPhoneNumber,
-				"content_type", payload.ContentType)
+				"content_type", contentType)
 			return fmt.Errorf("message has no content or attachments")
 		}
 
@@ -1139,17 +1249,17 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 				"error", err,
 				"to", cleanPhoneNumber,
 				"session_id", s.sessionID,
-				"content_type", payload.ContentType)
+				"content_type", contentType)
 			return fmt.Errorf("failed to send message to WhatsApp: %w", err)
 		}
 
 		// Log de sucesso
 		s.logger.Info("✅ MESSAGE SENT TO WHATSAPP SUCCESSFULLY",
 			"to", cleanPhoneNumber,
-			"content", payload.Content,
+			"content", content,
 			"session_id", s.sessionID,
-			"content_type", payload.ContentType,
-			"has_attachments", len(payload.Attachments) > 0)
+			"content_type", contentType,
+			"has_attachments", len(attachments) > 0)
 
 		return nil
 	}
@@ -1157,16 +1267,26 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 	s.logger.Warn("⚠️ WHATSAPP SERVICE NOT AVAILABLE",
 		"to", cleanPhoneNumber,
 		"session_id", s.sessionID,
-		"content", payload.Content)
+		"content", content)
 
 	return nil
 }
 
-// extractPhoneFromContact extrai número de telefone do contato
-func (s *Service) extractPhoneFromContact(contact *Contact) string {
-	if contact.PhoneNumber != "" {
+// extractPhoneFromContactMap extrai número de telefone do contato a partir de um map
+func (s *Service) extractPhoneFromContactMap(contact map[string]interface{}) string {
+	phoneNumber := ""
+	identifier := ""
+
+	if phone, ok := contact["phone_number"].(string); ok {
+		phoneNumber = phone
+	}
+	if id, ok := contact["identifier"].(string); ok {
+		identifier = id
+	}
+
+	if phoneNumber != "" {
 		// Remove + e espaços
-		phone := strings.ReplaceAll(contact.PhoneNumber, "+", "")
+		phone := strings.ReplaceAll(phoneNumber, "+", "")
 		phone = strings.ReplaceAll(phone, " ", "")
 		phone = strings.ReplaceAll(phone, "(", "")
 		phone = strings.ReplaceAll(phone, ")", "")
@@ -1174,68 +1294,185 @@ func (s *Service) extractPhoneFromContact(contact *Contact) string {
 		return phone
 	}
 
-	if contact.Identifier != "" {
-		return s.extractPhoneNumber(contact.Identifier)
+	if identifier != "" {
+		return s.extractPhoneNumber(identifier)
 	}
 
 	return ""
 }
 
 // sendAttachmentMessage envia mensagens com anexos
-func (s *Service) sendAttachmentMessage(ctx context.Context, phoneNumber string, payload *WebhookPayload) (interface{}, error) {
-	if len(payload.Attachments) == 0 {
+func (s *Service) sendAttachmentMessage(ctx context.Context, phoneNumber, content string, attachments []interface{}) (interface{}, error) {
+	if len(attachments) == 0 {
 		return nil, fmt.Errorf("no attachments found")
 	}
 
-	attachment := payload.Attachments[0] // Processa o primeiro anexo
-
-	s.logger.Info("📎 SENDING ATTACHMENT MESSAGE",
-		"file_type", attachment.FileType,
-		"data_url", attachment.DataURL,
+	s.logger.Info("📎 PROCESSING MULTIPLE ATTACHMENTS",
+		"total_attachments", len(attachments),
 		"to", phoneNumber)
 
-	// Download do arquivo
-	fileData, err := s.downloadAttachment(ctx, attachment.DataURL)
-	if err != nil {
-		s.logger.Error("❌ FAILED TO DOWNLOAD ATTACHMENT",
-			"error", err,
-			"data_url", attachment.DataURL)
-		return nil, fmt.Errorf("failed to download attachment: %w", err)
+	var results []interface{}
+	var lastResult interface{}
+
+	// Processa todos os anexos
+	for i, attachment := range attachments {
+		// Convert interface{} to map[string]interface{}
+		attachmentMap, ok := attachment.(map[string]interface{})
+		if !ok {
+			s.logger.Error("❌ INVALID ATTACHMENT FORMAT", "attachment_index", i+1)
+			continue
+		}
+
+		fileType := ""
+		dataURL := ""
+		if ft, ok := attachmentMap["file_type"].(string); ok {
+			fileType = ft
+		}
+		if du, ok := attachmentMap["data_url"].(string); ok {
+			dataURL = du
+		}
+
+		s.logger.Info("📎 SENDING ATTACHMENT MESSAGE",
+			"attachment_index", i+1,
+			"total_attachments", len(attachments),
+			"file_type", fileType,
+			"data_url", dataURL,
+			"to", phoneNumber)
+
+		// Download do arquivo
+		fileData, err := s.downloadAttachment(ctx, dataURL)
+		if err != nil {
+			s.logger.Error("❌ FAILED TO DOWNLOAD ATTACHMENT",
+				"error", err,
+				"attachment_index", i+1,
+				"data_url", dataURL)
+			continue // Continua com o próximo anexo
+		}
+
+		// Determina o tipo real do arquivo baseado na URL ou extensão
+		actualFileType := s.determineActualFileTypeFromMap(attachmentMap)
+
+		// Envia baseado no tipo de arquivo
+		var result interface{}
+		switch actualFileType {
+		case "audio":
+			s.logger.Info("🎵 SENDING AUDIO MESSAGE",
+				"size", len(fileData),
+				"to", phoneNumber,
+				"attachment_index", i+1,
+				"original_type", fileType,
+				"detected_type", actualFileType)
+			// Use SendAudioMessageWithPTT com PTT=true para mensagens de voz do Chatwoot
+			result, err = s.whatsappService.SendAudioMessageWithPTT(ctx, s.sessionID, phoneNumber, fileData, "audio/ogg", true)
+		case "image":
+			s.logger.Info("📷 SENDING IMAGE MESSAGE",
+				"size", len(fileData),
+				"to", phoneNumber,
+				"attachment_index", i+1,
+				"original_type", fileType,
+				"detected_type", actualFileType)
+			result, err = s.whatsappService.SendImageMessage(ctx, s.sessionID, phoneNumber, fileData, content, "image/jpeg")
+		case "video":
+			s.logger.Info("🎬 SENDING VIDEO MESSAGE",
+				"size", len(fileData),
+				"to", phoneNumber,
+				"attachment_index", i+1,
+				"original_type", fileType,
+				"detected_type", actualFileType)
+			result, err = s.whatsappService.SendVideoMessage(ctx, s.sessionID, phoneNumber, fileData, content, "video/mp4")
+		case "document", "file":
+			s.logger.Info("📄 SENDING DOCUMENT MESSAGE",
+				"size", len(fileData),
+				"to", phoneNumber,
+				"attachment_index", i+1,
+				"original_type", fileType,
+				"detected_type", actualFileType)
+			fileName := s.getFileNameFromAttachmentMap(attachmentMap)
+			result, err = s.whatsappService.SendDocumentMessage(ctx, s.sessionID, phoneNumber, fileData, fileName, content, "application/octet-stream")
+		default:
+			// Para qualquer outro tipo, tenta enviar como documento
+			s.logger.Info("📎 SENDING UNKNOWN TYPE AS DOCUMENT",
+				"size", len(fileData),
+				"to", phoneNumber,
+				"attachment_index", i+1,
+				"original_type", fileType,
+				"detected_type", actualFileType)
+			fileName := s.getFileNameFromAttachmentMap(attachmentMap)
+			result, err = s.whatsappService.SendDocumentMessage(ctx, s.sessionID, phoneNumber, fileData, fileName, content, "application/octet-stream")
+		}
+
+		if err != nil {
+			s.logger.Error("❌ FAILED TO SEND ATTACHMENT",
+				"error", err,
+				"attachment_index", i+1,
+				"file_type", fileType)
+			continue // Continua com o próximo anexo
+		}
+
+		results = append(results, result)
+		lastResult = result
+
+		s.logger.Info("✅ ATTACHMENT SENT SUCCESSFULLY",
+			"attachment_index", i+1,
+			"total_attachments", len(attachments),
+			"file_type", fileType)
 	}
 
-	// Envia baseado no tipo de arquivo
-	switch attachment.FileType {
-	case "audio":
-		s.logger.Info("🎵 SENDING AUDIO MESSAGE",
-			"size", len(fileData),
-			"to", phoneNumber)
-		// Use SendAudioMessageWithPTT com PTT=true para mensagens de voz do Chatwoot
-		return s.whatsappService.SendAudioMessageWithPTT(ctx, s.sessionID, phoneNumber, fileData, "audio/ogg", true)
-	case "image":
-		s.logger.Info("📷 SENDING IMAGE MESSAGE",
-			"size", len(fileData),
-			"to", phoneNumber)
-		return s.whatsappService.SendImageMessage(ctx, s.sessionID, phoneNumber, fileData, payload.Content, "image/jpeg")
-	case "video":
-		s.logger.Info("🎬 SENDING VIDEO MESSAGE",
-			"size", len(fileData),
-			"to", phoneNumber)
-		return s.whatsappService.SendVideoMessage(ctx, s.sessionID, phoneNumber, fileData, payload.Content, "video/mp4")
-	case "document":
-		s.logger.Info("📄 SENDING DOCUMENT MESSAGE",
-			"size", len(fileData),
-			"to", phoneNumber)
-		fileName := attachment.Fallback
-		if fileName == "" {
-			fileName = "document"
-		}
-		return s.whatsappService.SendDocumentMessage(ctx, s.sessionID, phoneNumber, fileData, fileName, payload.Content, "application/octet-stream")
-	default:
-		s.logger.Warn("⚠️ UNSUPPORTED ATTACHMENT TYPE, SENDING AS TEXT",
-			"file_type", attachment.FileType)
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("📎 Anexo enviado (%s)\n\n%s", attachment.FileType, payload.Content))
+	s.logger.Info("📎 FINISHED PROCESSING ALL ATTACHMENTS",
+		"total_attachments", len(attachments),
+		"successful_sends", len(results),
+		"to", phoneNumber)
+
+	// Retorna o último resultado para compatibilidade
+	if lastResult != nil {
+		return lastResult, nil
 	}
+
+	return nil, fmt.Errorf("failed to send any attachments")
+}
+
+// determineActualFileTypeFromMap determina o tipo real do arquivo baseado na URL, extensão ou MIME type
+func (s *Service) determineActualFileTypeFromMap(attachmentMap map[string]interface{}) string {
+	// Create an Attachment struct from the map for compatibility with existing detector
+	attachment := Attachment{}
+
+	if fileType, ok := attachmentMap["file_type"].(string); ok {
+		attachment.FileType = fileType
+	}
+	if dataURL, ok := attachmentMap["data_url"].(string); ok {
+		attachment.DataURL = dataURL
+	}
+	if fileSize, ok := attachmentMap["file_size"].(float64); ok {
+		attachment.FileSize = int(fileSize)
+	}
+	if fallback, ok := attachmentMap["fallback"].(string); ok {
+		attachment.Fallback = fallback
+	}
+
+	detector := NewFileTypeDetector()
+	return detector.DetectFileType(attachment)
+}
+
+// getFileNameFromAttachmentMap extrai o nome do arquivo do anexo a partir de um map
+func (s *Service) getFileNameFromAttachmentMap(attachmentMap map[string]interface{}) string {
+	// Create an Attachment struct from the map for compatibility with existing detector
+	attachment := Attachment{}
+
+	if fileType, ok := attachmentMap["file_type"].(string); ok {
+		attachment.FileType = fileType
+	}
+	if dataURL, ok := attachmentMap["data_url"].(string); ok {
+		attachment.DataURL = dataURL
+	}
+	if fileSize, ok := attachmentMap["file_size"].(float64); ok {
+		attachment.FileSize = int(fileSize)
+	}
+	if fallback, ok := attachmentMap["fallback"].(string); ok {
+		attachment.Fallback = fallback
+	}
+
+	detector := NewFileTypeDetector()
+	return detector.extractFileName(attachment)
 }
 
 // downloadAttachment faz download do anexo do Chatwoot
@@ -1259,7 +1496,11 @@ func (s *Service) downloadAttachment(ctx context.Context, dataURL string) ([]byt
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			s.logger.Error("Failed to close response body", "error", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to download file: status %d", resp.StatusCode)

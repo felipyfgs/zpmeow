@@ -11,7 +11,7 @@ import (
 
 type NoOpCacheService struct{}
 
-func NewNoOpCacheService() ports.CacheService {
+func NewNoOpCacheService() ports.CacheManager {
 	return &NoOpCacheService{}
 }
 
@@ -43,7 +43,7 @@ func (n *NoOpCacheService) GetQRCode(ctx context.Context, sessionID string) (str
 	return "", ports.NewCacheError("get", "qr:"+sessionID, fmt.Errorf("cache is disabled"))
 }
 
-func (n *NoOpCacheService) SetQRCode(ctx context.Context, sessionID string, qrCode string) error {
+func (n *NoOpCacheService) SetQRCode(ctx context.Context, sessionID string, qrCode string, ttl time.Duration) error {
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (n *NoOpCacheService) GetQRCodeBase64(ctx context.Context, sessionID string
 	return "", ports.NewCacheError("get", "qr_base64:"+sessionID, fmt.Errorf("cache is disabled"))
 }
 
-func (n *NoOpCacheService) SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string) error {
+func (n *NoOpCacheService) SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string, ttl time.Duration) error {
 	return nil
 }
 
@@ -87,16 +87,29 @@ func (n *NoOpCacheService) Ping(ctx context.Context) error {
 	return fmt.Errorf("cache is disabled")
 }
 
-func (n *NoOpCacheService) GetStats(ctx context.Context) (ports.CacheStats, error) {
-	return ports.CacheStats{
-		Connected:     false,
-		TotalKeys:     0,
-		UsedMemory:    "0B",
-		HitRate:       "0%",
-		MissRate:      "100%",
-		Uptime:        "0s",
-		Version:       "No-Op Cache",
-		LastError:     "Cache is disabled",
-		LastErrorTime: time.Now().Format(time.RFC3339),
+func (n *NoOpCacheService) Clear(ctx context.Context) error {
+	return ports.NewCacheError("clear", "all", fmt.Errorf("cache disabled"))
+}
+
+// Generic cache methods
+func (n *NoOpCacheService) Get(ctx context.Context, key string) (interface{}, error) {
+	return nil, ports.NewCacheError("get", key, fmt.Errorf("cache disabled"))
+}
+
+func (n *NoOpCacheService) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return ports.NewCacheError("set", key, fmt.Errorf("cache disabled"))
+}
+
+func (n *NoOpCacheService) Delete(ctx context.Context, key string) error {
+	return ports.NewCacheError("delete", key, fmt.Errorf("cache disabled"))
+}
+
+func (n *NoOpCacheService) GetStats(ctx context.Context) (*ports.CacheStats, error) {
+	return &ports.CacheStats{
+		Hits:        0,
+		Misses:      0,
+		Keys:        0,
+		Memory:      0,
+		Connections: 0,
 	}, nil
 }

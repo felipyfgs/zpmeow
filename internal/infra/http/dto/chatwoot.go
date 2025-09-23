@@ -2,10 +2,10 @@ package dto
 
 // ChatwootConfigRequest representa a requisição para configurar Chatwoot
 type ChatwootConfigRequest struct {
-	Enabled                 *bool    `json:"enabled" validate:"required" example:"true" swaggertype:"boolean"`
-	AccountID               string   `json:"accountId" validate:"required_if=Enabled true" example:"123"`
-	Token                   string   `json:"token" validate:"required_if=Enabled true" example:"your-chatwoot-api-token"`
-	URL                     string   `json:"url" validate:"required_if=Enabled true,url" example:"https://chatwoot.example.com"`
+	IsActive                *bool    `json:"isActive" validate:"required" example:"true" swaggertype:"boolean"`
+	AccountID               string   `json:"accountId" validate:"required_if=IsActive true" example:"123"`
+	Token                   string   `json:"token" validate:"required_if=IsActive true" example:"your-chatwoot-api-token"`
+	URL                     string   `json:"url" validate:"required_if=IsActive true,url" example:"https://chatwoot.example.com"`
 	NameInbox               string   `json:"nameInbox,omitempty" example:"WhatsApp Inbox"`
 	SignMsg                 *bool    `json:"signMsg,omitempty" example:"true" swaggertype:"boolean"`
 	SignDelimiter           string   `json:"signDelimiter,omitempty" example:"\n\n---\nSent via WhatsApp"`

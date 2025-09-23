@@ -49,12 +49,25 @@ func (h *Handler) HandleWebhook(c *fiber.Ctx) error {
 	// Log do payload para debug
 	conversationID := 0
 	if payload.Conversation != nil {
-		conversationID = payload.Conversation.ID
+		if id, ok := payload.Conversation["id"].(float64); ok {
+			conversationID = int(id)
+		}
 	}
+
+	messageType := ""
+	if msgType, ok := payload.Message["message_type"].(string); ok {
+		messageType = msgType
+	}
+
+	content := ""
+	if contentVal, ok := payload.Message["content"].(string); ok {
+		content = contentVal
+	}
+
 	h.logger.Debug("Webhook payload",
 		"event", payload.Event,
-		"messageType", payload.MsgType,
-		"content", payload.Content,
+		"messageType", messageType,
+		"content", content,
 		"conversationID", conversationID)
 
 	// Processa o webhook
@@ -83,10 +96,10 @@ func (h *Handler) CreateConfig(c *fiber.Ctx) error {
 	}
 
 	// Validações básicas
-	if config.Enabled {
+	if config.IsActive {
 		if config.URL == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "URL is required when Chatwoot is enabled",
+				"error": "URL is required when Chatwoot is active",
 			})
 		}
 
@@ -118,11 +131,11 @@ func (h *Handler) CreateConfig(c *fiber.Ctx) error {
 	// Aqui você salvaria a configuração no banco de dados
 	// Por exemplo: h.configRepository.Save(instanceName, &config)
 
-	h.logger.Info("Chatwoot config created", "instance", instanceName, "enabled", config.Enabled)
+	h.logger.Info("Chatwoot config created", "instance", instanceName, "isActive", config.IsActive)
 
 	// Retorna a configuração com URL do webhook
 	response := fiber.Map{
-		"enabled":                 config.Enabled,
+		"isActive":                config.IsActive,
 		"accountId":               config.AccountID,
 		"url":                     config.URL,
 		"nameInbox":               config.NameInbox,
@@ -153,12 +166,12 @@ func (h *Handler) GetConfig(c *fiber.Ctx) error {
 
 	// Por enquanto, retorna uma configuração padrão
 	config := ChatwootConfig{
-		Enabled: false,
-		URL:     "",
+		IsActive: false,
+		URL:      "",
 	}
 
 	response := fiber.Map{
-		"enabled":                 config.Enabled,
+		"isActive":                config.IsActive,
 		"accountId":               config.AccountID,
 		"url":                     config.URL,
 		"nameInbox":               config.NameInbox,
@@ -193,10 +206,10 @@ func (h *Handler) UpdateConfig(c *fiber.Ctx) error {
 	}
 
 	// Validações básicas (mesmo que CreateConfig)
-	if config.Enabled {
+	if config.IsActive {
 		if config.URL == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "URL is required when Chatwoot is enabled",
+				"error": "URL is required when Chatwoot is active",
 			})
 		}
 
@@ -227,10 +240,10 @@ func (h *Handler) UpdateConfig(c *fiber.Ctx) error {
 	// Aqui você atualizaria a configuração no banco de dados
 	// Por exemplo: h.configRepository.Update(instanceName, &config)
 
-	h.logger.Info("Chatwoot config updated", "instance", instanceName, "enabled", config.Enabled)
+	h.logger.Info("Chatwoot config updated", "instance", instanceName, "isActive", config.IsActive)
 
 	response := fiber.Map{
-		"enabled":                 config.Enabled,
+		"isActive":                config.IsActive,
 		"accountId":               config.AccountID,
 		"url":                     config.URL,
 		"nameInbox":               config.NameInbox,

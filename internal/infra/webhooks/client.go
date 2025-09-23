@@ -10,10 +10,9 @@ import (
 	"time"
 )
 
-type HTTPClient interface {
-	Post(ctx context.Context, url string, payload interface{}, headers map[string]string) error
-}
+// HTTPClient interface moved to internal/application/ports/interfaces.go
 
+// WebhookHTTPClient implements ports.HTTPClient interface
 type WebhookHTTPClient struct {
 	client  *http.Client
 	timeout time.Duration
@@ -68,6 +67,91 @@ func (c *WebhookHTTPClient) Post(ctx context.Context, url string, payload interf
 			Body:       string(body),
 			URL:        url,
 		}
+	}
+
+	return nil
+}
+
+// Get implements ports.HTTPClient interface
+func (c *WebhookHTTPClient) Get(ctx context.Context, url string, headers map[string]string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("webhooks: failed to create GET request: %w", err)
+	}
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("webhooks: failed to send GET request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("webhooks: failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("webhooks: GET request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return body, nil
+}
+
+// Put implements ports.HTTPClient interface
+func (c *WebhookHTTPClient) Put(ctx context.Context, url string, payload interface{}, headers map[string]string) error {
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("webhooks: failed to marshal payload: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("webhooks: failed to create PUT request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("webhooks: failed to send PUT request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("webhooks: PUT request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
+// Delete implements ports.HTTPClient interface
+func (c *WebhookHTTPClient) Delete(ctx context.Context, url string, headers map[string]string) error {
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("webhooks: failed to create DELETE request: %w", err)
+	}
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("webhooks: failed to send DELETE request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("webhooks: DELETE request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	return nil

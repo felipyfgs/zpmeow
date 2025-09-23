@@ -2,9 +2,11 @@ package ports
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mau.fi/whatsmeow"
+	"zpmeow/internal/domain/session"
 )
 
 type SessionManager interface {
@@ -319,6 +321,80 @@ type IDGenerator interface {
 	GenerateAPIKey() string
 }
 
+// ChatwootService defines the interface for Chatwoot integration service
+type ChatwootService interface {
+	ProcessWebhook(ctx context.Context, sessionID string, payload []byte) error
+	SendMessageToWhatsApp(ctx context.Context, sessionID, phone, content string) error
+}
+
+// ChatwootClient defines the interface for Chatwoot API operations
+type ChatwootClient interface {
+	// Contact operations
+	CreateContact(ctx context.Context, request ContactCreateRequest) (*ContactResponse, error)
+	GetContact(ctx context.Context, contactID int) (*ContactResponse, error)
+	SearchContacts(ctx context.Context, query string) ([]*ContactResponse, error)
+
+	// Conversation operations
+	CreateConversation(ctx context.Context, request ConversationCreateRequest) (*ConversationResponse, error)
+	GetConversation(ctx context.Context, conversationID int) (*ConversationResponse, error)
+
+	// Message operations
+	SendMessage(ctx context.Context, conversationID int, request MessageCreateRequest) (*MessageResponse, error)
+	SendAttachment(ctx context.Context, conversationID int, file []byte, fileName, mimeType string) (*MessageResponse, error)
+
+	// Inbox operations
+	GetInboxes(ctx context.Context) ([]*InboxResponse, error)
+	GetInbox(ctx context.Context, inboxID int) (*InboxResponse, error)
+}
+
+// Chatwoot API request/response types
+type ContactCreateRequest struct {
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email,omitempty"`
+	Identifier  string `json:"identifier,omitempty"`
+}
+
+type ContactResponse struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email"`
+	Identifier  string `json:"identifier"`
+}
+
+type ConversationCreateRequest struct {
+	ContactID int    `json:"contact_id"`
+	InboxID   int    `json:"inbox_id"`
+	Status    string `json:"status,omitempty"`
+}
+
+type ConversationResponse struct {
+	ID        int    `json:"id"`
+	ContactID int    `json:"contact_id"`
+	InboxID   int    `json:"inbox_id"`
+	Status    string `json:"status"`
+}
+
+type MessageCreateRequest struct {
+	Content     string `json:"content"`
+	MessageType int    `json:"message_type"`
+	Private     bool   `json:"private,omitempty"`
+}
+
+type MessageResponse struct {
+	ID             int    `json:"id"`
+	Content        string `json:"content"`
+	MessageType    int    `json:"message_type"`
+	ConversationID int    `json:"conversation_id"`
+}
+
+type InboxResponse struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	ChannelType string `json:"channel_type"`
+}
+
 type ContactInfo struct {
 	Name         string `json:"name"`
 	Phone        string `json:"phone"`
@@ -329,4 +405,177 @@ type ContactInfo struct {
 type NotificationService interface {
 	SendNotification(ctx context.Context, message string) error
 	SendWebhook(ctx context.Context, url string, payload interface{}) error
+}
+
+// HTTP Client interface for external requests
+type HTTPClient interface {
+	Post(ctx context.Context, url string, payload interface{}, headers map[string]string) error
+	Get(ctx context.Context, url string, headers map[string]string) ([]byte, error)
+	Put(ctx context.Context, url string, payload interface{}, headers map[string]string) error
+	Delete(ctx context.Context, url string, headers map[string]string) error
+}
+
+// Media operations interface
+type MediaUploader interface {
+	UploadMedia(ctx context.Context, data []byte, mediaType string) (*MediaUploadResult, error)
+}
+
+type MediaUploadResult struct {
+	URL      string `json:"url"`
+	MediaKey string `json:"media_key"`
+	FileSize int64  `json:"file_size"`
+}
+
+// File operations interface
+type FileDownloader interface {
+	Download(ctx context.Context, url string) ([]byte, error)
+	DownloadToFile(ctx context.Context, url, filePath string) error
+}
+
+// Validation interfaces - consolidated from infra layers
+type MessageValidator interface {
+	ValidateTextMessage(content string) error
+	ValidateMediaMessage(data []byte, mediaType string) error
+	ValidatePhoneNumber(phone string) error
+	ValidateClient(client interface{}) error
+	ValidateRecipient(to string) error
+}
+
+type SessionValidator interface {
+	ValidateSessionID(sessionID string) error
+	ValidateSessionName(name string) error
+}
+
+type PhoneValidator interface {
+	ValidatePhoneNumber(phone string) error
+	NormalizePhoneNumber(phone string) (string, error)
+	FormatPhoneNumber(phone string) string
+}
+
+type URLValidator interface {
+	ValidateURL(url string) error
+	ValidateScheme(url string, allowedSchemes []string) error
+	ExtractScheme(url string) string
+	HasHost(url string) bool
+}
+
+// Cache interface - consolidated from cache.go
+type CacheManager interface {
+	// Generic cache operations
+	Get(ctx context.Context, key string) (interface{}, error)
+	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	Delete(ctx context.Context, key string) error
+	Clear(ctx context.Context) error
+
+	// Session-specific cache operations
+	GetSession(ctx context.Context, sessionID string) (*session.Session, error)
+	SetSession(ctx context.Context, sessionID string, sess *session.Session, ttl time.Duration) error
+	DeleteSession(ctx context.Context, sessionID string) error
+
+	// QR Code cache operations
+	GetQRCode(ctx context.Context, sessionID string) (string, error)
+	SetQRCode(ctx context.Context, sessionID string, qrCode string, ttl time.Duration) error
+	DeleteQRCode(ctx context.Context, sessionID string) error
+	GetQRCodeBase64(ctx context.Context, sessionID string) (string, error)
+	SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string, ttl time.Duration) error
+
+	// Additional cache methods needed by implementations
+	GetSessionByName(ctx context.Context, name string) (*session.Session, error)
+	SetSessionByName(ctx context.Context, name string, sess *session.Session, ttl time.Duration) error
+	DeleteSessionByName(ctx context.Context, name string) error
+	SetDeviceJID(ctx context.Context, sessionID, jid string, ttl time.Duration) error
+	DeleteDeviceJID(ctx context.Context, sessionID string) error
+	DeleteSessionStatus(ctx context.Context, sessionID string) error
+	GetStats(ctx context.Context) (*CacheStats, error)
+	Ping(ctx context.Context) error
+}
+
+// Cache error helper
+func NewCacheError(operation, key string, err error) error {
+	return fmt.Errorf("cache %s failed for key '%s': %w", operation, key, err)
+}
+
+// Cache stats
+type CacheStats struct {
+	Hits        int64 `json:"hits"`
+	Misses      int64 `json:"misses"`
+	Keys        int64 `json:"keys"`
+	Memory      int64 `json:"memory"`
+	Connections int   `json:"connections"`
+}
+
+// Cache key prefixes
+const (
+	SessionKeyPrefix       = "session:"
+	SessionNameKeyPrefix   = "session_name:"
+	QRCodeKeyPrefix        = "qr:"
+	QRCodeBase64KeyPrefix  = "qr_base64:"
+	DeviceJIDKeyPrefix     = "device_jid:"
+	SessionStatusKeyPrefix = "session_status:"
+)
+
+// Configuration interfaces for application layer
+type ConfigProvider interface {
+	GetDatabase() DatabaseConfig
+	GetServer() ServerConfig
+	GetAuth() AuthConfig
+	GetWebhook() WebhookConfig
+	GetSecurity() SecurityConfig
+	GetCache() CacheConfig
+}
+
+type DatabaseConfig interface {
+	GetURL() string
+	GetMaxOpenConns() int
+	GetMaxIdleConns() int
+	GetConnMaxLifetime() time.Duration
+}
+
+type ServerConfig interface {
+	GetPort() string
+	GetReadTimeout() time.Duration
+	GetWriteTimeout() time.Duration
+	GetIdleTimeout() time.Duration
+}
+
+type AuthConfig interface {
+	GetGlobalAPIKey() string
+	GetSessionTimeout() time.Duration
+	GetTokenExpiration() time.Duration
+}
+
+type WebhookConfig interface {
+	GetTimeout() time.Duration
+	GetMaxRetries() int
+	GetInitialBackoff() time.Duration
+	GetMaxBackoff() time.Duration
+	GetBackoffMultiplier() float64
+}
+
+type SecurityConfig interface {
+	GetRateLimitEnabled() bool
+	GetRateLimitRPS() int
+	GetRequestTimeout() time.Duration
+	GetMaxRequestSize() int64
+}
+
+type CacheConfig interface {
+	GetCacheEnabled() bool
+	GetSessionTTL() time.Duration
+	GetQRCodeTTL() time.Duration
+}
+
+// Time provider interface for testability
+type TimeProvider interface {
+	Now() time.Time
+	Unix() int64
+}
+
+// Event interfaces - EventPublisher is defined in events.go
+type DomainEvent interface {
+	EventID() string
+	EventType() string
+	AggregateID() string
+	OccurredAt() time.Time
+	EventData() interface{}
 }

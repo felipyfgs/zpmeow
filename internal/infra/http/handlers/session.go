@@ -109,7 +109,7 @@ func (h *SessionHandler) convertToSessionInfo(session *session.Session) *dto.Ses
 		ID:        session.SessionID().Value(),
 		Name:      session.Name().Value(),
 		Status:    string(session.Status()),
-		DeviceJID: session.GetDeviceJIDString(),
+		DeviceJID: session.DeviceJID().Value(),
 		ApiKey:    session.ApiKey().Value(),
 		CreatedAt: session.CreatedAt().Value(),
 		UpdatedAt: session.UpdatedAt().Value(),
@@ -309,11 +309,11 @@ func (h *SessionHandler) ConnectSession(c *fiber.Ctx) error {
 		return h.sendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err.Error())
 	}
 
-	if !session.WaJID().IsEmpty() {
-		existingSession, err := h.sessionService.GetSessionByDeviceJID(c.Context(), session.WaJID().Value())
+	if !session.DeviceJID().IsEmpty() {
+		existingSession, err := h.sessionService.GetSessionByDeviceJID(c.Context(), session.DeviceJID().Value())
 		if err == nil && existingSession.SessionID() != session.SessionID() {
 			return h.sendErrorResponse(c, fiber.StatusConflict, "DEVICE_ALREADY_IN_USE",
-				fmt.Sprintf("Device %s is already in use by session %s (%s)", session.WaJID().Value(), existingSession.SessionID().Value(), existingSession.Name().Value()),
+				fmt.Sprintf("Device %s is already in use by session %s (%s)", session.DeviceJID().Value(), existingSession.SessionID().Value(), existingSession.Name().Value()),
 				"Each meow device can only be used by one session at a time")
 		}
 	}
@@ -501,7 +501,7 @@ func (h *SessionHandler) GetSessionStatus(c *fiber.Ctx) error {
 			Timestamp:     time.Now(),
 			Name:          session.Name().Value(),
 			SessionStatus: string(session.Status()),
-			DeviceJID:     session.WaJID().Value(),
+			DeviceJID:     session.DeviceJID().Value(),
 			IsConnected:   isConnected,
 			ClientStatus:  string(clientStatus),
 			CreatedAt:     session.CreatedAt().Value(),

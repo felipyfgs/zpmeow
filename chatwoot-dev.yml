@@ -1,0 +1,225 @@
+version: "3.8"
+
+services:
+  # PostgreSQL para Chatwoot (separado do zpmeow)
+  chatwoot-postgres:
+    image: pgvector/pgvector:pg13
+    container_name: chatwoot-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"  # Porta diferente do zpmeow (5432)
+    environment:
+      POSTGRES_DB: chatwoot_production
+      POSTGRES_USER: chatwoot
+      POSTGRES_PASSWORD: chatwoot_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - chatwoot_postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatwoot -d chatwoot_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para Chatwoot (separado do zpmeow)
+  chatwoot-redis:
+    image: redis:6.2-alpine
+    container_name: chatwoot-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # Porta diferente do zpmeow (6379)
+    volumes:
+      - chatwoot_redis_data:/data
+    networks:
+      - default
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Chatwoot Web Application
+  chatwoot-web:
+    image: chatwoot/chatwoot:latest
+    container_name: chatwoot-web
+    restart: unless-stopped
+    ports:
+      - "3001:3000"  # Porta 3001 para não conflitar com DbGate (3000)
+    depends_on:
+      chatwoot-postgres:
+        condition: service_healthy
+      chatwoot-redis:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      POSTGRES_HOST: chatwoot-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: chatwoot_production
+      POSTGRES_USERNAME: chatwoot
+      POSTGRES_PASSWORD: chatwoot_dev_password
+
+      # Redis Configuration
+      REDIS_URL: redis://chatwoot-redis:6379
+
+      # Rails Configuration
+      RAILS_ENV: production
+      NODE_ENV: production
+      SECRET_KEY_BASE: zpmeow_chatwoot_secret_key_base_development_2024
+      RAILS_SERVE_STATIC_FILES: true
+
+      # Chatwoot Configuration
+      FRONTEND_URL: http://localhost:3001
+      FORCE_SSL: false
+      ENABLE_ACCOUNT_SIGNUP: true
+      DEFAULT_LOCALE: pt_BR
+      INSTALLATION_NAME: zpmeow Chatwoot Dev
+
+      # Email Configuration (MailHog para desenvolvimento)
+      MAILER_SENDER_EMAIL: noreply@localhost
+      SMTP_DOMAIN: localhost
+      SMTP_ADDRESS: chatwoot-mailhog
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_AUTHENTICATION: ""
+      SMTP_ENABLE_STARTTLS_AUTO: false
+
+      # Storage Configuration (local para desenvolvimento)
+      ACTIVE_STORAGE_SERVICE: local
+
+      # Webhook Configuration
+      INSTALLATION_ENV: docker
+      WEBHOOKS_TRIGGER_TIMEOUT: 40
+
+      # Docker Host Configuration (para conectar ao zpmeow)
+      ZPMEOW_HOST: host.docker.internal
+
+      # Log Level
+      LOG_LEVEL: info
+      RAILS_LOG_TO_STDOUT: true
+
+      # Timezone
+      TZ: America/Sao_Paulo
+
+      # Bot Configuration
+      USE_INBOX_AVATAR_FOR_BOT: true
+
+      # URL Configuration (NECESSÁRIO PARA ANEXOS)
+      RAILS_RELATIVE_URL_ROOT: ""
+      ACTION_CONTROLLER_DEFAULT_URL_HOST: localhost:3001
+      ACTION_MAILER_DEFAULT_URL_HOST: localhost:3001
+
+    volumes:
+      - chatwoot_storage:/app/storage
+      - chatwoot_public:/app/public
+    networks:
+      - default
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+    command: >
+      sh -c "
+        bundle exec rails db:prepare &&
+        bundle exec rails server -b 0.0.0.0 -p 3000
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/accounts || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # Chatwoot Sidekiq (Background Jobs)
+  chatwoot-sidekiq:
+    image: chatwoot/chatwoot:latest
+    container_name: chatwoot-sidekiq
+    restart: unless-stopped
+    depends_on:
+      chatwoot-postgres:
+        condition: service_healthy
+      chatwoot-redis:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      POSTGRES_HOST: chatwoot-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: chatwoot_production
+      POSTGRES_USERNAME: chatwoot
+      POSTGRES_PASSWORD: chatwoot_dev_password
+
+      # Redis Configuration
+      REDIS_URL: redis://chatwoot-redis:6379
+
+      # Rails Configuration
+      RAILS_ENV: production
+      NODE_ENV: production
+      SECRET_KEY_BASE: zpmeow_chatwoot_secret_key_base_development_2024
+
+      # Chatwoot Configuration (NECESSÁRIO PARA SIDEKIQ)
+      FRONTEND_URL: http://localhost:3001
+      FORCE_SSL: false
+      DEFAULT_LOCALE: pt_BR
+      INSTALLATION_NAME: zpmeow Chatwoot Dev
+
+      # URL Configuration (NECESSÁRIO PARA ANEXOS)
+      RAILS_RELATIVE_URL_ROOT: ""
+      ACTION_CONTROLLER_DEFAULT_URL_HOST: localhost:3001
+      ACTION_MAILER_DEFAULT_URL_HOST: localhost:3001
+
+      # Storage Configuration
+      ACTIVE_STORAGE_SERVICE: local
+
+      # Webhook Configuration
+      INSTALLATION_ENV: docker
+      WEBHOOKS_TRIGGER_TIMEOUT: 40
+
+      # Docker Host Configuration (para conectar ao zpmeow)
+      ZPMEOW_HOST: host.docker.internal
+
+      # Log Level
+      LOG_LEVEL: info
+      RAILS_LOG_TO_STDOUT: true
+
+      # Timezone
+      TZ: America/Sao_Paulo
+
+    volumes:
+      - chatwoot_storage:/app/storage
+    networks:
+      - default
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sidekiq"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MailHog (para desenvolvimento - captura emails)
+  chatwoot-mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chatwoot-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - default
+
+volumes:
+  chatwoot_postgres_data:
+    driver: local
+  chatwoot_redis_data:
+    driver: local
+  chatwoot_storage:
+    driver: local
+  chatwoot_public:
+    driver: local
+
+networks:
+  default:
+    name: zpmeow_default
+    external: true

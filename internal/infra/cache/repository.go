@@ -12,11 +12,11 @@ import (
 
 type CachedSessionRepository struct {
 	repo   session.Repository
-	cache  ports.CacheService
+	cache  ports.CacheManager
 	logger logging.Logger
 }
 
-func NewCachedSessionRepository(repo session.Repository, cache ports.CacheService) session.Repository {
+func NewCachedSessionRepository(repo session.Repository, cache ports.CacheManager) session.Repository {
 	return &CachedSessionRepository{
 		repo:   repo,
 		cache:  cache,
@@ -175,10 +175,6 @@ func (c *CachedSessionRepository) List(ctx context.Context, limit, offset int, s
 
 func (c *CachedSessionRepository) GetByApiKey(ctx context.Context, apiKey string) (*session.Session, error) {
 	return c.repo.GetByApiKey(ctx, apiKey)
-}
-
-func (c *CachedSessionRepository) ValidateDeviceUniqueness(ctx context.Context, sessionID, deviceJID string) error {
-	return c.repo.ValidateDeviceUniqueness(ctx, sessionID, deviceJID)
 }
 
 func (c *CachedSessionRepository) GetByDeviceJID(ctx context.Context, deviceJID string) (*session.Session, error) {

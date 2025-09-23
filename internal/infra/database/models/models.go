@@ -8,18 +8,16 @@ import (
 )
 
 type SessionModel struct {
-	ID            string    `db:"id" json:"id"`
-	Name          string    `db:"name" json:"name"`
-	DeviceJid     string    `db:"deviceJid" json:"deviceJid"` // camelCase exato com aspas duplas
-	Status        string    `db:"status" json:"status"`
-	QrCode        string    `db:"qrCode" json:"qrCode"`               // camelCase exato com aspas duplas
-	ProxyUrl      string    `db:"proxyUrl" json:"proxyUrl"`           // camelCase exato com aspas duplas
-	WebhookUrl    string    `db:"webhookUrl" json:"webhookUrl"`       // camelCase exato com aspas duplas
-	WebhookEvents string    `db:"webhookEvents" json:"webhookEvents"` // camelCase exato com aspas duplas
-	Connected     bool      `db:"connected" json:"connected"`         // Campo necessário para o repositório
-	ApiKey        string    `db:"apiKey" json:"apiKey"`               // camelCase exato com aspas duplas
-	CreatedAt     time.Time `db:"createdAt" json:"createdAt"`         // camelCase exato com aspas duplas
-	UpdatedAt     time.Time `db:"updatedAt" json:"updatedAt"`         // camelCase exato com aspas duplas
+	ID        string    `db:"id" json:"id"`
+	Name      string    `db:"name" json:"name"`
+	DeviceJid string    `db:"deviceJid" json:"deviceJid"` // camelCase exato com aspas duplas
+	Status    string    `db:"status" json:"status"`
+	QrCode    string    `db:"qrCode" json:"qrCode"`       // camelCase exato com aspas duplas
+	ProxyUrl  string    `db:"proxyUrl" json:"proxyUrl"`   // camelCase exato com aspas duplas
+	Connected bool      `db:"connected" json:"connected"` // Campo necessário para o repositório
+	ApiKey    string    `db:"apiKey" json:"apiKey"`       // camelCase exato com aspas duplas
+	CreatedAt time.Time `db:"createdAt" json:"createdAt"` // camelCase exato com aspas duplas
+	UpdatedAt time.Time `db:"updatedAt" json:"updatedAt"` // camelCase exato com aspas duplas
 }
 
 func (SessionModel) TableName() string {
@@ -58,12 +56,11 @@ func (sa StringArray) Value() (driver.Value, error) {
 type ChatwootModel struct {
 	ID         string     `db:"id" json:"id"`
 	SessionId  string     `db:"sessionId" json:"sessionId"` // camelCase exato com aspas duplas
-	Enabled    bool       `db:"enabled" json:"enabled"`
+	IsActive   bool       `db:"isActive" json:"isActive"`   // camelCase exato com aspas duplas
 	AccountId  *string    `db:"accountId" json:"accountId"` // camelCase exato com aspas duplas
 	Token      *string    `db:"token" json:"token"`
 	URL        *string    `db:"url" json:"url"`
-	NameInbox  *string    `db:"nameInbox" json:"nameInbox"` // camelCase exato com aspas duplas
-	Number     string     `db:"number" json:"number"`
+	NameInbox  *string    `db:"nameInbox" json:"nameInbox"`   // camelCase exato com aspas duplas
 	InboxId    *int       `db:"inboxId" json:"inboxId"`       // camelCase exato com aspas duplas
 	Config     JSONB      `db:"config" json:"config"`         // configurações específicas agrupadas
 	SyncStatus string     `db:"syncStatus" json:"syncStatus"` // camelCase exato com aspas duplas
@@ -75,7 +72,7 @@ type ChatwootModel struct {
 }
 
 func (ChatwootModel) TableName() string {
-	return "chatwoot"
+	return "zpChatwoot"
 }
 
 // JSONB representa um campo JSONB do PostgreSQL
@@ -181,4 +178,19 @@ type ZpCwMessageModel struct {
 
 func (ZpCwMessageModel) TableName() string {
 	return "zp_cw_messages"
+}
+
+// WebhookModel representa a configuração de webhook no banco de dados
+type WebhookModel struct {
+	ID        string    `db:"id" json:"id"`
+	SessionId string    `db:"sessionId" json:"sessionId"` // camelCase exato com aspas duplas
+	URL       string    `db:"url" json:"url"`
+	Events    []string  `db:"events" json:"events"`       // Array de eventos
+	IsActive  bool      `db:"isActive" json:"isActive"`   // camelCase exato com aspas duplas
+	CreatedAt time.Time `db:"createdAt" json:"createdAt"` // camelCase exato com aspas duplas
+	UpdatedAt time.Time `db:"updatedAt" json:"updatedAt"` // camelCase exato com aspas duplas
+}
+
+func (WebhookModel) TableName() string {
+	return "zpWebhooks"
 }

@@ -29,9 +29,9 @@ func (m *MessageMapper) WhatsAppToChatwoot(msg *WhatsAppMessage) (*MessageCreate
 	content := m.formatWhatsAppContent(msg)
 
 	req := &MessageCreateRequest{
-		Content:  content,
-		MsgType:  messageType,
-		SourceID: fmt.Sprintf("WAID:%s", msg.ID),
+		Content:     content,
+		MessageType: messageType,
+		SourceID:    fmt.Sprintf("WAID:%s", msg.ID),
 	}
 
 	// Adiciona atributos de contexto para mensagens citadas

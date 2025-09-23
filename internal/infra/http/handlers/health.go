@@ -15,7 +15,7 @@ import (
 type HealthHandler struct {
 	*BaseHandler
 	db    *sqlx.DB
-	cache ports.CacheService
+	cache ports.CacheManager
 }
 
 func NewHealthHandler(db *sqlx.DB) *HealthHandler {
@@ -26,7 +26,7 @@ func NewHealthHandler(db *sqlx.DB) *HealthHandler {
 	}
 }
 
-func NewHealthHandlerWithCache(db *sqlx.DB, cache ports.CacheService) *HealthHandler {
+func NewHealthHandlerWithCache(db *sqlx.DB, cache ports.CacheManager) *HealthHandler {
 	return &HealthHandler{
 		BaseHandler: NewBaseHandler("health-handler"),
 		db:          db,

@@ -1028,7 +1028,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When enabled=true, accountId, token, and url are required fields.",
+                "description": "Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When isActive=true, accountId, token, and url are required fields.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6735,7 +6735,7 @@ const docTemplate = `{
         "dto.ChatwootConfigRequest": {
             "type": "object",
             "required": [
-                "enabled"
+                "isActive"
             ],
             "properties": {
                 "accountId": {
@@ -6756,10 +6756,6 @@ const docTemplate = `{
                     "minimum": 1,
                     "example": 30
                 },
-                "enabled": {
-                    "type": "boolean",
-                    "example": true
-                },
                 "ignoreJids": {
                     "type": "array",
                     "items": {
@@ -6777,6 +6773,10 @@ const docTemplate = `{
                 "importMessages": {
                     "type": "boolean",
                     "example": false
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "logo": {
                     "type": "string",

@@ -20,7 +20,7 @@ type RedisService struct {
 	logger logging.Logger
 }
 
-func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheService, error) {
+func NewRedisService(cfg config.CacheConfigProvider) (ports.CacheManager, error) {
 	logger := logging.GetLogger().Sub("cache")
 
 	if !cfg.GetCacheEnabled() {
@@ -189,9 +189,8 @@ func (r *RedisService) GetQRCode(ctx context.Context, sessionID string) (string,
 	return data, nil
 }
 
-func (r *RedisService) SetQRCode(ctx context.Context, sessionID string, qrCode string) error {
+func (r *RedisService) SetQRCode(ctx context.Context, sessionID string, qrCode string, ttl time.Duration) error {
 	key := ports.QRCodeKeyPrefix + sessionID
-	ttl := r.config.GetQRCodeTTL()
 
 	if err := r.client.Set(ctx, key, qrCode, ttl).Err(); err != nil {
 		return ports.NewCacheError("set", key, err)
@@ -225,9 +224,8 @@ func (r *RedisService) GetQRCodeBase64(ctx context.Context, sessionID string) (s
 	return data, nil
 }
 
-func (r *RedisService) SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string) error {
+func (r *RedisService) SetQRCodeBase64(ctx context.Context, sessionID string, qrCodeBase64 string, ttl time.Duration) error {
 	key := ports.QRCodeBase64KeyPrefix + sessionID
-	ttl := r.config.GetQRCodeTTL()
 
 	if err := r.client.Set(ctx, key, qrCodeBase64, ttl).Err(); err != nil {
 		return ports.NewCacheError("set", key, err)
@@ -315,6 +313,39 @@ func (r *RedisService) DeleteSessionStatus(ctx context.Context, sessionID string
 	return nil
 }
 
+func (r *RedisService) Clear(ctx context.Context) error {
+	if err := r.client.FlushDB(ctx).Err(); err != nil {
+		return ports.NewCacheError("clear", "all", err)
+	}
+	return nil
+}
+
+// Generic cache methods
+func (r *RedisService) Get(ctx context.Context, key string) (interface{}, error) {
+	val, err := r.client.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil // Key not found
+		}
+		return nil, ports.NewCacheError("get", key, err)
+	}
+	return val, nil
+}
+
+func (r *RedisService) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	if err := r.client.Set(ctx, key, value, ttl).Err(); err != nil {
+		return ports.NewCacheError("set", key, err)
+	}
+	return nil
+}
+
+func (r *RedisService) Delete(ctx context.Context, key string) error {
+	if err := r.client.Del(ctx, key).Err(); err != nil {
+		return ports.NewCacheError("delete", key, err)
+	}
+	return nil
+}
+
 func (r *RedisService) Ping(ctx context.Context) error {
 	if err := r.client.Ping(ctx).Err(); err != nil {
 		return ports.NewCacheError("ping", "", err)
@@ -322,15 +353,18 @@ func (r *RedisService) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (r *RedisService) GetStats(ctx context.Context) (ports.CacheStats, error) {
-	stats := ports.CacheStats{
-		Connected: true,
-		Version:   "Redis",
+func (r *RedisService) GetStats(ctx context.Context) (*ports.CacheStats, error) {
+	stats := &ports.CacheStats{
+		Hits:        0,
+		Misses:      0,
+		Keys:        0,
+		Memory:      0,
+		Connections: 1,
 	}
 
 	dbSize, err := r.client.DBSize(ctx).Result()
 	if err == nil {
-		stats.TotalKeys = dbSize
+		stats.Keys = dbSize
 	}
 
 	return stats, nil

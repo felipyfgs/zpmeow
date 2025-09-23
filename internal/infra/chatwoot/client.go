@@ -9,114 +9,205 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strings"
-	"time"
 )
 
-// Client representa o cliente HTTP para a API do Chatwoot
+// Client implements Chatwoot API client
 type Client struct {
-	baseURL    string
-	token      string
-	accountID  string
-	httpClient *http.Client
+	baseURL     string
+	token       string
+	accountID   string
+	httpClient  *http.Client
+	urlBuilder  *URLBuilder
+	validator   *ResponseValidator
+	errorHelper *ErrorHelper
 }
 
-// NewClient cria uma nova instância do cliente Chatwoot
-func NewClient(baseURL, token, accountID string) *Client {
+// NewClient creates a new Chatwoot client
+func NewClient(baseURL, token, accountID string, httpClient *http.Client) *Client {
+	if httpClient == nil {
+		httpClient = &http.Client{}
+	}
+
 	return &Client{
-		baseURL:   strings.TrimSuffix(baseURL, "/"),
-		token:     token,
-		accountID: accountID,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
+		baseURL:     strings.TrimSuffix(baseURL, "/"),
+		token:       token,
+		accountID:   accountID,
+		httpClient:  httpClient,
+		urlBuilder:  NewURLBuilder(baseURL, accountID),
+		validator:   NewResponseValidator(),
+		errorHelper: NewErrorHelper(),
 	}
 }
 
-// makeRequest executa uma requisição HTTP para a API do Chatwoot
+// makeRequest executes HTTP request to Chatwoot API
 func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body interface{}) (*http.Response, error) {
-	var reqBody io.Reader
-
-	if body != nil {
-		jsonBody, err := json.Marshal(body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal request body: %w", err)
-		}
-		reqBody = bytes.NewBuffer(jsonBody)
+	reqBody, err := c.prepareRequestBody(body)
+	if err != nil {
+		return nil, c.errorHelper.WrapError(err, "failed to prepare request body")
 	}
 
-	url := fmt.Sprintf("%s/api/v1/accounts/%s%s", c.baseURL, c.accountID, endpoint)
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	url := c.buildURL(endpoint)
+	req, err := c.createRequest(ctx, method, url, reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, c.errorHelper.WrapError(err, "failed to create request")
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, c.errorHelper.WrapError(err, "failed to execute request")
+	}
+
+	return resp, nil
+}
+
+// prepareRequestBody prepares request body for JSON requests
+func (c *Client) prepareRequestBody(body interface{}) (io.Reader, error) {
+	if body == nil {
+		return nil, nil
+	}
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewBuffer(jsonBody), nil
+}
+
+// buildURL builds full URL for API endpoint
+func (c *Client) buildURL(endpoint string) string {
+	return fmt.Sprintf("%s/api/v1/accounts/%s%s", c.baseURL, c.accountID, endpoint)
+}
+
+// createRequest creates HTTP request with headers
+func (c *Client) createRequest(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("api_access_token", c.token)
 
-	return c.httpClient.Do(req)
+	return req, nil
 }
 
-// makeMultipartRequest executa uma requisição multipart para upload de arquivos
+// makeMultipartRequest executes multipart request for file uploads
 func (c *Client) makeMultipartRequest(ctx context.Context, method, endpoint string, fields map[string]string, file io.Reader, filename string) (*http.Response, error) {
+	body, contentType, err := c.prepareMultipartBody(fields, file, filename)
+	if err != nil {
+		return nil, c.errorHelper.WrapError(err, "failed to prepare multipart body")
+	}
+
+	url := c.buildURL(endpoint)
+	req, err := c.createMultipartRequest(ctx, method, url, body, contentType)
+	if err != nil {
+		return nil, c.errorHelper.WrapError(err, "failed to create multipart request")
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, c.errorHelper.WrapError(err, "failed to execute multipart request")
+	}
+
+	return resp, nil
+}
+
+// prepareMultipartBody prepares multipart form data
+func (c *Client) prepareMultipartBody(fields map[string]string, file io.Reader, filename string) (io.Reader, string, error) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
-	// Adiciona campos de texto
+	if err := c.addFormFields(writer, fields); err != nil {
+		return nil, "", err
+	}
+
+	if err := c.addFormFile(writer, file, filename); err != nil {
+		return nil, "", err
+	}
+
+	contentType := writer.FormDataContentType()
+	if err := writer.Close(); err != nil {
+		return nil, "", err
+	}
+
+	return &buf, contentType, nil
+}
+
+// addFormFields adds text fields to multipart form
+func (c *Client) addFormFields(writer *multipart.Writer, fields map[string]string) error {
 	for key, value := range fields {
 		if err := writer.WriteField(key, value); err != nil {
-			return nil, fmt.Errorf("failed to write field %s: %w", key, err)
+			return fmt.Errorf("failed to write field %s: %w", key, err)
 		}
 	}
+	return nil
+}
 
-	// Adiciona arquivo se fornecido
-	if file != nil && filename != "" {
-		part, err := writer.CreateFormFile("attachments[]", filename)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create form file: %w", err)
-		}
-
-		if _, err := io.Copy(part, file); err != nil {
-			return nil, fmt.Errorf("failed to copy file: %w", err)
-		}
+// addFormFile adds file to multipart form
+func (c *Client) addFormFile(writer *multipart.Writer, file io.Reader, filename string) error {
+	if file == nil || filename == "" {
+		return nil
 	}
 
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-
-	url := fmt.Sprintf("%s/api/v1/accounts/%s%s", c.baseURL, c.accountID, endpoint)
-	req, err := http.NewRequestWithContext(ctx, method, url, &buf)
+	part, err := writer.CreateFormFile("attachments[]", filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to create form file: %w", err)
 	}
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if _, err := io.Copy(part, file); err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	return nil
+}
+
+// createMultipartRequest creates HTTP request for multipart data
+func (c *Client) createMultipartRequest(ctx context.Context, method, url string, body io.Reader, contentType string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("api_access_token", c.token)
 
-	return c.httpClient.Do(req)
+	return req, nil
 }
 
 // parseResponse analisa a resposta HTTP e decodifica o JSON
 func parseResponse(resp *http.Response, result interface{}) error {
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close response body in parseResponse: %v\n", closeErr)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	fmt.Printf("🔍 [CHATWOOT API DEBUG] Response Status: %d\n", resp.StatusCode)
+	fmt.Printf("📄 [CHATWOOT API DEBUG] FULL RESPONSE PAYLOAD: %s\n", string(body))
+
 	if resp.StatusCode >= 400 {
 		var errResp ErrorResponse
 		if err := json.Unmarshal(body, &errResp); err != nil {
+			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to parse error response: %v\n", err)
 			return fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
 		}
+		fmt.Printf("❌ [CHATWOOT API DEBUG] API Error: %s\n", errResp.Message)
 		return fmt.Errorf("API error: %s", errResp.Message)
 	}
 
 	if result != nil {
+		fmt.Printf("🔄 [CHATWOOT API DEBUG] Unmarshaling to type: %T\n", result)
 		if err := json.Unmarshal(body, result); err != nil {
+			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to unmarshal: %v\n", err)
 			return fmt.Errorf("failed to unmarshal response: %w", err)
 		}
+		fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully unmarshaled result: %+v\n", result)
 	}
 
 	return nil
@@ -124,27 +215,62 @@ func parseResponse(resp *http.Response, result interface{}) error {
 
 // CreateContact cria um novo contato
 func (c *Client) CreateContact(ctx context.Context, req ContactCreateRequest) (*Contact, error) {
+	fmt.Printf("🚀 [CHATWOOT API DEBUG] Creating contact: %+v\n", req)
+
 	resp, err := c.makeRequest(ctx, "POST", "/contacts", req)
 	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to make request: %v\n", err)
 		return nil, err
 	}
 
-	var apiResp APIResponse
-	if err := parseResponse(resp, &apiResp); err != nil {
-		return nil, err
-	}
-
-	// Converte o payload para Contact
-	contactData, err := json.Marshal(apiResp.Payload)
+	// Vamos ler a resposta manualmente primeiro para debug
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal contact data: %w", err)
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to read response body: %v\n", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	// Recriar o body para parseResponse
+	resp.Body = io.NopCloser(bytes.NewReader(respBody))
+
+	fmt.Printf("📋 [CHATWOOT API DEBUG] RAW RESPONSE BODY FOR CONTACT CREATION: %s\n", string(respBody))
+
+	// Primeiro, vamos tentar decodificar diretamente como Contact
 	var contact Contact
-	if err := json.Unmarshal(contactData, &contact); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal contact: %w", err)
+	if err := json.Unmarshal(respBody, &contact); err != nil {
+		fmt.Printf("⚠️ [CHATWOOT API DEBUG] Direct Contact parsing failed: %v\n", err)
+
+		// Se falhar, tenta com APIResponse
+		var apiResp APIResponse
+		if err2 := json.Unmarshal(respBody, &apiResp); err2 != nil {
+			fmt.Printf("❌ [CHATWOOT API DEBUG] Both parsing methods failed: %v, %v\n", err, err2)
+			return nil, fmt.Errorf("failed to parse response as Contact or APIResponse: %v, %v", err, err2)
+		}
+
+		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse structure: %+v\n", apiResp)
+		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse payload type: %T\n", apiResp.Payload)
+		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse payload value: %+v\n", apiResp.Payload)
+
+		// Converte o payload para Contact
+		contactData, err := json.Marshal(apiResp.Payload)
+		if err != nil {
+			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to marshal payload: %v\n", err)
+			return nil, fmt.Errorf("failed to marshal contact data: %w", err)
+		}
+
+		fmt.Printf("🔄 [CHATWOOT API DEBUG] Contact data JSON from payload: %s\n", string(contactData))
+
+		if err := json.Unmarshal(contactData, &contact); err != nil {
+			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to unmarshal contact from payload: %v\n", err)
+			return nil, fmt.Errorf("failed to unmarshal contact: %w", err)
+		}
+
+		fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully parsed contact from APIResponse payload\n")
+	} else {
+		fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully parsed contact directly from response\n")
 	}
 
+	fmt.Printf("✅ [CHATWOOT API DEBUG] Created contact - ID: %d, Name: %s, Phone: %s\n", contact.ID, contact.Name, contact.PhoneNumber)
 	return &contact, nil
 }
 
@@ -246,7 +372,7 @@ func (c *Client) createFilterPayload(phoneNumber string) []map[string]interface{
 
 			// Determina se é o último item para definir query_operator
 			var queryOperator *string
-			if !(i == len(fieldsToSearch)-1 && j == len(numbers)-1) {
+			if i != len(fieldsToSearch)-1 || j != len(numbers)-1 {
 				op := "OR"
 				queryOperator = &op
 			}
@@ -354,16 +480,33 @@ func (c *Client) CreateInbox(ctx context.Context, req InboxCreateRequest) (*Inbo
 
 // CreateConversation cria uma nova conversa
 func (c *Client) CreateConversation(ctx context.Context, req ConversationCreateRequest) (*Conversation, error) {
+	fmt.Printf("🚀 [CHATWOOT API DEBUG] Creating conversation: %+v\n", req)
+
 	resp, err := c.makeRequest(ctx, "POST", "/conversations", req)
 	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to create conversation: %v\n", err)
 		return nil, err
 	}
+
+	// Ler resposta para debug
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to read conversation response body: %v\n", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Recriar o body
+	resp.Body = io.NopCloser(bytes.NewReader(respBody))
+
+	fmt.Printf("📋 [CHATWOOT API DEBUG] RAW RESPONSE BODY FOR CONVERSATION CREATION: %s\n", string(respBody))
 
 	var conversation Conversation
 	if err := parseResponse(resp, &conversation); err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to parse conversation response: %v\n", err)
 		return nil, err
 	}
 
+	fmt.Printf("✅ [CHATWOOT API DEBUG] Created conversation - ID: %d, Status: %s\n", conversation.ID, conversation.Status)
 	return &conversation, nil
 }
 
@@ -385,27 +528,50 @@ func (c *Client) GetConversation(ctx context.Context, conversationID int) (*Conv
 
 // ListContactConversations lista conversas de um contato
 func (c *Client) ListContactConversations(ctx context.Context, contactID int) ([]Conversation, error) {
+	fmt.Printf("🔍 [CHATWOOT API DEBUG] Listing conversations for contact ID: %d\n", contactID)
+
 	endpoint := fmt.Sprintf("/contacts/%d/conversations", contactID)
 	resp, err := c.makeRequest(ctx, "GET", endpoint, nil)
 	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to list conversations: %v\n", err)
 		return nil, err
 	}
+
+	// Ler resposta para debug
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to read conversations response body: %v\n", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Recriar o body
+	resp.Body = io.NopCloser(bytes.NewReader(respBody))
+
+	fmt.Printf("📋 [CHATWOOT API DEBUG] RAW RESPONSE BODY FOR LIST CONVERSATIONS: %s\n", string(respBody))
 
 	var apiResp APIResponse
 	if err := parseResponse(resp, &apiResp); err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to parse conversations response: %v\n", err)
 		return nil, err
 	}
 
+	fmt.Printf("🔄 [CHATWOOT API DEBUG] Conversations APIResponse payload: %+v\n", apiResp.Payload)
+
 	conversationsData, err := json.Marshal(apiResp.Payload)
 	if err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to marshal conversations: %v\n", err)
 		return nil, fmt.Errorf("failed to marshal conversations data: %w", err)
 	}
 
+	fmt.Printf("🔄 [CHATWOOT API DEBUG] Conversations data JSON: %s\n", string(conversationsData))
+
 	var conversations []Conversation
 	if err := json.Unmarshal(conversationsData, &conversations); err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to unmarshal conversations: %v\n", err)
 		return nil, fmt.Errorf("failed to unmarshal conversations: %w", err)
 	}
 
+	fmt.Printf("✅ [CHATWOOT API DEBUG] Found %d conversations for contact %d\n", len(conversations), contactID)
 	return conversations, nil
 }
 

@@ -93,7 +93,7 @@ func (uc *GetSessionStatusUseCase) Handle(ctx context.Context, query GetSessionS
 		Status:          whatsappStatus,
 		IsConnected:     sessionEntity.IsConnected(),
 		IsAuthenticated: sessionEntity.IsAuthenticated(),
-		DeviceJID:       sessionEntity.WaJID().Value(),
+		DeviceJID:       sessionEntity.DeviceJID().Value(),
 		QRCode:          qrCode,
 		LastSeen:        sessionEntity.UpdatedAt().Value().Format("2006-01-02T15:04:05Z07:00"),
 		ConnectionInfo:  connectionInfo,

@@ -28,6 +28,7 @@ type EventProcessor struct {
 	chatwootRepo        *repository.ChatwootRepository
 	messageRepo         *repository.MessageRepository
 	chatRepo            *repository.ChatRepository
+	webhookRepo         *repository.WebhookRepository
 	mediaCache          map[string]interface{} // Cache para mensagens de mídia
 
 	receiptMutex   sync.Mutex
@@ -137,16 +138,17 @@ var eventHandlers = map[string]func(*EventProcessor, interface{}){
 	"*events.ChatPresence": (*EventProcessor).handleChatPresence,
 }
 
-func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Repository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository) *EventProcessor {
+func NewEventProcessor(sessionID string, sessionRepo session.Repository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository, webhookRepo *repository.WebhookRepository) *EventProcessor {
 	logger := logging.GetLogger().Sub("events").Sub(sessionID)
 	ep := &EventProcessor{
 		sessionID:        sessionID,
-		webhookURL:       webhookURL,
+		webhookURL:       "", // Será carregado dinamicamente do repositório
 		sessionManager:   NewSessionManager(sessionRepo, logger),
 		logger:           logger,
 		subscribedEvents: []string{},
 		messageRepo:      messageRepo,
 		chatRepo:         chatRepo,
+		webhookRepo:      webhookRepo,
 	}
 
 	ep.loadSubscribedEvents()
@@ -154,11 +156,11 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 	return ep
 }
 
-func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository) *EventProcessor {
+func NewEventProcessorWithChatwoot(sessionID string, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository, webhookRepo *repository.WebhookRepository) *EventProcessor {
 	logger := logging.GetLogger().Sub("events").Sub(sessionID)
 	ep := &EventProcessor{
 		sessionID:           sessionID,
-		webhookURL:          webhookURL,
+		webhookURL:          "", // Será carregado dinamicamente do repositório
 		sessionManager:      NewSessionManager(sessionRepo, logger),
 		logger:              logger,
 		subscribedEvents:    []string{},
@@ -166,6 +168,7 @@ func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo ses
 		chatwootRepo:        chatwootRepo,
 		messageRepo:         messageRepo,
 		chatRepo:            chatRepo,
+		webhookRepo:         webhookRepo,
 	}
 
 	ep.loadSubscribedEvents()
@@ -233,6 +236,26 @@ func (ep *EventProcessor) UpdateWebhookURL(webhookURL string) {
 	ep.logger.Infof("Updated webhook URL: %s", webhookURL)
 }
 
+// getWebhookURL carrega a URL do webhook dinamicamente do repositório
+func (ep *EventProcessor) getWebhookURL() string {
+	if ep.webhookRepo == nil {
+		return ep.webhookURL // Fallback para compatibilidade
+	}
+
+	ctx := context.Background()
+	webhookConfig, err := ep.webhookRepo.GetBySessionID(ctx, ep.sessionID)
+	if err != nil {
+		ep.logger.Debugf("No webhook configuration found for session %s: %v", ep.sessionID, err)
+		return ""
+	}
+
+	if webhookConfig != nil && webhookConfig.IsActive && webhookConfig.URL != "" {
+		return webhookConfig.URL
+	}
+
+	return ""
+}
+
 func (ep *EventProcessor) HandleEvent(evt interface{}) {
 	eventType := fmt.Sprintf("%T", evt)
 
@@ -277,7 +300,8 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 	ep.processChatwootMessage(msg)
 
 	// Depois enviar para webhook externo se configurado
-	if ep.webhookURL != "" {
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
 		normalizedMsg := ep.normalizeMessage(msg)
 
 		webhookPayload := map[string]interface{}{
@@ -287,14 +311,14 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 			"data":      normalizedMsg,
 		}
 
-		ep.logger.Infof("Sending Message event to webhook: %s", ep.webhookURL)
-		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+		ep.logger.Infof("Sending Message event to webhook: %s", webhookURL)
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
 			ep.logger.Errorf("Failed to send Message webhook: %v", err)
 		} else {
 			ep.logger.Infof("Successfully sent Message event")
 		}
 	} else {
-		ep.logger.Warnf("No webhook URL configured for session %s, skipping external webhook", ep.sessionID)
+		ep.logger.Debugf("No webhook URL configured for session %s, skipping external webhook", ep.sessionID)
 	}
 }
 
@@ -320,9 +344,9 @@ func (ep *EventProcessor) processChatwootMessage(msg *events.Message) {
 		return
 	}
 
-	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Found Chatwoot config for session %s: enabled=%v, url=%s, accountId=%s", ep.sessionID, config.Enabled, getStringValue(config.URL), getStringValue(config.AccountId))
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Found Chatwoot config for session %s: isActive=%v, url=%s, accountId=%s", ep.sessionID, config.IsActive, getStringValue(config.URL), getStringValue(config.AccountId))
 
-	if !config.Enabled {
+	if !config.IsActive {
 		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] Chatwoot integration disabled for session %s", ep.sessionID)
 		return
 	}
@@ -334,7 +358,7 @@ func (ep *EventProcessor) processChatwootMessage(msg *events.Message) {
 	if !isEnabled {
 		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Registering Chatwoot integration for session %s", ep.sessionID)
 		chatwootConfig := ep.dbModelToChatwootConfig(config)
-		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Converted config: enabled=%v, url=%s, accountId=%s", chatwootConfig.Enabled, chatwootConfig.URL, chatwootConfig.AccountID)
+		ep.logger.Infof("🔍 [CHATWOOT DEBUG] Converted config: isActive=%v, url=%s, accountId=%s", chatwootConfig.IsActive, chatwootConfig.URL, chatwootConfig.AccountID)
 
 		if err := ep.chatwootIntegration.RegisterInstance(ep.sessionID, chatwootConfig); err != nil {
 			ep.logger.Errorf("🔍 [CHATWOOT DEBUG] Failed to register Chatwoot instance for session %s: %v", ep.sessionID, err)
@@ -380,7 +404,7 @@ func (ep *EventProcessor) convertToCharwootMessage(msg *events.Message) *chatwoo
 		To:        "", // Será preenchido pela integração
 		Body:      text,
 		Type:      msgType,
-		Timestamp: msg.Info.Timestamp.Unix(),
+		Timestamp: float64(msg.Info.Timestamp.Unix()),
 		MimeType:  mimeType,
 		FileName:  fileName,
 	}
@@ -668,8 +692,7 @@ func (ep *EventProcessor) dbModelToChatwootConfig(model *models.ChatwootModel) *
 	}
 
 	config := &chatwoot.ChatwootConfig{
-		Enabled:    model.Enabled,
-		Number:     model.Number,
+		IsActive:   model.IsActive,
 		WebhookURL: fmt.Sprintf("%s/chatwoot/webhook/%s", webhookURL, ep.sessionID),
 	}
 
@@ -729,7 +752,8 @@ func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message 
 }
 
 func (ep *EventProcessor) handleConnected(evt interface{}) {
-	if ep.webhookURL != "" {
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
 		webhookPayload := map[string]interface{}{
 			"event":     "Connected",
 			"sessionID": ep.sessionID,
@@ -737,14 +761,15 @@ func (ep *EventProcessor) handleConnected(evt interface{}) {
 			"data":      evt,
 		}
 
-		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
 			ep.logger.Errorf("Failed to send webhook: %v", err)
 		}
 	}
 }
 
 func (ep *EventProcessor) handleDisconnected(evt interface{}) {
-	if ep.webhookURL != "" {
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
 		webhookPayload := map[string]interface{}{
 			"event":     "Disconnected",
 			"sessionID": ep.sessionID,
@@ -752,7 +777,7 @@ func (ep *EventProcessor) handleDisconnected(evt interface{}) {
 			"data":      evt,
 		}
 
-		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
 			ep.logger.Errorf("Failed to send webhook: %v", err)
 		}
 	}
@@ -763,7 +788,8 @@ func (ep *EventProcessor) handleQR(evt interface{}) {
 	ep.logger.Infof("QR code generated for session %s", ep.sessionID)
 
 	// Só tenta enviar webhook se a URL estiver configurada
-	if ep.webhookURL != "" {
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
 		webhookPayload := map[string]interface{}{
 			"event":     "QR",
 			"sessionID": ep.sessionID,
@@ -771,7 +797,7 @@ func (ep *EventProcessor) handleQR(evt interface{}) {
 			"data":      qr,
 		}
 
-		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
 			ep.logger.Errorf("Failed to send webhook: %v", err)
 		}
 	} else {
@@ -883,7 +909,8 @@ func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 var globalWebhookService *webhooks.Service
 
 func init() {
-	globalWebhookService = webhooks.NewService()
+	httpClient := webhooks.NewWebhookHTTPClient(30 * time.Second)
+	globalWebhookService = webhooks.NewService(httpClient)
 }
 
 func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {

@@ -3,13 +3,12 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
 
-	sessiondomain "zpmeow/internal/domain/session"
+	"zpmeow/internal/domain/session"
 	"zpmeow/internal/infra/database/models"
 
 	"github.com/jmoiron/sqlx"
@@ -19,19 +18,14 @@ type PostgresRepo struct {
 	db *sqlx.DB
 }
 
-func NewPostgresRepo(db *sqlx.DB) sessiondomain.Repository {
+func NewPostgresRepo(db *sqlx.DB) session.Repository {
 	return &PostgresRepo{
 		db: db,
 	}
 }
 
-func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity *sessiondomain.Session) (string, error) {
-	eventsJSON := []byte("[]")
-	if len(sessionEntity.GetWebhookEvents()) > 0 {
-		if jsonBytes, err := json.Marshal(sessionEntity.GetWebhookEvents()); err == nil {
-			eventsJSON = jsonBytes
-		}
-	}
+func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity *session.Session) (string, error) {
+	// Webhook events agora são gerenciados pela tabela zpWebhooks separada
 
 	now := time.Now()
 	createdAt := now
@@ -45,12 +39,12 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 	}
 
 	query := `
-		INSERT INTO "zpSessions" (name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt")
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO "zpSessions" (name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt")
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
 	`
 
-	isConnected := sessionEntity.Status() == sessiondomain.StatusConnected && sessionEntity.GetDeviceJIDString() != ""
+	isConnected := sessionEntity.Status() == session.StatusConnected && sessionEntity.DeviceJID().Value() != ""
 
 	apiKey := sessionEntity.ApiKey().Value()
 	if apiKey == "" || apiKey == "temp-key" {
@@ -60,12 +54,10 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 	var generatedID string
 	err := r.db.QueryRowContext(ctx, query,
 		sessionEntity.Name().Value(),
-		sessionEntity.GetDeviceJIDString(),
+		sessionEntity.DeviceJID().Value(),
 		string(sessionEntity.Status()),
 		sessionEntity.QRCode().Value(),
 		sessionEntity.ProxyConfiguration().Value(),
-		sessionEntity.WebhookEndpoint().Value(),
-		string(eventsJSON),
 		isConnected,
 		apiKey,
 		createdAt,
@@ -82,7 +74,7 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 	return generatedID, nil
 }
 
-func (r *PostgresRepo) Create(ctx context.Context, sessionEntity *sessiondomain.Session) error {
+func (r *PostgresRepo) Create(ctx context.Context, sessionEntity *session.Session) error {
 	_, err := r.CreateWithGeneratedID(ctx, sessionEntity)
 	return err
 }
@@ -97,10 +89,10 @@ func (r *PostgresRepo) Exists(ctx context.Context, name string) (bool, error) {
 	return exists, nil
 }
 
-func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*session.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE id = $1
 	`
 
@@ -115,10 +107,10 @@ func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*sessiondomain.S
 	return r.modelToDomain(&model)
 }
 
-func (r *PostgresRepo) GetByName(ctx context.Context, name string) (*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetByName(ctx context.Context, name string) (*session.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE name = $1
 	`
 
@@ -133,10 +125,10 @@ func (r *PostgresRepo) GetByName(ctx context.Context, name string) (*sessiondoma
 	return r.modelToDomain(&model)
 }
 
-func (r *PostgresRepo) GetAll(ctx context.Context) ([]*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetAll(ctx context.Context) ([]*session.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" ORDER BY "createdAt" DESC
 	`
 
@@ -145,7 +137,7 @@ func (r *PostgresRepo) GetAll(ctx context.Context) ([]*sessiondomain.Session, er
 		return nil, fmt.Errorf("failed to get all sessions: %w", err)
 	}
 
-	sessions := make([]*sessiondomain.Session, len(sessionModels))
+	sessions := make([]*session.Session, len(sessionModels))
 	for i, model := range sessionModels {
 		session, err := r.modelToDomain(&model)
 		if err != nil {
@@ -157,35 +149,28 @@ func (r *PostgresRepo) GetAll(ctx context.Context) ([]*sessiondomain.Session, er
 	return sessions, nil
 }
 
-func (r *PostgresRepo) Update(ctx context.Context, session *sessiondomain.Session) error {
-	eventsJSON := []byte("[]")
-	if len(session.GetWebhookEvents()) > 0 {
-		if jsonBytes, err := json.Marshal(session.GetWebhookEvents()); err == nil {
-			eventsJSON = jsonBytes
-		}
-	}
+func (r *PostgresRepo) Update(ctx context.Context, sessionEntity *session.Session) error {
+	// Webhook events agora são gerenciados pela tabela zpWebhooks separada
 	updatedAt := time.Now()
 
 	query := `
 		UPDATE "zpSessions"
 		SET name = $2, "deviceJid" = $3, status = $4, "qrCode" = $5, "proxyUrl" = $6,
-		    "webhookUrl" = $7, "webhookEvents" = $8, connected = $9, "apiKey" = $10, "updatedAt" = $11
+		    connected = $7, "apiKey" = $8, "updatedAt" = $9
 		WHERE id = $1
 	`
 
-	isConnected := session.Status() == sessiondomain.StatusConnected && session.GetDeviceJIDString() != ""
+	isConnected := sessionEntity.Status() == session.StatusConnected && sessionEntity.DeviceJID().Value() != ""
 
 	result, err := r.db.ExecContext(ctx, query,
-		session.SessionID().Value(),
-		session.Name().Value(),
-		session.GetDeviceJIDString(),
-		string(session.Status()),
-		session.QRCode().Value(),
-		session.ProxyConfiguration().Value(),
-		session.WebhookEndpoint().Value(),
-		string(eventsJSON),
+		sessionEntity.SessionID().Value(),
+		sessionEntity.Name().Value(),
+		sessionEntity.DeviceJID().Value(),
+		string(sessionEntity.Status()),
+		sessionEntity.QRCode().Value(),
+		sessionEntity.ProxyConfiguration().Value(),
 		isConnected,
-		session.ApiKey().Value(),
+		sessionEntity.ApiKey().Value(),
 		updatedAt,
 	)
 
@@ -228,7 +213,7 @@ func (r *PostgresRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status string) ([]*sessiondomain.Session, int, error) {
+func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status string) ([]*session.Session, int, error) {
 	var sessionModels []models.SessionModel
 	var totalCount int
 
@@ -248,7 +233,7 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 	}
 
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions"
 	`
 
@@ -266,7 +251,7 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 		return nil, 0, fmt.Errorf("failed to list sessions: %w", err)
 	}
 
-	sessions := make([]*sessiondomain.Session, len(sessionModels))
+	sessions := make([]*session.Session, len(sessionModels))
 	for i, model := range sessionModels {
 		session, err := r.modelToDomain(&model)
 		if err != nil {
@@ -278,10 +263,10 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 	return sessions, totalCount, nil
 }
 
-func (r *PostgresRepo) GetActive(ctx context.Context) ([]*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetActive(ctx context.Context) ([]*session.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE "deviceJid" IS NOT NULL AND "deviceJid" != '' ORDER BY "createdAt" DESC
 	`
 
@@ -290,7 +275,7 @@ func (r *PostgresRepo) GetActive(ctx context.Context) ([]*sessiondomain.Session,
 		return nil, fmt.Errorf("failed to get sessions with credentials: %w", err)
 	}
 
-	sessions := make([]*sessiondomain.Session, len(sessionModels))
+	sessions := make([]*session.Session, len(sessionModels))
 	for i, model := range sessionModels {
 		session, err := r.modelToDomain(&model)
 		if err != nil {
@@ -302,10 +287,10 @@ func (r *PostgresRepo) GetActive(ctx context.Context) ([]*sessiondomain.Session,
 	return sessions, nil
 }
 
-func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*session.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE status != $1 ORDER BY "createdAt" DESC
 	`
 
@@ -314,7 +299,7 @@ func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*sessiondomain.Sessio
 		return nil, fmt.Errorf("failed to get inactive sessions: %w", err)
 	}
 
-	sessions := make([]*sessiondomain.Session, len(sessionModels))
+	sessions := make([]*session.Session, len(sessionModels))
 	for i, model := range sessionModels {
 		session, err := r.modelToDomain(&model)
 		if err != nil {
@@ -326,10 +311,10 @@ func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*sessiondomain.Sessio
 	return sessions, nil
 }
 
-func (r *PostgresRepo) GetByApiKey(ctx context.Context, apiKey string) (*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetByApiKey(ctx context.Context, apiKey string) (*session.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE "apiKey" = $1
 	`
 
@@ -344,14 +329,14 @@ func (r *PostgresRepo) GetByApiKey(ctx context.Context, apiKey string) (*session
 	return r.modelToDomain(&model)
 }
 
-func (r *PostgresRepo) GetByDeviceJID(ctx context.Context, deviceJID string) (*sessiondomain.Session, error) {
+func (r *PostgresRepo) GetByDeviceJID(ctx context.Context, deviceJID string) (*session.Session, error) {
 	if deviceJID == "" {
 		return nil, fmt.Errorf("device JID cannot be empty")
 	}
 
 	var model models.SessionModel
 	query := `
-		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", connected, "apiKey", "createdAt", "updatedAt"
 		FROM "zpSessions" WHERE "deviceJid" = $1
 	`
 
@@ -389,80 +374,75 @@ func (r *PostgresRepo) ValidateDeviceUniqueness(ctx context.Context, sessionID, 
 	return nil
 }
 
-func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain.Session, error) {
+func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*session.Session, error) {
 
-	sessionID, err := sessiondomain.NewSessionID(model.ID)
+	sessionID, err := session.NewSessionID(model.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session ID: %w", err)
 	}
 
-	sessionName, err := sessiondomain.NewSessionName(model.Name)
+	sessionName, err := session.NewSessionName(model.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session name: %w", err)
 	}
 
-	var proxyURL sessiondomain.ProxyConfiguration
+	var proxyURL session.ProxyConfiguration
 	if model.ProxyUrl != "" {
-		proxy, err := sessiondomain.NewProxyConfiguration(model.ProxyUrl)
+		proxy, err := session.NewProxyConfiguration(model.ProxyUrl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create proxy configuration: %w", err)
 		}
 		proxyURL = proxy
 	}
 
-	var DeviceJID sessiondomain.DeviceJID
+	var DeviceJID session.DeviceJID
 	if model.DeviceJid != "" {
-		jid, err := sessiondomain.NewDeviceJID(model.DeviceJid)
+		jid, err := session.NewDeviceJID(model.DeviceJid)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create device JID: %w", err)
 		}
 		DeviceJID = jid
 	}
 
-	var qrCode sessiondomain.QRCode
+	var qrCode session.QRCode
 	if model.QrCode != "" {
-		qr, err := sessiondomain.NewQRCode(model.QrCode)
+		qr, err := session.NewQRCode(model.QrCode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create QR code: %w", err)
 		}
 		qrCode = qr
 	}
 
-	var apiKey sessiondomain.ApiKey
+	var apiKey session.ApiKey
 	if model.ApiKey != "" {
-		key, err := sessiondomain.NewApiKey(model.ApiKey)
+		key, err := session.NewApiKey(model.ApiKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create API key: %w", err)
 		}
 		apiKey = key
 	}
 
-	var events []string
-	if model.WebhookEvents != "" && model.WebhookEvents != "[]" {
-		if err := json.Unmarshal([]byte(model.WebhookEvents), &events); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal webhook events: %w", err)
-		}
-	}
+	// Webhook events agora são gerenciados pela tabela zpWebhooks separada
 
-	sessionEntity, err := sessiondomain.NewSession(sessionID.Value(), sessionName.Value())
+	sessionEntity, err := session.NewSession(sessionID.Value(), sessionName.Value())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session entity: %w", err)
 	}
 
-	if model.Status != string(sessiondomain.StatusDisconnected) {
-		switch sessiondomain.Status(model.Status) {
-		case sessiondomain.StatusConnecting:
+	if model.Status != string(session.StatusDisconnected) {
+		switch session.Status(model.Status) {
+		case session.StatusConnecting:
 			if err := sessionEntity.Connect(); err != nil {
 				return nil, fmt.Errorf("failed to set connecting status: %w", err)
 			}
-		case sessiondomain.StatusConnected:
+		case session.StatusConnected:
 			if err := sessionEntity.Connect(); err != nil {
 				return nil, fmt.Errorf("failed to set connecting status: %w", err)
 			}
 			if err := sessionEntity.SetConnected(); err != nil {
 				return nil, fmt.Errorf("failed to set connected status: %w", err)
 			}
-		case sessiondomain.StatusError:
+		case session.StatusError:
 			sessionEntity.SetError("Restored from database")
 		}
 	}
@@ -491,15 +471,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 		}
 	}
 
-	if model.WebhookUrl != "" {
-		if err := sessionEntity.SetWebhookEndpoint(model.WebhookUrl); err != nil {
-			return nil, fmt.Errorf("failed to set webhook URL: %w", err)
-		}
-	}
-
-	if len(events) > 0 {
-		sessionEntity.SetWebhookEvents(events)
-	}
+	// Webhook URL e events agora são gerenciados pela tabela zpWebhooks separada
+	// A configuração de webhook deve ser feita através do WebhookRepository
 
 	return sessionEntity, nil
 }

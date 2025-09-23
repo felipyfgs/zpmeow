@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"zpmeow/internal/application/ports"
 	"zpmeow/internal/infra/logging"
 )
 
 type Service struct {
-	httpClient    HTTPClient
+	httpClient    ports.HTTPClient
 	retryStrategy *RetryStrategy
 	logger        logging.Logger
 }
 
-func NewService() *Service {
+func NewService(httpClient ports.HTTPClient) *Service {
 	retryConfig := &RetryConfig{
 		MaxRetries:        3,
 		InitialBackoff:    time.Second,
@@ -23,7 +24,7 @@ func NewService() *Service {
 	}
 
 	return &Service{
-		httpClient:    NewWebhookHTTPClient(30 * time.Second),
+		httpClient:    httpClient,
 		retryStrategy: NewRetryStrategy(retryConfig),
 		logger:        logging.GetLogger().Sub("webhook-service"),
 	}
@@ -32,6 +33,24 @@ func NewService() *Service {
 func NewServiceWithConfig(timeout time.Duration, retryConfig *RetryConfig) *Service {
 	return &Service{
 		httpClient:    NewWebhookHTTPClient(timeout),
+		retryStrategy: NewRetryStrategy(retryConfig),
+		logger:        logging.GetLogger().Sub("webhook-service"),
+	}
+}
+
+// NewServiceWithHTTPClient creates a service with a custom HTTP client
+func NewServiceWithHTTPClient(httpClient ports.HTTPClient, retryConfig *RetryConfig) *Service {
+	if retryConfig == nil {
+		retryConfig = &RetryConfig{
+			MaxRetries:        3,
+			InitialBackoff:    time.Second,
+			MaxBackoff:        30 * time.Second,
+			BackoffMultiplier: 2.0,
+		}
+	}
+
+	return &Service{
+		httpClient:    httpClient,
 		retryStrategy: NewRetryStrategy(retryConfig),
 		logger:        logging.GetLogger().Sub("webhook-service"),
 	}

@@ -97,3 +97,22 @@ func ValidateSessionStatus(currentStatus, newStatus Status) error {
 
 	return ErrInvalidSessionStatus
 }
+
+// ValidateDeviceUniqueness validates that a device JID is not used by another session
+// This should be implemented by the domain service implementation, not here
+// func ValidateDeviceUniqueness(ctx context.Context, repository Repository, sessionID, deviceJID string) error {
+//     if deviceJID == "" {
+//         return nil // Empty device JID is allowed
+//     }
+//
+//     existingSession, err := repository.GetByDeviceJID(ctx, deviceJID)
+//     if err != nil {
+//         return err
+//     }
+//
+//     if existingSession != nil && existingSession.ID().Value() != sessionID {
+//         return ErrDeviceAlreadyInUse
+//     }
+//
+//     return nil
+// }

@@ -15,31 +15,15 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.mau.fi/whatsmeow"
-	waCommon "go.mau.fi/whatsmeow/proto/waCommon"
+	"go.mau.fi/whatsmeow/proto/waCommon"
 	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waTypes "go.mau.fi/whatsmeow/types"
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-type ButtonData = ports.ButtonData
-type ListItem = ports.ListItem
-type ListRow = ports.ListItem
-type ListSection = ports.ListSection
-
+// Use ports types directly
 type WameowService = ports.WameowService
-
-type UserCheckResult = ports.UserCheckResult
-type UserInfoResult = ports.UserInfoResult
-type AvatarResult = ports.AvatarResult
-type ContactResult = ports.ContactResult
-
-type ContactData = ports.ContactData
-type GroupInfo = ports.GroupInfo
-type ChatInfo = ports.ChatInfo
-type NewsletterMessage = ports.NewsletterMessage
-type NewsletterInfo = ports.NewsletterInfo
-type PrivacySettings = ports.PrivacySettings
 
 type MeowService struct {
 	clients             map[string]*WameowClient
@@ -54,12 +38,14 @@ type MeowService struct {
 	chatwootRepo        *repository.ChatwootRepository
 	messageRepo         *repository.MessageRepository
 	chatRepo            *repository.ChatRepository
+	webhookRepo         *repository.WebhookRepository
 }
 
 func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, db *sqlx.DB) WameowService {
-	// Criar repositórios de mensagem e chat
+	// Criar repositórios de mensagem, chat e webhook
 	messageRepo := repository.NewMessageRepository(db)
 	chatRepo := repository.NewChatRepository(db)
+	webhookRepo := repository.NewWebhookRepository(db)
 
 	return &MeowService{
 		clients:       make(map[string]*WameowClient),
@@ -71,13 +57,15 @@ func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessio
 		mimeHelper:    NewMimeTypeHelper(),
 		messageRepo:   messageRepo,
 		chatRepo:      chatRepo,
+		webhookRepo:   webhookRepo,
 	}
 }
 
 func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository, db *sqlx.DB) WameowService {
-	// Criar repositórios de mensagem e chat
+	// Criar repositórios de mensagem, chat e webhook
 	messageRepo := repository.NewMessageRepository(db)
 	chatRepo := repository.NewChatRepository(db)
+	webhookRepo := repository.NewWebhookRepository(db)
 
 	return &MeowService{
 		clients:             make(map[string]*WameowClient),
@@ -91,6 +79,7 @@ func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Lo
 		chatwootRepo:        chatwootRepo,
 		messageRepo:         messageRepo,
 		chatRepo:            chatRepo,
+		webhookRepo:         webhookRepo,
 	}
 }
 
@@ -209,8 +198,9 @@ func (m *MeowService) extractDeviceJID(sessionEntity interface{}, sessionID stri
 		return ""
 	}
 
-	if session, ok := sessionEntity.(interface{ GetDeviceJIDString() string }); ok {
-		deviceJIDString := session.GetDeviceJIDString()
+	// Cast to the actual session domain entity from the domain package
+	if session, ok := sessionEntity.(*session.Session); ok {
+		deviceJIDString := session.DeviceJID().Value()
 		m.logger.Debugf("Session %s device JID from entity: '%s'", sessionID, deviceJIDString)
 
 		if deviceJIDString != "" {
@@ -219,6 +209,8 @@ func (m *MeowService) extractDeviceJID(sessionEntity interface{}, sessionID stri
 		} else {
 			m.logger.Warnf("Session %s has empty device JID string", sessionID)
 		}
+	} else {
+		m.logger.Errorf("Failed to cast sessionEntity to *session.Session for session %s (type: %T)", sessionID, sessionEntity)
 	}
 
 	return ""
@@ -229,12 +221,17 @@ func (m *MeowService) extractWebhookURL(sessionEntity interface{}, sessionID str
 		return ""
 	}
 
-	if session, ok := sessionEntity.(interface{ GetWebhookEndpointString() string }); ok {
-		webhookURL := session.GetWebhookEndpointString()
-		if webhookURL != "" {
-			m.logger.Infof("Creating client for session %s with webhook URL: %s", sessionID, webhookURL)
-		}
-		return webhookURL
+	// Buscar configuração de webhook da nova tabela zpWebhooks
+	ctx := context.Background()
+	webhookConfig, err := m.webhookRepo.GetBySessionID(ctx, sessionID)
+	if err != nil {
+		m.logger.Debugf("No webhook configuration found for session %s: %v", sessionID, err)
+		return ""
+	}
+
+	if webhookConfig != nil && webhookConfig.IsActive && webhookConfig.URL != "" {
+		m.logger.Infof("Creating client for session %s with webhook URL: %s", sessionID, webhookConfig.URL)
+		return webhookConfig.URL
 	}
 
 	return ""
@@ -267,10 +264,8 @@ func (m *MeowService) validateAndGetClientForSending(sessionID string) (*WameowC
 }
 
 func (m *MeowService) validateSessionID(sessionID string) error {
-	if sessionID == "" {
-		return fmt.Errorf("session ID cannot be empty")
-	}
-	return nil
+	validator := NewSessionValidator()
+	return validator.ValidateSessionID(sessionID)
 }
 
 func (m *MeowService) validateClientConnection(client *WameowClient, sessionID string) error {
@@ -295,17 +290,12 @@ func (m *MeowService) getMessageBuilder() *MessageBuilder {
 	return NewMessageBuilder()
 }
 
-func (m *MeowService) validateButtons(buttons []ButtonData) error {
-	if len(buttons) == 0 {
-		return fmt.Errorf("at least one button is required")
-	}
-	if len(buttons) > 3 {
-		return fmt.Errorf("maximum 3 buttons allowed")
-	}
-	return nil
+func (m *MeowService) validateButtons(buttons []ports.ButtonData) error {
+	validator := NewButtonValidator()
+	return validator.ValidateButtons(buttons)
 }
 
-func (m *MeowService) buildWhatsAppButtons(buttons []ButtonData) []*waProto.ButtonsMessage_Button {
+func (m *MeowService) buildWhatsAppButtons(buttons []ports.ButtonData) []*waProto.ButtonsMessage_Button {
 	var waButtons []*waProto.ButtonsMessage_Button
 	for _, button := range buttons {
 		waButtons = append(waButtons, &waProto.ButtonsMessage_Button{
@@ -317,14 +307,12 @@ func (m *MeowService) buildWhatsAppButtons(buttons []ButtonData) []*waProto.Butt
 	return waButtons
 }
 
-func (m *MeowService) validateListSections(sections []ListSection) error {
-	if len(sections) == 0 {
-		return fmt.Errorf("at least one section is required")
-	}
-	return nil
+func (m *MeowService) validateListSections(sections []ports.ListSection) error {
+	validator := NewListValidator()
+	return validator.ValidateListSections(sections)
 }
 
-func (m *MeowService) buildWhatsAppListSections(sections []ListSection) []*waProto.ListMessage_Section {
+func (m *MeowService) buildWhatsAppListSections(sections []ports.ListSection) []*waProto.ListMessage_Section {
 	var waSections []*waProto.ListMessage_Section
 	for _, section := range sections {
 		var waRows []*waProto.ListMessage_Row
@@ -406,7 +394,7 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 	m.logger.Infof("Found %d sessions with credentials to reconnect", len(sessions))
 
 	for _, sessionEntity := range sessions {
-		if sessionEntity.GetDeviceJIDString() == "" {
+		if sessionEntity.DeviceJID().Value() == "" {
 			m.logger.Warnf("Session %s (%s) has no device_jid but was returned as active - fixing status",
 				sessionEntity.ID().Value(), sessionEntity.Name().Value())
 
@@ -420,9 +408,9 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 			continue
 		}
 
-		if !m.deviceExistsInDatabase(sessionEntity.GetDeviceJIDString()) {
+		if !m.deviceExistsInDatabase(sessionEntity.DeviceJID().Value()) {
 			m.logger.Warnf("Session %s (%s) has device_jid %s but device not found in whatsmeow_device table - marking as disconnected",
-				sessionEntity.ID().Value(), sessionEntity.Name().Value(), sessionEntity.GetDeviceJIDString())
+				sessionEntity.ID().Value(), sessionEntity.Name().Value(), sessionEntity.DeviceJID().Value())
 
 			err := sessionEntity.Disconnect("device not found in database")
 			if err != nil {
@@ -439,7 +427,7 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 		}
 
 		m.logger.Infof("Attempting to reconnect session %s (status: %s, device_jid: %s)",
-			sessionEntity.ID().Value(), sessionEntity.Status().String(), sessionEntity.GetDeviceJIDString())
+			sessionEntity.ID().Value(), sessionEntity.Status().String(), sessionEntity.DeviceJID().Value())
 
 		if err := m.StartClient(sessionEntity.ID().Value()); err != nil {
 			m.logger.Errorf("Failed to start client for session %s: %v", sessionEntity.ID().Value(), err)
@@ -931,7 +919,7 @@ func (m *MeowService) SendStickerMessage(ctx context.Context, sessionID, phone s
 	return m.sendStickerMessage(client.GetClient(), phone, data, mimeType)
 }
 
-func (m *MeowService) SendContactsMessage(ctx context.Context, sessionID, phone string, contacts []ContactData) (*whatsmeow.SendResponse, error) {
+func (m *MeowService) SendContactsMessage(ctx context.Context, sessionID, phone string, contacts []ports.ContactData) (*whatsmeow.SendResponse, error) {
 	client, err := m.validateAndGetClientForSending(sessionID)
 	if err != nil {
 		return nil, err
@@ -973,7 +961,7 @@ func (m *MeowService) MarkAsRead(ctx context.Context, sessionID, phone string, m
 	return nil
 }
 
-func (m *MeowService) SendButtonMessage(ctx context.Context, sessionID, phone, title string, buttons []ButtonData) (*whatsmeow.SendResponse, error) {
+func (m *MeowService) SendButtonMessage(ctx context.Context, sessionID, phone, title string, buttons []ports.ButtonData) (*whatsmeow.SendResponse, error) {
 	client, err := m.validateAndGetClient(sessionID)
 	if err != nil {
 		return nil, err
@@ -1008,7 +996,7 @@ func (m *MeowService) SendButtonMessage(ctx context.Context, sessionID, phone, t
 	return &resp, nil
 }
 
-func (m *MeowService) SendListMessage(ctx context.Context, sessionID, phone, title, description, buttonText, footerText string, sections []ListSection) (*whatsmeow.SendResponse, error) {
+func (m *MeowService) SendListMessage(ctx context.Context, sessionID, phone, title, description, buttonText, footerText string, sections []ports.ListSection) (*whatsmeow.SendResponse, error) {
 	client, err := m.validateAndGetClient(sessionID)
 	if err != nil {
 		return nil, err
@@ -1172,7 +1160,7 @@ func (m *MeowService) CreateGroup(ctx context.Context, sessionID, name string, p
 		return nil, fmt.Errorf("failed to create group: %w", err)
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -1208,9 +1196,9 @@ func (m *MeowService) ListGroups(ctx context.Context, sessionID string) ([]ports
 		return nil, fmt.Errorf("failed to get joined groups: %w", err)
 	}
 
-	var results []GroupInfo
+	var results []ports.GroupInfo
 	for _, group := range groups {
-		result := GroupInfo{
+		result := ports.GroupInfo{
 			JID:         group.JID.String(),
 			Name:        group.Name,
 			Topic:       group.Topic,
@@ -1253,7 +1241,7 @@ func (m *MeowService) GetGroupInfo(ctx context.Context, sessionID, groupJID stri
 		return nil, fmt.Errorf("failed to get group info: %w", err)
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -1290,7 +1278,7 @@ func (m *MeowService) JoinGroup(ctx context.Context, sessionID, inviteLink strin
 
 	groupInfo, err := client.GetClient().GetGroupInfo(groupJID)
 	if err != nil {
-		result := &GroupInfo{
+		result := &ports.GroupInfo{
 			JID: groupJID.String(),
 		}
 		m.logger.Debugf("Successfully joined group %s via invite link for session %s (basic info)",
@@ -1298,7 +1286,7 @@ func (m *MeowService) JoinGroup(ctx context.Context, sessionID, inviteLink strin
 		return result, nil
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -1346,7 +1334,7 @@ func (m *MeowService) JoinGroupWithInvite(ctx context.Context, sessionID, groupJ
 
 	groupInfo, err := client.GetClient().GetGroupInfo(groupJIDParsed)
 	if err != nil {
-		result := &GroupInfo{
+		result := &ports.GroupInfo{
 			JID: groupJIDParsed.String(),
 		}
 		m.logger.Debugf("Successfully joined group %s via specific invite for session %s (basic info)",
@@ -1354,7 +1342,7 @@ func (m *MeowService) JoinGroupWithInvite(ctx context.Context, sessionID, groupJ
 		return result, nil
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -1672,7 +1660,7 @@ func (m *MeowService) GetLinkedGroupsParticipants(ctx context.Context, sessionID
 	return participantList, nil
 }
 
-func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []string) ([]UserCheckResult, error) {
+func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []string) ([]ports.UserCheckResult, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -1702,14 +1690,14 @@ func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []
 		return nil, fmt.Errorf("failed to check users on WhatsApp: %w", err)
 	}
 
-	var results []UserCheckResult
+	var results []ports.UserCheckResult
 	for _, item := range resp {
 		verifiedName := ""
 		if item.VerifiedName != nil {
 			verifiedName = item.VerifiedName.Details.GetVerifiedName()
 		}
 
-		result := UserCheckResult{
+		result := ports.UserCheckResult{
 			Query:        item.Query,
 			IsInWhatsapp: item.IsIn,
 			IsInMeow:     item.IsIn,
@@ -1725,7 +1713,7 @@ func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []
 	return results, nil
 }
 
-func (m *MeowService) CheckContact(ctx context.Context, sessionID, phone string) (*UserCheckResult, error) {
+func (m *MeowService) CheckContact(ctx context.Context, sessionID, phone string) (*ports.UserCheckResult, error) {
 	results, err := m.CheckUser(ctx, sessionID, []string{phone})
 	if err != nil {
 		return nil, err
@@ -1738,7 +1726,7 @@ func (m *MeowService) CheckContact(ctx context.Context, sessionID, phone string)
 	return &results[0], nil
 }
 
-func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones []string) (map[string]UserInfoResult, error) {
+func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones []string) (map[string]ports.UserInfoResult, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -1770,10 +1758,10 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones 
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	results := make(map[string]UserInfoResult)
+	results := make(map[string]ports.UserInfoResult)
 	for jid := range resp {
 
-		result := UserInfoResult{
+		result := ports.UserInfoResult{
 			JID:          jid.String(),
 			Name:         "",
 			Notify:       "",
@@ -1791,7 +1779,7 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones 
 	return results, nil
 }
 
-func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*AvatarResult, error) {
+func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*ports.AvatarResult, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -1811,7 +1799,7 @@ func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*
 		return nil, fmt.Errorf("failed to get avatar: %w", err)
 	}
 
-	result := &AvatarResult{
+	result := &ports.AvatarResult{
 		Phone:     phone,
 		JID:       jid.String(),
 		AvatarURL: pictureInfo.URL,
@@ -1823,7 +1811,7 @@ func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*
 	return result, nil
 }
 
-func (m *MeowService) GetContacts(ctx context.Context, sessionID string, limit, offset int) ([]ContactResult, error) {
+func (m *MeowService) GetContacts(ctx context.Context, sessionID string, limit, offset int) ([]ports.ContactResult, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -1838,9 +1826,9 @@ func (m *MeowService) GetContacts(ctx context.Context, sessionID string, limit, 
 		return nil, fmt.Errorf("failed to get contacts: %w", err)
 	}
 
-	var allResults []ContactResult
+	var allResults []ports.ContactResult
 	for jid, contact := range contacts {
-		result := ContactResult{
+		result := ports.ContactResult{
 			JID:          jid.String(),
 			Name:         contact.FullName,
 			Notify:       contact.PushName,
@@ -2144,7 +2132,7 @@ func (m *MeowService) GetInviteInfo(ctx context.Context, sessionID, inviteLink s
 		return nil, fmt.Errorf("failed to get invite info: %w", err)
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -2190,7 +2178,7 @@ func (m *MeowService) GetGroupInfoFromInvite(ctx context.Context, sessionID, gro
 		return nil, fmt.Errorf("failed to get group info from invite: %w", err)
 	}
 
-	result := &GroupInfo{
+	result := &ports.GroupInfo{
 		JID:         groupInfo.JID.String(),
 		Name:        groupInfo.Name,
 		Topic:       groupInfo.Topic,
@@ -2572,13 +2560,13 @@ func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string)
 		return nil, err
 	}
 
-	var chats []ChatInfo
+	var chats []ports.ChatInfo
 
 	if chatType == "" || chatType == "groups" || chatType == "all" {
 		groups, err := client.GetClient().GetJoinedGroups(ctx)
 		if err == nil {
 			for _, group := range groups {
-				chat := ChatInfo{
+				chat := ports.ChatInfo{
 					JID:         group.JID.String(),
 					Name:        group.Name,
 					Type:        "group",
@@ -2604,7 +2592,7 @@ func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string)
 					continue
 				}
 
-				chat := ChatInfo{
+				chat := ports.ChatInfo{
 					JID:         jid.String(),
 					Name:        contact.FullName,
 					Type:        "contact",
@@ -2671,7 +2659,7 @@ func (m *MeowService) GetChatInfo(ctx context.Context, sessionID, chatJID string
 		chatType = "group"
 	}
 
-	chat := &ChatInfo{
+	chat := &ports.ChatInfo{
 		JID:         chatJID,
 		Name:        chatJID,
 		Type:        chatType,
@@ -2757,7 +2745,7 @@ func (m *MeowService) GetNewsletterMessageUpdates(ctx context.Context, sessionID
 		return nil, err
 	}
 
-	var messages []NewsletterMessage
+	var messages []ports.NewsletterMessage
 
 	m.logger.Debugf("Retrieved %d newsletter messages for newsletter %s in session %s", len(messages), newsletterID, sessionID)
 	return messages, nil
@@ -2824,7 +2812,7 @@ func (m *MeowService) GetNewsletterInfoWithInvite(ctx context.Context, sessionID
 	}
 
 	timestamp := time.Now().Unix()
-	newsletter := &NewsletterInfo{
+	newsletter := &ports.NewsletterInfo{
 		ID:          "newsletter_" + inviteCode,
 		JID:         "newsletter_" + inviteCode + "@newsletter",
 		Name:        "Newsletter from invite",
@@ -2851,7 +2839,7 @@ func (m *MeowService) CreateNewsletter(ctx context.Context, sessionID, name, des
 
 	timestamp := time.Now().Unix()
 	newsletterID := fmt.Sprintf("newsletter_%d", timestamp)
-	newsletter := &NewsletterInfo{
+	newsletter := &ports.NewsletterInfo{
 		ID:          newsletterID,
 		JID:         newsletterID + "@newsletter",
 		Name:        name,
@@ -2877,7 +2865,7 @@ func (m *MeowService) GetNewsletterInfo(ctx context.Context, sessionID, newslett
 	}
 
 	timestamp := time.Now().Unix()
-	newsletter := &NewsletterInfo{
+	newsletter := &ports.NewsletterInfo{
 		ID:          newsletterID,
 		JID:         newsletterID + "@newsletter",
 		Name:        "Newsletter",
@@ -2902,7 +2890,7 @@ func (m *MeowService) GetSubscribedNewsletters(ctx context.Context, sessionID st
 		return nil, err
 	}
 
-	var newsletters []NewsletterInfo
+	var newsletters []ports.NewsletterInfo
 
 	m.logger.Debugf("Retrieved %d subscribed newsletters for session %s", len(newsletters), sessionID)
 	return newsletters, nil
@@ -2944,7 +2932,7 @@ func (m *MeowService) GetNewsletterMessages(ctx context.Context, sessionID, news
 		return nil, err
 	}
 
-	var messages []NewsletterMessage
+	var messages []ports.NewsletterMessage
 
 	m.logger.Debugf("Retrieved %d messages for newsletter %s in session %s", len(messages), newsletterID, sessionID)
 	return messages, nil
@@ -2956,7 +2944,7 @@ func (m *MeowService) GetPrivacySettings(ctx context.Context, sessionID string) 
 		return nil, err
 	}
 
-	settings := &PrivacySettings{
+	settings := &ports.PrivacySettings{
 		LastSeen:             "contacts",
 		ProfilePhoto:         "contacts",
 		About:                "contacts",

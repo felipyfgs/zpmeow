@@ -166,9 +166,6 @@ definitions:
         maximum: 365
         minimum: 1
         type: integer
-      enabled:
-        example: true
-        type: boolean
       ignoreJids:
         example:
         - 554988989314@s.whatsapp.net
@@ -181,6 +178,9 @@ definitions:
         type: boolean
       importMessages:
         example: false
+        type: boolean
+      isActive:
+        example: true
         type: boolean
       logo:
         example: https://example.com/logo.png
@@ -217,7 +217,7 @@ definitions:
         example: https://chatwoot.example.com
         type: string
     required:
-    - enabled
+    - isActive
     type: object
   dto.ChatwootConfigResponse:
     properties:
@@ -2787,7 +2787,7 @@ paths:
       description: Configure Chatwoot integration for a WhatsApp session. This endpoint
         allows you to set up the connection between your WhatsApp session and Chatwoot.
         You can use either the global API key or the session-specific API key for
-        authentication. When enabled=true, accountId, token, and url are required
+        authentication. When isActive=true, accountId, token, and url are required
         fields.
       parameters:
       - description: Session ID or name

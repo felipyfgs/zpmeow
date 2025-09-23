@@ -32,7 +32,11 @@ func (r *ZpCwMessageRepository) CreateRelation(ctx context.Context, relation *mo
 	if err != nil {
 		return fmt.Errorf("failed to create chatwoot message relation: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in CreateRelation: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&relation.ID, &relation.CreatedAt, &relation.UpdatedAt)
@@ -142,7 +146,11 @@ func (r *ZpCwMessageRepository) UpdateRelation(ctx context.Context, relation *mo
 	if err != nil {
 		return fmt.Errorf("failed to update chatwoot message relation: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in UpdateRelation: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&relation.UpdatedAt)
@@ -229,7 +237,11 @@ func (r *ZpCwMessageRepository) GetRelationStats(ctx context.Context, sessionID 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get relation stats: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in GetRelationStats: %v\n", closeErr)
+		}
+	}()
 
 	stats := make(map[string]int)
 	for rows.Next() {

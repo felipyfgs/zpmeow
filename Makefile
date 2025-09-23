@@ -44,6 +44,25 @@ up: ## Start all services (PostgreSQL, Redis, MinIO) with Docker Compose
 down: ## Stop all Docker Compose services and remove volumes
 	docker compose down -v
 
+chatwoot-up: ## Start Chatwoot development environment
+	docker compose -f chatwoot-dev.yml up -d
+
+chatwoot-down: ## Stop Chatwoot development environment
+	docker compose -f chatwoot-dev.yml down -v
+
+chatwoot-logs: ## Show Chatwoot logs
+	docker compose -f chatwoot-dev.yml logs -f
+
+chatwoot-restart: ## Restart Chatwoot services
+	docker compose -f chatwoot-dev.yml restart
+
+chatwoot-status: ## Show Chatwoot services status
+	docker compose -f chatwoot-dev.yml ps
+
+full-up: up chatwoot-up ## Start both zpmeow and Chatwoot environments
+
+full-down: down chatwoot-down ## Stop both zpmeow and Chatwoot environments
+
 docs: ## Generate Swagger API documentation
 	@if command -v swag > /dev/null; then \
 		swag init -g $(MAIN_PATH)/main.go -o ./docs 2>&1 | grep -v "warning: failed to get package name" | grep -v "warning: failed to evaluate const"; \

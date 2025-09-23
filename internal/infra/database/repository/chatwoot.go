@@ -22,18 +22,23 @@ func NewChatwootRepository(db *sqlx.DB) *ChatwootRepository {
 func (r *ChatwootRepository) Create(ctx context.Context, config *models.ChatwootModel) error {
 	query := `
 		INSERT INTO "zpChatwoot" (
-			"sessionId", enabled, "accountId", token, url, "nameInbox",
-			number, "inboxId", "syncStatus", config
+			"sessionId", "isActive", "accountId", token, url, "nameInbox",
+			"inboxId", "syncStatus", config
 		) VALUES (
-			:"sessionId", :enabled, :"accountId", :token, :url, :"nameInbox",
-			:number, :"inboxId", :"syncStatus", :config
+			$1, $2, $3, $4, $5, $6, $7, $8, $9
 		) RETURNING id, "createdAt", "updatedAt"`
 
-	rows, err := r.db.NamedQueryContext(ctx, query, config)
+	rows, err := r.db.QueryContext(ctx, query,
+		config.SessionId, config.IsActive, config.AccountId, config.Token,
+		config.URL, config.NameInbox, config.InboxId, config.SyncStatus, config.Config)
 	if err != nil {
 		return fmt.Errorf("failed to create chatwoot config: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in CreateChatwootConfig: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&config.ID, &config.CreatedAt, &config.UpdatedAt)
@@ -49,7 +54,7 @@ func (r *ChatwootRepository) Create(ctx context.Context, config *models.Chatwoot
 func (r *ChatwootRepository) GetBySessionID(ctx context.Context, sessionID string) (*models.ChatwootModel, error) {
 	var config models.ChatwootModel
 	query := `
-		SELECT id, "sessionId", enabled, "accountId", token, url, "nameInbox",
+		SELECT id, "sessionId", "isActive", "accountId", token, url, "nameInbox",
 			   "inboxId", "lastSync", "syncStatus", config, "createdAt", "updatedAt"
 		FROM "zpChatwoot"
 		WHERE "sessionId" = $1`
@@ -69,7 +74,7 @@ func (r *ChatwootRepository) GetBySessionID(ctx context.Context, sessionID strin
 func (r *ChatwootRepository) GetByID(ctx context.Context, id string) (*models.ChatwootModel, error) {
 	var config models.ChatwootModel
 	query := `
-		SELECT id, "sessionId", enabled, "accountId", token, url, "nameInbox",
+		SELECT id, "sessionId", "isActive", "accountId", token, url, "nameInbox",
 			   "inboxId", "lastSync", "syncStatus", config, "createdAt", "updatedAt"
 		FROM "zpChatwoot"
 		WHERE id = $1`
@@ -89,24 +94,31 @@ func (r *ChatwootRepository) GetByID(ctx context.Context, id string) (*models.Ch
 func (r *ChatwootRepository) Update(ctx context.Context, config *models.ChatwootModel) error {
 	query := `
 		UPDATE "zpChatwoot" SET
-			enabled = :enabled,
-			"accountId" = :"accountId",
-			token = :token,
-			url = :url,
-			"nameInbox" = :"nameInbox",
-			"inboxId" = :"inboxId",
-			"lastSync" = :"lastSync",
-			"syncStatus" = :"syncStatus",
-			config = :config,
+			"isActive" = $1,
+			"accountId" = $2,
+			token = $3,
+			url = $4,
+			"nameInbox" = $5,
+			"inboxId" = $6,
+			"lastSync" = $7,
+			"syncStatus" = $8,
+			config = $9,
 			"updatedAt" = NOW()
-		WHERE "sessionId" = :"sessionId"
+		WHERE "sessionId" = $10
 		RETURNING "updatedAt"`
 
-	rows, err := r.db.NamedQueryContext(ctx, query, config)
+	rows, err := r.db.QueryContext(ctx, query,
+		config.IsActive, config.AccountId, config.Token, config.URL,
+		config.NameInbox, config.InboxId, config.LastSync, config.SyncStatus,
+		config.Config, config.SessionId)
 	if err != nil {
 		return fmt.Errorf("failed to update chatwoot config: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in UpdateChatwootConfig: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&config.UpdatedAt)
@@ -140,20 +152,20 @@ func (r *ChatwootRepository) Delete(ctx context.Context, sessionID string) error
 }
 
 // List lista todas as configurações Chatwoot
-func (r *ChatwootRepository) List(ctx context.Context, enabled *bool) ([]*models.ChatwootModel, error) {
+func (r *ChatwootRepository) List(ctx context.Context, isActive *bool) ([]*models.ChatwootModel, error) {
 	var configs []*models.ChatwootModel
 
 	query := `
-		SELECT c.id, c."sessionId", c.enabled, c."accountId", c.token, c.url, c."nameInbox",
+		SELECT c.id, c."sessionId", c."isActive", c."accountId", c.token, c.url, c."nameInbox",
 			   c."inboxId", c."lastSync", c."syncStatus", c.config, c."createdAt", c."updatedAt"
 		FROM "zpChatwoot" c
-		INNER JOIN sessions s ON c."sessionId" = s.id`
+		INNER JOIN "zpSessions" s ON c."sessionId" = s.id`
 
 	args := []interface{}{}
 
-	if enabled != nil {
-		query += ` WHERE c.enabled = $1`
-		args = append(args, *enabled)
+	if isActive != nil {
+		query += ` WHERE c."isActive" = $1`
+		args = append(args, *isActive)
 	}
 
 	query += ` ORDER BY c."createdAt" DESC`
@@ -167,11 +179,11 @@ func (r *ChatwootRepository) List(ctx context.Context, enabled *bool) ([]*models
 }
 
 // ListWithSessionInfo lista configurações com informações da sessão
-func (r *ChatwootRepository) ListWithSessionInfo(ctx context.Context, enabled *bool) ([]*ChatwootWithSession, error) {
+func (r *ChatwootRepository) ListWithSessionInfo(ctx context.Context, isActive *bool) ([]*ChatwootWithSession, error) {
 	var configs []*ChatwootWithSession
 
 	query := `
-		SELECT c.id, c."sessionId", c.enabled, c."accountId", c.token, c.url, c."nameInbox",
+		SELECT c.id, c."sessionId", c."isActive", c."accountId", c.token, c.url, c."nameInbox",
 			   c.sign_msg, c.sign_delimiter, c.number, c.reopen_conversation,
 			   c.conversation_pending, c.merge_brazil_contacts, c.import_contacts,
 			   c.import_messages, c.days_limit_import_messages, c.auto_create,
@@ -184,9 +196,9 @@ func (r *ChatwootRepository) ListWithSessionInfo(ctx context.Context, enabled *b
 
 	args := []interface{}{}
 
-	if enabled != nil {
-		query += ` WHERE c.enabled = $1`
-		args = append(args, *enabled)
+	if isActive != nil {
+		query += ` WHERE c."isActive" = $1`
+		args = append(args, *isActive)
 	}
 
 	query += ` ORDER BY c."createdAt" DESC`
@@ -252,10 +264,10 @@ func (r *ChatwootRepository) UpdateInboxInfo(ctx context.Context, sessionID stri
 	return nil
 }
 
-// GetEnabledConfigs retorna apenas configurações habilitadas
-func (r *ChatwootRepository) GetEnabledConfigs(ctx context.Context) ([]*models.ChatwootModel, error) {
-	enabled := true
-	return r.List(ctx, &enabled)
+// GetActiveConfigs retorna apenas configurações ativas
+func (r *ChatwootRepository) GetActiveConfigs(ctx context.Context) ([]*models.ChatwootModel, error) {
+	isActive := true
+	return r.List(ctx, &isActive)
 }
 
 // GetMetrics retorna métricas agregadas
@@ -263,10 +275,10 @@ func (r *ChatwootRepository) GetMetrics(ctx context.Context) (*ChatwootMetrics, 
 	var metrics ChatwootMetrics
 
 	query := `
-		SELECT 
+		SELECT
 			COUNT(*) as total_configs,
-			COUNT(CASE WHEN enabled = true THEN 1 END) as enabled_configs,
-			COUNT(CASE WHEN enabled = true AND "inboxId" IS NOT NULL THEN 1 END) as connected_configs,
+			COUNT(CASE WHEN "isActive" = true THEN 1 END) as active_configs,
+			COUNT(CASE WHEN "isActive" = true AND "inboxId" IS NOT NULL THEN 1 END) as connected_configs,
 			COALESCE(SUM(messages_count), 0) as total_messages,
 			COALESCE(SUM(contacts_count), 0) as total_contacts,
 			COALESCE(SUM(conversations_count), 0) as total_conversations
@@ -293,7 +305,7 @@ type ChatwootWithSession struct {
 // ChatwootMetrics representa métricas agregadas
 type ChatwootMetrics struct {
 	TotalConfigs       int `db:"total_configs" json:"total_configs"`
-	EnabledConfigs     int `db:"enabled_configs" json:"enabled_configs"`
+	ActiveConfigs      int `db:"active_configs" json:"active_configs"`
 	ConnectedConfigs   int `db:"connected_configs" json:"connected_configs"`
 	TotalMessages      int `db:"total_messages" json:"total_messages"`
 	TotalContacts      int `db:"total_contacts" json:"total_contacts"`

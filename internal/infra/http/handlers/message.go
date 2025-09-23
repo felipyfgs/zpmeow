@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"zpmeow/internal/application"
+	"zpmeow/internal/application/ports"
 	"zpmeow/internal/infra/http/dto"
 	"zpmeow/internal/infra/wmeow"
 
@@ -669,7 +670,7 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	if req.IsSingleContact() {
-		contacts := []wmeow.ContactData{{
+		contacts := []ports.ContactData{{
 			Name:  req.ContactName,
 			Phone: req.ContactPhone,
 		}}
@@ -691,9 +692,9 @@ func (h *MessageHandler) SendContact(c *fiber.Ctx) error {
 	}
 
 	if req.IsMultipleContacts() {
-		var contacts []wmeow.ContactData
+		var contacts []ports.ContactData
 		for _, contact := range req.Contacts {
-			contacts = append(contacts, wmeow.ContactData{
+			contacts = append(contacts, ports.ContactData{
 				Name:  contact.Name,
 				Phone: contact.Phone,
 			})
@@ -1180,9 +1181,9 @@ func (h *MessageHandler) SendButton(c *fiber.Ctx) error {
 		))
 	}
 
-	var buttons []wmeow.ButtonData
+	var buttons []ports.ButtonData
 	for _, btn := range req.Buttons {
-		buttons = append(buttons, wmeow.ButtonData{
+		buttons = append(buttons, ports.ButtonData{
 			ID:   btn.ID,
 			Text: btn.Text,
 			Type: btn.Type,
@@ -1241,17 +1242,17 @@ func (h *MessageHandler) SendList(c *fiber.Ctx) error {
 		))
 	}
 
-	var sections []wmeow.ListSection
+	var sections []ports.ListSection
 	for _, section := range req.Sections {
-		var rows []wmeow.ListRow
+		var rows []ports.ListItem
 		for _, row := range section.Rows {
-			rows = append(rows, wmeow.ListRow{
+			rows = append(rows, ports.ListItem{
 				ID:          row.ID,
 				Title:       row.Title,
 				Description: row.Description,
 			})
 		}
-		sections = append(sections, wmeow.ListSection{
+		sections = append(sections, ports.ListSection{
 			Title: section.Title,
 			Rows:  rows,
 		})

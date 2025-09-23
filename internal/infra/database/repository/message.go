@@ -158,7 +158,11 @@ func (r *MessageRepository) UpdateMessage(ctx context.Context, message *models.M
 	if err != nil {
 		return fmt.Errorf("failed to update message: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in UpdateMessage: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&message.UpdatedAt)

@@ -33,7 +33,11 @@ func (r *ChatRepository) CreateChat(ctx context.Context, chat *models.ChatModel)
 	if err != nil {
 		return fmt.Errorf("failed to create chat: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in CreateChat: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt)
@@ -111,7 +115,11 @@ func (r *ChatRepository) UpdateChat(ctx context.Context, chat *models.ChatModel)
 	if err != nil {
 		return fmt.Errorf("failed to update chat: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close rows in UpdateChat: %v\n", closeErr)
+		}
+	}()
 
 	if rows.Next() {
 		err = rows.Scan(&chat.UpdatedAt)

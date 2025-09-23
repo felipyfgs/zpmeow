@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"zpmeow/internal/application"
+	"zpmeow/internal/application/ports"
 	"zpmeow/internal/infra/http/dto"
 	"zpmeow/internal/infra/wmeow"
 
@@ -497,7 +498,7 @@ func (h *GroupHandler) GetInviteLink(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
-func convertWmeowGroupInfoToDTO(groupInfo *wmeow.GroupInfo) *dto.GroupInfo {
+func convertWmeowGroupInfoToDTO(groupInfo *ports.GroupInfo) *dto.GroupInfo {
 	if groupInfo == nil {
 		return nil
 	}

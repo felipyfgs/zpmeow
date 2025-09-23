@@ -3,40 +3,10 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"zpmeow/internal/domain/common"
 )
-
-type WebhookEndpoint struct {
-	url string
-}
-
-func NewWebhookEndpoint(url string) (WebhookEndpoint, error) {
-	trimmed := strings.TrimSpace(url)
-	if trimmed == "" {
-		return WebhookEndpoint{}, fmt.Errorf("webhook URL cannot be empty")
-	}
-
-	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
-		return WebhookEndpoint{}, fmt.Errorf("webhook URL must start with http:// or https://")
-	}
-
-	return WebhookEndpoint{url: trimmed}, nil
-}
-
-func (w WebhookEndpoint) URL() string {
-	return w.url
-}
-
-func (w WebhookEndpoint) Value() string {
-	return w.url
-}
-
-func (w WebhookEndpoint) IsEmpty() bool {
-	return w.url == ""
-}
 
 type Status string
 
@@ -130,10 +100,6 @@ func (s *Session) Name() SessionName {
 
 func (s *Session) Status() Status {
 	return s.status
-}
-
-func (s *Session) WaJID() DeviceJID {
-	return s.deviceJID
 }
 
 func (s *Session) QRCode() QRCode {
@@ -260,11 +226,8 @@ func (s *Session) SetQRCode(qrCode string) error {
 	s.qrCode = qr
 	s.updateTimestamp()
 
-	changes := map[string]interface{}{
-		"qr_code_updated": true,
-	}
-	event := NewSessionConfigurationChangedEvent(s.id.Value(), changes)
-	s.AddEvent(event)
+	// QR Code update is not a configuration change, it's a connection state change
+	// No event needed here as it's an internal state update
 
 	return nil
 }
@@ -331,6 +294,13 @@ func (s *Session) SetApiKey(apiKey string) error {
 	s.apiKey = key
 	s.updateTimestamp()
 
+	// Emit configuration changed event for API key update
+	changes := map[string]interface{}{
+		"api_key_updated": true,
+	}
+	event := NewSessionConfigurationChangedEvent(s.id.Value(), changes)
+	s.AddEvent(event)
+
 	return nil
 }
 
@@ -379,24 +349,13 @@ func (s *Session) HasApiKey() bool {
 	return !s.apiKey.IsEmpty()
 }
 
-func (s *Session) GetDeviceJIDString() string {
-	return s.deviceJID.Value()
-}
-
-func (s *Session) GetQRCodeString() string {
-	return s.qrCode.Value()
-}
-
-func (s *Session) GetApiKeyString() string {
-	return s.apiKey.Value()
+// DeviceJID returns the device JID value object
+func (s *Session) DeviceJID() DeviceJID {
+	return s.deviceJID
 }
 
 func (s *Session) HasWebhook() bool {
 	return !s.webhookEndpoint.IsEmpty()
-}
-
-func (s *Session) GetWebhookEndpointString() string {
-	return s.webhookEndpoint.Value()
 }
 
 func (s *Session) GetWebhookEvents() []string {

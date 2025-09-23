@@ -203,3 +203,33 @@ func (p ProxyConfiguration) Scheme() string {
 	}
 	return strings.ToLower(parts[0])
 }
+
+// WebhookEndpoint represents a webhook URL endpoint
+type WebhookEndpoint struct {
+	url string
+}
+
+func NewWebhookEndpoint(url string) (WebhookEndpoint, error) {
+	trimmed := strings.TrimSpace(url)
+	if trimmed == "" {
+		return WebhookEndpoint{}, nil // Allow empty webhook
+	}
+
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		return WebhookEndpoint{}, fmt.Errorf("webhook URL must start with http:// or https://")
+	}
+
+	return WebhookEndpoint{url: trimmed}, nil
+}
+
+func (w WebhookEndpoint) URL() string {
+	return w.url
+}
+
+func (w WebhookEndpoint) Value() string {
+	return w.url
+}
+
+func (w WebhookEndpoint) IsEmpty() bool {
+	return w.url == ""
+}

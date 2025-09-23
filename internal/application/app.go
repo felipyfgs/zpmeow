@@ -106,7 +106,7 @@ func (w *WebhookApp) GetWebhook(ctx context.Context, sessionID string) (string, 
 		return "", nil, err
 	}
 
-	webhookURL := sess.GetWebhookEndpointString()
+	webhookURL := sess.WebhookEndpoint().Value()
 	events := []string{}
 
 	return webhookURL, events, nil

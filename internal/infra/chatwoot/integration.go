@@ -49,7 +49,7 @@ func (i *Integration) RegisterInstance(instanceName string, config *ChatwootConf
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 
-	if !config.Enabled {
+	if !config.IsActive {
 		i.logger.Info("Chatwoot disabled for instance", "instance", instanceName)
 		// Remove serviço se existir
 		delete(i.services, instanceName)
@@ -124,7 +124,7 @@ func (i *Integration) ProcessWebhook(ctx context.Context, instanceName string, p
 // IsEnabled verifica se a integração Chatwoot está habilitada para uma instância
 func (i *Integration) IsEnabled(instanceName string) bool {
 	config, exists := i.GetConfig(instanceName)
-	return exists && config.Enabled
+	return exists && config.IsActive
 }
 
 // GetEnabledInstances retorna lista de instâncias com Chatwoot habilitado
@@ -134,7 +134,7 @@ func (i *Integration) GetEnabledInstances() []string {
 
 	var enabled []string
 	for instanceName, config := range i.configs {
-		if config.Enabled {
+		if config.IsActive {
 			enabled = append(enabled, instanceName)
 		}
 	}
@@ -157,7 +157,7 @@ func (i *Integration) GetEnabledInstancesCount() int {
 
 	count := 0
 	for _, config := range i.configs {
-		if config.Enabled {
+		if config.IsActive {
 			count++
 		}
 	}
@@ -176,10 +176,10 @@ func (i *Integration) ListInstances() []InstanceInfo {
 
 		instances = append(instances, InstanceInfo{
 			Name:      instanceName,
-			Enabled:   config.Enabled,
+			Enabled:   config.IsActive,
 			URL:       config.URL,
 			InboxName: config.NameInbox,
-			Connected: hasService && config.Enabled,
+			Connected: hasService && config.IsActive,
 		})
 	}
 
@@ -205,7 +205,7 @@ func (i *Integration) Health() HealthStatus {
 	connected := 0
 
 	for _, config := range i.configs {
-		if config.Enabled {
+		if config.IsActive {
 			enabled++
 			if _, hasService := i.services[config.NameInbox]; hasService {
 				connected++
@@ -253,12 +253,12 @@ func (i *Integration) Shutdown(ctx context.Context) error {
 
 // ValidateConfig valida uma configuração Chatwoot
 func (i *Integration) ValidateConfig(config *ChatwootConfig) error {
-	if !config.Enabled {
+	if !config.IsActive {
 		return nil // Configuração desabilitada é válida
 	}
 
 	if config.AccountID == "" {
-		return fmt.Errorf("account ID is required when Chatwoot is enabled")
+		return fmt.Errorf("account ID is required when Chatwoot is active")
 	}
 
 	if config.Token == "" {
@@ -283,12 +283,12 @@ func (i *Integration) TestConnection(ctx context.Context, config *ChatwootConfig
 		return err
 	}
 
-	if !config.Enabled {
+	if !config.IsActive {
 		return fmt.Errorf("chatwoot is disabled")
 	}
 
 	// Cria cliente temporário para teste
-	client := NewClient(config.URL, config.Token, config.AccountID)
+	client := NewClient(config.URL, config.Token, config.AccountID, nil)
 
 	// Testa conexão listando inboxes
 	_, err := client.ListInboxes(ctx)
@@ -313,11 +313,11 @@ func (i *Integration) GetMetrics() Metrics {
 
 	for instanceName, config := range i.configs {
 		instanceMetric := InstanceMetrics{
-			Enabled:   config.Enabled,
+			Enabled:   config.IsActive,
 			Connected: false,
 		}
 
-		if config.Enabled {
+		if config.IsActive {
 			metrics.EnabledInstances++
 
 			if _, hasService := i.services[instanceName]; hasService {

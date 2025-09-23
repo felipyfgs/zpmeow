@@ -2,12 +2,14 @@ package wmeow
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"go.mau.fi/whatsmeow"
 	waTypes "go.mau.fi/whatsmeow/types"
 )
 
+// messageValidator implements ports.MessageValidator interface
 type messageValidator struct{}
 
 func NewMessageValidator() *messageValidator {
@@ -125,7 +127,20 @@ func ValidateSessionID(sessionID string) error {
 }
 
 func IsDeviceRegistered(client *whatsmeow.Client) bool {
-	return client != nil && client.Store != nil && client.Store.ID != nil
+	if client == nil {
+		fmt.Printf("DEBUG: IsDeviceRegistered - client is nil\n")
+		return false
+	}
+	if client.Store == nil {
+		fmt.Printf("DEBUG: IsDeviceRegistered - client.Store is nil\n")
+		return false
+	}
+	if client.Store.ID == nil {
+		fmt.Printf("DEBUG: IsDeviceRegistered - client.Store.ID is nil\n")
+		return false
+	}
+	fmt.Printf("DEBUG: IsDeviceRegistered - device is registered with ID: %s\n", client.Store.ID.String())
+	return true
 }
 
 func ValidateNonEmpty(value, fieldName string) error {

@@ -67,7 +67,7 @@ func (h *ChatwootHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName string)
 
 // SetChatwootConfig configura a integração Chatwoot para uma sessão
 // @Summary Configure Chatwoot integration
-// @Description Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When enabled=true, accountId, token, and url are required fields.
+// @Description Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When isActive=true, accountId, token, and url are required fields.
 // @Tags Chatwoot
 // @Accept json
 // @Produce json
@@ -291,8 +291,8 @@ func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
 	_, serviceExists := h.chatwootIntegration.GetService(sessionID)
 
 	response := &dto.ChatwootStatusResponse{
-		Enabled:       dbConfig.Enabled,
-		Connected:     serviceExists && dbConfig.Enabled && dbConfig.InboxId != nil,
+		Enabled:       dbConfig.IsActive,
+		Connected:     serviceExists && dbConfig.IsActive && dbConfig.InboxId != nil,
 		InboxName:     stringPtrToString(dbConfig.NameInbox),
 		MessagesCount: 0, /* TODO: calcular dinamicamente */
 		ContactsCount: 0, /* TODO: calcular dinamicamente */
@@ -410,7 +410,7 @@ func (h *ChatwootHandler) TestChatwootConnection(c *fiber.Ctx) error {
 	}
 
 	// Cria cliente temporário para teste
-	client := chatwoot.NewClient(req.URL, req.Token, req.AccountID)
+	client := chatwoot.NewClient(req.URL, req.Token, req.AccountID, nil)
 
 	// Testa conexão listando inboxes
 	inboxes, err := client.ListInboxes(c.Context())
@@ -453,7 +453,7 @@ func (h *ChatwootHandler) bindAndValidateRequest(c *fiber.Ctx, req interface{}) 
 
 func (h *ChatwootHandler) dtoToConfig(req *dto.ChatwootConfigRequest, sessionID string) *chatwoot.ChatwootConfig {
 	config := &chatwoot.ChatwootConfig{
-		Enabled:   req.Enabled != nil && *req.Enabled,
+		IsActive:  req.IsActive != nil && *req.IsActive,
 		AccountID: req.AccountID,
 		Token:     req.Token,
 		URL:       req.URL,
@@ -468,7 +468,6 @@ func (h *ChatwootHandler) dtoToConfig(req *dto.ChatwootConfigRequest, sessionID 
 		config.SignMsg = *req.SignMsg
 	}
 	config.SignDelimiter = req.SignDelimiter
-	config.Number = req.Number
 
 	if req.ReopenConversation != nil {
 		config.ReopenConversation = *req.ReopenConversation
@@ -514,11 +513,23 @@ func (h *ChatwootHandler) configToDTO(config *chatwoot.ChatwootConfig, sessionID
 	}
 
 	return &dto.ChatwootConfigResponse{
-		Enabled:   config.Enabled,
-		AccountID: config.AccountID,
-		URL:       config.URL,
-		NameInbox: config.NameInbox,
-		Number:    config.Number,
+		Enabled:                 config.IsActive,
+		AccountID:               config.AccountID,
+		URL:                     config.URL,
+		NameInbox:               config.NameInbox,
+		SignMsg:                 config.SignMsg,
+		SignDelimiter:           config.SignDelimiter,
+		Number:                  config.Number,
+		ReopenConversation:      config.ReopenConversation,
+		ConversationPending:     config.ConversationPending,
+		MergeBrazilContacts:     config.MergeBrazilContacts,
+		ImportContacts:          config.ImportContacts,
+		ImportMessages:          config.ImportMessages,
+		DaysLimitImportMessages: config.DaysLimitImportMessages,
+		AutoCreate:              config.AutoCreate,
+		Organization:            config.Organization,
+		Logo:                    config.Logo,
+		IgnoreJids:              config.IgnoreJids,
 		WebhookURL: func() string {
 			webhookURL := fmt.Sprintf("%s/chatwoot/webhook/%s", baseURL, url.QueryEscape(sessionIdentifier))
 			h.logger.Infof("DEBUG: Final webhook URL generated: %s", webhookURL)
@@ -529,31 +540,46 @@ func (h *ChatwootHandler) configToDTO(config *chatwoot.ChatwootConfig, sessionID
 
 func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPayload) *chatwoot.WebhookPayload {
 	payload := &chatwoot.WebhookPayload{
-		Event:             dtoPayload.Event,
-		ID:                dtoPayload.ID,
-		Content:           dtoPayload.Content,
-		Private:           dtoPayload.Private,
-		SourceID:          dtoPayload.SourceID,
-		ContentType:       dtoPayload.ContentType,
-		ContentAttributes: dtoPayload.ContentAttributes,
+		Event:   dtoPayload.Event,
+		Message: make(map[string]interface{}),
+	}
+
+	// Popula o map Message com os dados do DTO
+	if dtoPayload.ID != 0 {
+		payload.Message["id"] = dtoPayload.ID
+	}
+	if dtoPayload.Content != "" {
+		payload.Message["content"] = dtoPayload.Content
+	}
+	payload.Message["private"] = dtoPayload.Private
+	if dtoPayload.SourceID != "" {
+		payload.Message["source_id"] = dtoPayload.SourceID
+	}
+	if dtoPayload.ContentType != "" {
+		payload.Message["content_type"] = dtoPayload.ContentType
+	}
+	if dtoPayload.ContentAttributes != nil {
+		payload.Message["content_attributes"] = dtoPayload.ContentAttributes
 	}
 
 	// Converte MsgType (pode ser string ou int)
 	if dtoPayload.MsgType != nil {
 		switch v := dtoPayload.MsgType.(type) {
 		case string:
-			payload.MsgType = v
+			payload.Message["message_type"] = v
 		case float64:
-			if v == 0 {
-				payload.MsgType = "incoming"
-			} else if v == 1 {
-				payload.MsgType = "outgoing"
+			switch v {
+			case 0:
+				payload.Message["message_type"] = "incoming"
+			case 1:
+				payload.Message["message_type"] = "outgoing"
 			}
 		case int:
-			if v == 0 {
-				payload.MsgType = "incoming"
-			} else if v == 1 {
-				payload.MsgType = "outgoing"
+			switch v {
+			case 0:
+				payload.Message["message_type"] = "incoming"
+			case 1:
+				payload.Message["message_type"] = "outgoing"
 			}
 		}
 	}
@@ -563,14 +589,14 @@ func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPa
 		switch v := dtoPayload.CreatedAt.(type) {
 		case string:
 			if t, err := time.Parse(time.RFC3339, v); err == nil {
-				payload.CreatedAt = t
+				payload.Message["created_at"] = t
 			}
 		case float64:
-			payload.CreatedAt = time.Unix(int64(v), 0)
+			payload.Message["created_at"] = time.Unix(int64(v), 0)
 		case int64:
-			payload.CreatedAt = time.Unix(v, 0)
+			payload.Message["created_at"] = time.Unix(v, 0)
 		case int:
-			payload.CreatedAt = time.Unix(int64(v), 0)
+			payload.Message["created_at"] = time.Unix(int64(v), 0)
 		}
 	}
 
@@ -587,45 +613,35 @@ func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPa
 	}
 
 	if contact != nil {
-		payload.Contact = &chatwoot.Contact{
-			ID:               contact.ID,
-			Name:             contact.Name,
-			Avatar:           contact.Avatar,
-			AvatarURL:        contact.AvatarURL,
-			PhoneNumber:      contact.PhoneNumber,
-			Email:            contact.Email,
-			Identifier:       contact.Identifier,
-			Thumbnail:        contact.Thumbnail,
-			CustomAttributes: contact.CustomAttributes,
-		}
+		payload.Contact = make(map[string]interface{})
+		payload.Contact["id"] = contact.ID
+		payload.Contact["name"] = contact.Name
+		payload.Contact["phone_number"] = contact.PhoneNumber
+		payload.Contact["email"] = contact.Email
+		payload.Contact["identifier"] = contact.Identifier
 	}
 
 	if dtoPayload.Conversation != nil {
-		payload.Conversation = &chatwoot.Conversation{
-			ID:                   dtoPayload.Conversation.ID,
-			AccountID:            dtoPayload.Conversation.AccountID,
-			InboxID:              dtoPayload.Conversation.InboxID,
-			Status:               dtoPayload.Conversation.Status,
-			Timestamp:            dtoPayload.Conversation.Timestamp,
-			UnreadCount:          dtoPayload.Conversation.UnreadCount,
-			AdditionalAttributes: dtoPayload.Conversation.AdditionalAttributes,
-			CustomAttributes:     dtoPayload.Conversation.CustomAttributes,
-		}
+		payload.Conversation = make(map[string]interface{})
+		payload.Conversation["id"] = dtoPayload.Conversation.ID
+		payload.Conversation["inbox_id"] = dtoPayload.Conversation.InboxID
+		payload.Conversation["status"] = dtoPayload.Conversation.Status
 	}
 
-	// Converte anexos
-	for _, att := range dtoPayload.Attachments {
-		payload.Attachments = append(payload.Attachments, chatwoot.Attachment{
-			ID:        att.ID,
-			MessageID: att.MessageID,
-			FileType:  att.FileType,
-			AccountID: att.AccountID,
-			Extension: att.Extension,
-			DataURL:   att.DataURL,
-			ThumbURL:  att.ThumbURL,
-			FileSize:  att.FileSize,
-			Fallback:  att.Fallback,
-		})
+	// Converte anexos para o map Message
+	if len(dtoPayload.Attachments) > 0 {
+		attachments := make([]interface{}, 0, len(dtoPayload.Attachments))
+		for _, att := range dtoPayload.Attachments {
+			attachment := map[string]interface{}{
+				"id":        att.ID,
+				"file_type": att.FileType,
+				"data_url":  att.DataURL,
+				"file_size": int(att.FileSize), // Convert int64 to int
+				"fallback":  att.Fallback,
+			}
+			attachments = append(attachments, attachment)
+		}
+		payload.Message["attachments"] = attachments
 	}
 
 	return payload
@@ -682,13 +698,12 @@ func mustParseInt(s string) int {
 func (h *ChatwootHandler) configToDBModel(config *chatwoot.ChatwootConfig, sessionID string) *models.ChatwootModel {
 	model := &models.ChatwootModel{
 		SessionId:  sessionID,
-		Enabled:    config.Enabled,
-		Number:     config.Number,
+		IsActive:   config.IsActive,
 		SyncStatus: "pending",
 	}
 
 	// Campos opcionais (apenas se habilitado)
-	if config.Enabled {
+	if config.IsActive {
 		model.AccountId = &config.AccountID
 		model.Token = &config.Token
 		model.URL = &config.URL
@@ -704,8 +719,7 @@ func (h *ChatwootHandler) configToDBModel(config *chatwoot.ChatwootConfig, sessi
 // dbModelToConfig converte modelo do banco para configuração
 func (h *ChatwootHandler) dbModelToConfig(model *models.ChatwootModel) *chatwoot.ChatwootConfig {
 	config := &chatwoot.ChatwootConfig{
-		Enabled: model.Enabled,
-		Number:  model.Number,
+		IsActive: model.IsActive,
 	}
 
 	// Campos opcionais
@@ -722,7 +736,7 @@ func (h *ChatwootHandler) dbModelToConfig(model *models.ChatwootModel) *chatwoot
 		config.NameInbox = *model.NameInbox
 	}
 	// Extrair configurações do campo Config JSONB
-	if model.Config != nil && len(model.Config) > 0 {
+	if len(model.Config) > 0 {
 		var configData map[string]interface{}
 		configBytes, err := json.Marshal(model.Config)
 		if err == nil {
