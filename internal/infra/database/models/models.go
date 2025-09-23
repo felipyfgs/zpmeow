@@ -57,7 +57,7 @@ func (sa StringArray) Value() (driver.Value, error) {
 // ChatwootModel representa a configuração Chatwoot no banco de dados
 type ChatwootModel struct {
 	ID                      string      `db:"id" json:"id"`
-	SessionID               string      `db:"session_id" json:"session_id"`
+	SessionID               string      `db:"session_id" json:"session_id"` // UUID da sessão
 	Enabled                 bool        `db:"enabled" json:"enabled"`
 	AccountID               *string     `db:"account_id" json:"account_id"`
 	Token                   *string     `db:"token" json:"token"`
@@ -90,4 +90,115 @@ type ChatwootModel struct {
 
 func (ChatwootModel) TableName() string {
 	return "chatwoot"
+}
+
+// JSONB representa um campo JSONB do PostgreSQL
+type JSONB map[string]interface{}
+
+// Scan implementa o driver.Valuer interface para JSONB
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = JSONB{}
+		return nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		return json.Unmarshal(v, j)
+	case string:
+		return json.Unmarshal([]byte(v), j)
+	default:
+		return fmt.Errorf("cannot scan %T into JSONB", value)
+	}
+}
+
+// Value implementa o driver.Valuer interface para JSONB
+func (j JSONB) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return "{}", nil
+	}
+	return json.Marshal(j)
+}
+
+// ChatModel representa um chat/conversa no banco de dados
+type ChatModel struct {
+	ID                     string     `db:"id" json:"id"`
+	SessionID              string     `db:"session_id" json:"session_id"`
+	ChatJID                string     `db:"chat_jid" json:"chat_jid"`
+	ChatName               *string    `db:"chat_name" json:"chat_name"`
+	ChatType               string     `db:"chat_type" json:"chat_type"`
+	PhoneNumber            *string    `db:"phone_number" json:"phone_number"`
+	IsGroup                bool       `db:"is_group" json:"is_group"`
+	GroupSubject           *string    `db:"group_subject" json:"group_subject"`
+	GroupDescription       *string    `db:"group_description" json:"group_description"`
+	ChatwootConversationID *int64     `db:"chatwoot_conversation_id" json:"chatwoot_conversation_id"`
+	ChatwootContactID      *int64     `db:"chatwoot_contact_id" json:"chatwoot_contact_id"`
+	LastMessageAt          *time.Time `db:"last_message_at" json:"last_message_at"`
+	UnreadCount            int        `db:"unread_count" json:"unread_count"`
+	IsArchived             bool       `db:"is_archived" json:"is_archived"`
+	Metadata               JSONB      `db:"metadata" json:"metadata"`
+	CreatedAt              time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt              time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+func (ChatModel) TableName() string {
+	return "chats"
+}
+
+// MessageModel representa uma mensagem no banco de dados
+type MessageModel struct {
+	ID                 string     `db:"id" json:"id"`
+	ChatID             string     `db:"chat_id" json:"chat_id"`
+	SessionID          string     `db:"session_id" json:"session_id"`
+	WhatsAppMessageID  string     `db:"whatsapp_message_id" json:"whatsapp_message_id"`
+	MessageType        string     `db:"message_type" json:"message_type"`
+	Content            *string    `db:"content" json:"content"`
+	MediaURL           *string    `db:"media_url" json:"media_url"`
+	MediaMimeType      *string    `db:"media_mime_type" json:"media_mime_type"`
+	MediaSize          *int64     `db:"media_size" json:"media_size"`
+	MediaFilename      *string    `db:"media_filename" json:"media_filename"`
+	ThumbnailURL       *string    `db:"thumbnail_url" json:"thumbnail_url"`
+	SenderJID          string     `db:"sender_jid" json:"sender_jid"`
+	SenderName         *string    `db:"sender_name" json:"sender_name"`
+	IsFromMe           bool       `db:"is_from_me" json:"is_from_me"`
+	IsForwarded        bool       `db:"is_forwarded" json:"is_forwarded"`
+	IsBroadcast        bool       `db:"is_broadcast" json:"is_broadcast"`
+	QuotedMessageID    *string    `db:"quoted_message_id" json:"quoted_message_id"`
+	QuotedContent      *string    `db:"quoted_content" json:"quoted_content"`
+	Status             string     `db:"status" json:"status"`
+	Timestamp          time.Time  `db:"timestamp" json:"timestamp"`
+	EditTimestamp      *time.Time `db:"edit_timestamp" json:"edit_timestamp"`
+	IsDeleted          bool       `db:"is_deleted" json:"is_deleted"`
+	DeletedAt          *time.Time `db:"deleted_at" json:"deleted_at"`
+	Reaction           *string    `db:"reaction" json:"reaction"`
+	Metadata           JSONB      `db:"metadata" json:"metadata"`
+	CreatedAt          time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+func (MessageModel) TableName() string {
+	return "messages"
+}
+
+// ZpCwMessageModel representa a relação entre mensagens zpmeow e Chatwoot
+type ZpCwMessageModel struct {
+	ID                      string     `db:"id" json:"id"`
+	SessionID               string     `db:"session_id" json:"session_id"`
+	ZpmeowMessageID         string     `db:"zpmeow_message_id" json:"zpmeow_message_id"`
+	ChatwootMessageID       int64      `db:"chatwoot_message_id" json:"chatwoot_message_id"`
+	ChatwootConversationID  int64      `db:"chatwoot_conversation_id" json:"chatwoot_conversation_id"`
+	ChatwootAccountID       int64      `db:"chatwoot_account_id" json:"chatwoot_account_id"`
+	Direction               string     `db:"direction" json:"direction"`
+	SyncStatus              string     `db:"sync_status" json:"sync_status"`
+	SyncError               *string    `db:"sync_error" json:"sync_error"`
+	LastSyncAt              *time.Time `db:"last_sync_at" json:"last_sync_at"`
+	ChatwootSourceID        *string    `db:"chatwoot_source_id" json:"chatwoot_source_id"`
+	ChatwootEchoID          *string    `db:"chatwoot_echo_id" json:"chatwoot_echo_id"`
+	Metadata                JSONB      `db:"metadata" json:"metadata"`
+	CreatedAt               time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt               time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+func (ZpCwMessageModel) TableName() string {
+	return "zp_cw_messages"
 }

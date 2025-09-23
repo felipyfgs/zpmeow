@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"time"
 
 	"zpmeow/internal/domain/session"
@@ -94,7 +95,20 @@ func (q *qrCodeGenerator) DisplayQRCodeInTerminal(qrCode, sessionID string) {
 	}
 
 	q.logger.Infof("QR Code for session %s:", sessionID)
-	qrterminal.Generate(qrCode, qrterminal.L, nil)
+
+	// Adicionar defer para capturar panics
+	defer func() {
+		if r := recover(); r != nil {
+			q.logger.Errorf("Panic in DisplayQRCodeInTerminal for session %s: %v", sessionID, r)
+		}
+	}()
+
+	// Tentar gerar o QR code no terminal com tamanho reduzido (metade do tamanho)
+	q.logger.Infof("Generating compact QR code in terminal for session %s", sessionID)
+
+	// Usar GenerateHalfBlock para QR code com metade do tamanho (como na wuzapi)
+	qrterminal.GenerateHalfBlock(qrCode, qrterminal.L, os.Stdout)
+	q.logger.Infof("QR code generation completed for session %s", sessionID)
 }
 
 type sessionManager struct {

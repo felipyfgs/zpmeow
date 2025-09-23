@@ -28,7 +28,6 @@ import (
 	"zpmeow/internal/application"
 	"zpmeow/internal/config"
 	"zpmeow/internal/domain/session"
-	"zpmeow/internal/infra/cache"
 	"zpmeow/internal/infra/chatwoot"
 	"zpmeow/internal/infra/database"
 	"zpmeow/internal/infra/database/repository"
@@ -95,20 +94,8 @@ func main() {
 		log.Fatalf("Failed to create whatsmeow container: %v", err)
 	}
 
-	cacheService, err := cache.NewRedisService(cfg.GetCache())
-	if err != nil {
-		log.Fatalf("Failed to initialize cache service: %v", err)
-	}
-	defer func() {
-		if closer, ok := cacheService.(*cache.RedisService); ok {
-			if err := closer.Close(); err != nil {
-				log.Errorf("Error closing cache service: %v", err)
-			}
-		}
-	}()
-
-	baseSessionRepo := repository.NewPostgresRepo(db)
-	sessionRepo := cache.NewCachedSessionRepository(baseSessionRepo, cacheService)
+	// Session repository (direct, without cache)
+	sessionRepo := repository.NewPostgresRepo(db)
 
 	_ = webhooks.NewService()
 
@@ -119,10 +106,11 @@ func main() {
 	chatwootRepo := repository.NewChatwootRepository(db)
 	chatwootIntegration := chatwoot.NewIntegration(chatwootLogger)
 
-	// Carregar configurações existentes do Chatwoot
-	if err := loadChatwootConfigurations(context.Background(), chatwootIntegration, chatwootRepo, chatwootLogger); err != nil {
-		log.Errorf("Failed to load Chatwoot configurations: %v", err)
-	}
+	// REMOVIDO: Não carregar configurações automaticamente no startup
+	// As configurações do Chatwoot devem ser criadas apenas via API manual
+	// if err := loadChatwootConfigurations(context.Background(), chatwootIntegration, chatwootRepo, sessionRepo, chatwootLogger); err != nil {
+	//     log.Errorf("Failed to load Chatwoot configurations: %v", err)
+	// }
 
 	// Criar wmeowService com integração Chatwoot
 	wmeowService := wmeow.NewMeowServiceWithChatwoot(container, waLogger, sessionRepo, chatwootIntegration, chatwootRepo)
@@ -151,7 +139,7 @@ func main() {
 	appChatService := application.NewChatApp(sessionRepo, wmeowService)
 	appGroupService := application.NewGroupApp(sessionRepo, wmeowService)
 
-	healthHandler := handlers.NewHealthHandlerWithCache(db, cacheService)
+	healthHandler := handlers.NewHealthHandler(db)
 	sessionHandler := handlers.NewSessionHandler(appSessionService, wmeowService)
 	messageHandler := handlers.NewMessageHandler(appSessionService, wmeowService)
 	privacyHandler := handlers.NewPrivacyHandler(appSessionService, wmeowService)
@@ -220,8 +208,11 @@ func main() {
 	log.Info("Server exited")
 }
 
-// loadChatwootConfigurations carrega todas as configurações habilitadas do Chatwoot na inicialização
-func loadChatwootConfigurations(ctx context.Context, integration *chatwoot.Integration, repo *repository.ChatwootRepository, logger *slog.Logger) error {
+// FUNÇÃO REMOVIDA: loadChatwootConfigurations
+// Esta função foi removida para evitar criação automática de configurações Chatwoot no startup.
+// As configurações devem ser criadas apenas via API manual.
+/*
+func loadChatwootConfigurations(ctx context.Context, integration *chatwoot.Integration, repo *repository.ChatwootRepository, sessionRepo session.Repository, logger *slog.Logger) error {
 	// Busca todas as configurações habilitadas
 	enabled := true
 	configs, err := repo.List(ctx, &enabled)
@@ -264,16 +255,28 @@ func loadChatwootConfigurations(ctx context.Context, integration *chatwoot.Integ
 			config.NameInbox = *dbConfig.NameInbox
 		}
 
-		// Registra a configuração na integração
-		if err := integration.RegisterInstance(dbConfig.SessionID, config); err != nil {
+		// Busca a sessão pelo ID para obter o nome
+		session, err := sessionRepo.GetByID(ctx, dbConfig.SessionID)
+		if err != nil {
+			logger.Error("Failed to get session for Chatwoot config",
+				"sessionID", dbConfig.SessionID,
+				"error", err)
+			continue
+		}
+
+		// Registra a configuração na integração usando o nome da sessão
+		sessionName := session.Name().Value()
+		if err := integration.RegisterInstance(sessionName, config); err != nil {
 			logger.Error("Failed to register Chatwoot instance",
 				"sessionID", dbConfig.SessionID,
+				"sessionName", sessionName,
 				"error", err)
 			continue
 		}
 
 		logger.Info("Chatwoot configuration loaded",
 			"sessionID", dbConfig.SessionID,
+			"sessionName", sessionName,
 			"accountID", dbConfig.AccountID,
 			"url", dbConfig.URL)
 	}
@@ -281,3 +284,4 @@ func loadChatwootConfigurations(ctx context.Context, integration *chatwoot.Integ
 	logger.Info("Chatwoot configurations loaded successfully", "loaded", len(configs))
 	return nil
 }
+*/

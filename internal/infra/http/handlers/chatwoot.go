@@ -338,15 +338,22 @@ func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /chatwoot/webhook/{sessionId} [post]
 func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
-	sessionID := c.Params("sessionId")
-	if sessionID == "" {
+	sessionIDOrName := c.Params("sessionId")
+	if sessionIDOrName == "" {
 		h.logger.Error("Session ID is required")
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, "VALIDATION_ERROR", "Session ID is required", nil)
 	}
 
 	// Decodifica o sessionID se necessário
-	if decodedSessionID, err := url.QueryUnescape(sessionID); err == nil {
-		sessionID = decodedSessionID
+	if decodedSessionID, err := url.QueryUnescape(sessionIDOrName); err == nil {
+		sessionIDOrName = decodedSessionID
+	}
+
+	// Resolve sessionID ou nome para o UUID real
+	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
+	if err != nil {
+		h.logger.Errorf("Failed to resolve session ID %s: %v", sessionIDOrName, err)
+		return h.SendErrorResponse(c, fiber.StatusNotFound, "SESSION_NOT_FOUND", "Session not found", err)
 	}
 
 	// Log do payload bruto para debug
@@ -514,12 +521,16 @@ func (h *ChatwootHandler) dtoToConfig(req *dto.ChatwootConfigRequest, sessionID 
 
 func (h *ChatwootHandler) configToDTO(config *chatwoot.ChatwootConfig, sessionID string, c *fiber.Ctx) *dto.ChatwootConfigResponse {
 	baseURL := h.getBaseURL(c)
+	h.logger.Infof("DEBUG: Base URL obtained: %s", baseURL)
 
-	// Buscar o nome da sessão
+	// Buscar o nome da sessão para usar no webhook (como faz a Evolution API)
 	session, err := h.sessionService.GetSession(c.Context(), sessionID)
-	sessionName := sessionID // fallback para o UUID se não conseguir buscar o nome
+	sessionIdentifier := sessionID // fallback para o UUID se não conseguir buscar o nome
 	if err == nil && session != nil {
-		sessionName = session.Name().Value()
+		sessionIdentifier = session.Name().Value()
+		h.logger.Infof("DEBUG: Using session name as identifier: %s", sessionIdentifier)
+	} else {
+		h.logger.Infof("DEBUG: Using session UUID as identifier: %s", sessionIdentifier)
 	}
 
 	return &dto.ChatwootConfigResponse{
@@ -540,7 +551,11 @@ func (h *ChatwootHandler) configToDTO(config *chatwoot.ChatwootConfig, sessionID
 		Organization:                config.Organization,
 		Logo:                        config.Logo,
 		IgnoreJids:                  config.IgnoreJids,
-		WebhookURL:                  fmt.Sprintf("%s/chatwoot/webhook/%s", baseURL, sessionName),
+		WebhookURL:                  func() string {
+			webhookURL := fmt.Sprintf("%s/chatwoot/webhook/%s", baseURL, url.QueryEscape(sessionIdentifier))
+			h.logger.Infof("DEBUG: Final webhook URL generated: %s", webhookURL)
+			return webhookURL
+		}(),
 	}
 }
 
@@ -649,19 +664,25 @@ func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPa
 }
 
 func (h *ChatwootHandler) getBaseURL(c *fiber.Ctx) string {
-	// Use PUBLIC_HOST environment variable if set, otherwise fallback to request host
-	if publicHost := os.Getenv("PUBLIC_HOST"); publicHost != "" {
+	// Use SERVER_HOST environment variable if set, otherwise fallback to request host
+	if serverHost := os.Getenv("SERVER_HOST"); serverHost != "" {
+		h.logger.Infof("DEBUG: SERVER_HOST found: %s", serverHost)
 		scheme := "http"
-		if strings.Contains(publicHost, "https://") {
-			return publicHost
+		if strings.Contains(serverHost, "https://") {
+			h.logger.Infof("DEBUG: Using HTTPS scheme from SERVER_HOST")
+			return serverHost
 		}
-		if strings.Contains(publicHost, "://") {
-			return publicHost
+		if strings.Contains(serverHost, "://") {
+			h.logger.Infof("DEBUG: Using scheme from SERVER_HOST: %s", serverHost)
+			return serverHost
 		}
-		return fmt.Sprintf("%s://%s", scheme, publicHost)
+		finalURL := fmt.Sprintf("%s://%s", scheme, serverHost)
+		h.logger.Infof("DEBUG: Generated base URL: %s", finalURL)
+		return finalURL
 	}
 
 	// Fallback to request host
+	h.logger.Warnf("DEBUG: SERVER_HOST not found, using request host fallback")
 	scheme := "http"
 	if c.Protocol() == "https" {
 		scheme = "https"
@@ -676,7 +697,9 @@ func (h *ChatwootHandler) getBaseURL(c *fiber.Ctx) string {
 		host = forwarded
 	}
 
-	return fmt.Sprintf("%s://%s", scheme, host)
+	fallbackURL := fmt.Sprintf("%s://%s", scheme, host)
+	h.logger.Infof("DEBUG: Fallback URL generated: %s", fallbackURL)
+	return fallbackURL
 }
 
 func mustParseInt(s string) int {

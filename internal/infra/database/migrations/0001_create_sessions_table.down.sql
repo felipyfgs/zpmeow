@@ -1,15 +1,13 @@
--- =============================================================================
--- Sessions Table - Rollback Migration
--- =============================================================================
--- This migration completely removes the sessions table and all related objects
+-- Drop trigger
+DROP TRIGGER IF EXISTS trigger_sessions_updated_at ON sessions;
 
--- Drop indexes first (if they exist)
+-- Drop function
+DROP FUNCTION IF EXISTS update_sessions_updated_at();
+
+-- Drop indexes
+DROP INDEX IF EXISTS idx_sessions_name;
 DROP INDEX IF EXISTS idx_sessions_apikey;
+DROP INDEX IF EXISTS idx_sessions_status;
 
--- Drop constraints (if they exist)
-ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS unique_session_name;
-
--- Drop the table completely
+-- Drop table
 DROP TABLE IF EXISTS sessions;
-
--- Note: This will permanently delete all session data!

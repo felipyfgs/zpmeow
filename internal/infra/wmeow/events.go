@@ -580,28 +580,32 @@ func (ep *EventProcessor) normalizeMessage(msg *events.Message) *events.Message 
 }
 
 func (ep *EventProcessor) handleConnected(evt interface{}) {
-	webhookPayload := map[string]interface{}{
-		"event":     "Connected",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      evt,
-	}
+	if ep.webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "Connected",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      evt,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send webhook: %v", err)
+		}
 	}
 }
 
 func (ep *EventProcessor) handleDisconnected(evt interface{}) {
-	webhookPayload := map[string]interface{}{
-		"event":     "Disconnected",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      evt,
-	}
+	if ep.webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "Disconnected",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      evt,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send webhook: %v", err)
+		}
 	}
 }
 
@@ -609,15 +613,20 @@ func (ep *EventProcessor) handleQR(evt interface{}) {
 	qr := evt.(*events.QR)
 	ep.logger.Infof("QR code generated for session %s", ep.sessionID)
 
-	webhookPayload := map[string]interface{}{
-		"event":     "QR",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      qr,
-	}
+	// Só tenta enviar webhook se a URL estiver configurada
+	if ep.webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "QR",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      qr,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send webhook: %v", err)
+		}
+	} else {
+		ep.logger.Debugf("No webhook URL configured for session %s, skipping QR webhook", ep.sessionID)
 	}
 }
 

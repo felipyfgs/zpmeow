@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -528,10 +529,22 @@ func (s *Service) initializeInbox(ctx context.Context) error {
 
 // createInbox cria uma nova inbox API
 func (s *Service) createInbox(ctx context.Context) error {
-	// Usa WebhookURL da configuração se disponível, senão usa um placeholder
+	// Usa WebhookURL da configuração se disponível, senão usa SERVER_HOST
 	webhookURL := s.config.WebhookURL
 	if webhookURL == "" {
-		webhookURL = "http://localhost:8080/chatwoot/webhook" // Placeholder que será atualizado
+		// Usa SERVER_HOST do .env ao invés de localhost
+		serverHost := os.Getenv("SERVER_HOST")
+		if serverHost == "" {
+			serverHost = "localhost:8080" // Fallback apenas se SERVER_HOST não estiver definido
+		}
+
+		// Adiciona esquema se não estiver presente
+		if !strings.HasPrefix(serverHost, "http://") && !strings.HasPrefix(serverHost, "https://") {
+			serverHost = fmt.Sprintf("http://%s", serverHost)
+		}
+
+		webhookURL = fmt.Sprintf("%s/chatwoot/webhook/%s", serverHost, s.sessionID)
+		s.logger.Info("Generated webhook URL from SERVER_HOST", "webhook", webhookURL, "server_host", os.Getenv("SERVER_HOST"))
 	}
 
 	req := InboxCreateRequest{

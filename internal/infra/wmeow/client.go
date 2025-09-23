@@ -356,11 +356,19 @@ func (c *WameowClient) handleExistingDeviceConnection() {
 }
 
 func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
+	if qrChan == nil {
+		c.logger.Errorf("QR channel is nil for session %s", c.sessionID)
+		return
+	}
+
 	c.mu.Lock()
 	c.qrLoopActive = true
 	c.mu.Unlock()
 
 	defer func() {
+		if r := recover(); r != nil {
+			c.logger.Errorf("QR loop panic for session %s: %v", c.sessionID, r)
+		}
 		c.mu.Lock()
 		c.qrLoopActive = false
 		c.mu.Unlock()
@@ -380,7 +388,9 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 			if !ok {
 				c.logger.Infof("QR channel closed for session %s", c.sessionID)
 				c.setStatus(session.StatusDisconnected)
-				c.sessionManager.UpdateQRCode(c.sessionID, "")
+				if c.sessionManager != nil {
+					c.sessionManager.UpdateQRCode(c.sessionID, "")
+				}
 				return
 			}
 
@@ -388,14 +398,20 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 			case "code":
 				c.mu.Lock()
 				c.qrCode = evt.Code
-				c.qrCodeBase64 = c.qrGenerator.GenerateQRCodeImage(evt.Code)
+				if c.qrGenerator != nil {
+					c.qrCodeBase64 = c.qrGenerator.GenerateQRCodeImage(evt.Code)
+				}
 				c.mu.Unlock()
 
-				c.qrGenerator.DisplayQRCodeInTerminal(evt.Code, c.sessionID)
+				if c.qrGenerator != nil {
+					c.qrGenerator.DisplayQRCodeInTerminal(evt.Code, c.sessionID)
+				}
 				c.logger.Infof("QR code generated for session %s", c.sessionID)
 				c.setStatus(session.StatusConnecting)
 
-				c.sessionManager.UpdateQRCode(c.sessionID, evt.Code)
+				if c.sessionManager != nil {
+					c.sessionManager.UpdateQRCode(c.sessionID, evt.Code)
+				}
 
 			case "success":
 				c.logger.Infof("QR code scanned successfully for session %s", c.sessionID)
@@ -413,7 +429,9 @@ func (c *WameowClient) handleQRLoop(qrChan <-chan whatsmeow.QRChannelItem) {
 
 				c.setStatus(session.StatusDisconnected)
 
-				c.sessionManager.UpdateQRCode(c.sessionID, "")
+				if c.sessionManager != nil {
+					c.sessionManager.UpdateQRCode(c.sessionID, "")
+				}
 				return
 
 			default:
@@ -440,6 +458,17 @@ func (c *WameowClient) stopQRLoop() {
 }
 
 func (c *WameowClient) persistQRSuccess() {
+	defer func() {
+		if r := recover(); r != nil {
+			c.logger.Errorf("Panic in persistQRSuccess for session %s: %v", c.sessionID, r)
+		}
+	}()
+
+	if c.sessionManager == nil {
+		c.logger.Errorf("Session manager is nil for session %s", c.sessionID)
+		return
+	}
+
 	sessionEntity, err := c.sessionManager.GetSession(c.sessionID)
 	if err != nil {
 		c.logger.Errorf("Failed to get session %s from database: %v", c.sessionID, err)
@@ -447,7 +476,7 @@ func (c *WameowClient) persistQRSuccess() {
 	}
 
 	var deviceJID string
-	if c.client != nil && c.client.Store.ID != nil {
+	if c.client != nil && c.client.Store != nil && c.client.Store.ID != nil {
 		deviceJID = c.client.Store.ID.String()
 	}
 
@@ -463,6 +492,16 @@ func (c *WameowClient) persistQRSuccess() {
 	err = sessionEntity.SetConnected()
 	if err != nil {
 		c.logger.Errorf("Failed to set session %s as connected: %v", c.sessionID, err)
+		return
+	}
+
+	// IMPORTANTE: Salvar as mudanças no banco de dados
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = c.sessionManager.sessionRepo.Update(ctx, sessionEntity)
+	if err != nil {
+		c.logger.Errorf("Failed to save session %s to database: %v", c.sessionID, err)
 		return
 	}
 
