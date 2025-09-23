@@ -62,6 +62,8 @@ import (
 // @tag.description Newsletter management and broadcasting endpoints
 // @tag.name Webhooks
 // @tag.description Webhook configuration and event management endpoints
+// @tag.name Chatwoot
+// @tag.description Chatwoot integration and configuration endpoints
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -104,7 +106,9 @@ func main() {
 	// Chatwoot integration (criar antes do wmeowService)
 	chatwootLogger := slog.Default().With("component", "chatwoot")
 	chatwootRepo := repository.NewChatwootRepository(db)
-	chatwootIntegration := chatwoot.NewIntegration(chatwootLogger)
+	messageRepo := repository.NewMessageRepository(db)
+	zpCwRepo := repository.NewZpCwMessageRepository(db)
+	chatwootIntegration := chatwoot.NewIntegration(chatwootLogger, messageRepo, zpCwRepo)
 
 	// REMOVIDO: Não carregar configurações automaticamente no startup
 	// As configurações do Chatwoot devem ser criadas apenas via API manual
@@ -113,7 +117,7 @@ func main() {
 	// }
 
 	// Criar wmeowService com integração Chatwoot
-	wmeowService := wmeow.NewMeowServiceWithChatwoot(container, waLogger, sessionRepo, chatwootIntegration, chatwootRepo)
+	wmeowService := wmeow.NewMeowServiceWithChatwoot(container, waLogger, sessionRepo, chatwootIntegration, chatwootRepo, db)
 
 	domainService := session.NewService()
 

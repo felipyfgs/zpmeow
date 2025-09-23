@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"zpmeow/internal/application/ports"
+	"zpmeow/internal/infra/database/models"
+	"zpmeow/internal/infra/database/repository"
 )
 
 // Service representa o serviço de integração Chatwoot
@@ -30,10 +32,12 @@ type Service struct {
 	inbox           *Inbox
 	whatsappService ports.WhatsAppService
 	sessionID       string
+	messageRepo     *repository.MessageRepository
+	zpCwRepo        *repository.ZpCwMessageRepository
 }
 
 // NewService cria uma nova instância do serviço Chatwoot
-func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService ports.WhatsAppService, sessionID string) (*Service, error) {
+func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService ports.WhatsAppService, sessionID string, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository) (*Service, error) {
 	if !config.Enabled {
 		return nil, fmt.Errorf("chatwoot integration is disabled")
 	}
@@ -48,6 +52,8 @@ func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService por
 		cacheMutex:      sync.RWMutex{},
 		whatsappService: whatsappService,
 		sessionID:       sessionID,
+		messageRepo:     messageRepo,
+		zpCwRepo:        zpCwRepo,
 	}
 
 	// Inicializa a inbox
@@ -91,7 +97,7 @@ func (s *Service) getContentTypeFromWhatsAppMessage(msg *WhatsAppMessage) string
 }
 
 // formatMessageContentByType formata o conteúdo da mensagem baseado no tipo
-func (s *Service) formatMessageContentByType(msg *WhatsAppMessage, isGroup bool) string {
+func (s *Service) _formatMessageContentByType(msg *WhatsAppMessage, isGroup bool) string {
 	switch msg.Type {
 	case "text", "extendedTextMessage":
 		return s.formatTextMessage(msg, isGroup)
@@ -187,7 +193,7 @@ func (s *Service) formatContactMessage(msg *WhatsAppMessage, isGroup bool) strin
 }
 
 // processMediaAttachment processa anexos de mídia para o Chatwoot
-func (s *Service) processMediaAttachment(ctx context.Context, msg *WhatsAppMessage) map[string]interface{} {
+func (s *Service) processMediaAttachment(_ context.Context, msg *WhatsAppMessage) map[string]interface{} {
 	contentAttributes := make(map[string]interface{})
 
 	// Adiciona informações de mídia se disponível
@@ -292,39 +298,6 @@ func (s *Service) sendMediaToChatwoot(ctx context.Context, conversationId int, m
 
 	// Envia como anexo para o Chatwoot
 	return s.sendMediaAttachmentToChatwoot(ctx, conversationId, mediaData, fileName, finalMimeType, msg.Body, messageType, sourceID)
-}
-
-// downloadMediaFromWhatsApp faz download da mídia do WhatsApp
-func (s *Service) downloadMediaFromWhatsApp(ctx context.Context, mediaURL string) ([]byte, error) {
-	if mediaURL == "" {
-		return nil, fmt.Errorf("media URL is empty")
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", mediaURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download media: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to download media: status %d", resp.StatusCode)
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read media data: %w", err)
-	}
-
-	return data, nil
 }
 
 // getMediaFileName determina o nome do arquivo baseado no tipo de mídia
@@ -583,7 +556,7 @@ func (s *Service) setCache(key string, value interface{}) {
 // findOrCreateContact encontra ou cria um contato
 func (s *Service) findOrCreateContact(ctx context.Context, phoneNumber, name, avatarURL string, isGroup bool) (*Contact, error) {
 	cacheKey := fmt.Sprintf("contact:%s", phoneNumber)
-	
+
 	// Verifica cache primeiro
 	if cached, exists := s.getFromCache(cacheKey); exists {
 		if contact, ok := cached.(*Contact); ok {
@@ -736,7 +709,7 @@ func (s *Service) findBestMatchContact(contacts []Contact, query string) *Contac
 }
 
 // handleBrazilianContacts lida com contatos brasileiros (com e sem 9º dígito)
-func (s *Service) handleBrazilianContacts(contacts []Contact, query string) *Contact {
+func (s *Service) handleBrazilianContacts(contacts []Contact, _ string) *Contact {
 	// Procura contato com número de 14 dígitos (com 9º dígito)
 	var contactWith9 *Contact
 	var contactWithout9 *Contact
@@ -787,7 +760,7 @@ func (s *Service) getPhoneNumberVariations(phoneNumber string) []string {
 // findOrCreateConversation encontra ou cria uma conversa
 func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact) (*Conversation, error) {
 	cacheKey := fmt.Sprintf("conversation:%d:%d", contact.ID, s.inbox.ID)
-	
+
 	// Verifica cache primeiro
 	if cached, exists := s.getFromCache(cacheKey); exists {
 		if conversation, ok := cached.(*Conversation); ok {
@@ -860,7 +833,7 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"phone_number", phoneNumber,
 		"is_group", isGroup,
 		"original_from", msg.From)
-	
+
 	var contactName string
 	if isGroup {
 		contactName = fmt.Sprintf("%s (GROUP)", msg.ChatName)
@@ -915,7 +888,7 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 	contentType := s.getContentTypeFromWhatsAppMessage(msg)
 
 	// Processa conteúdo da mensagem baseado no tipo
-	content := s.formatMessageContentByType(msg, isGroup)
+	content := s._formatMessageContentByType(msg, isGroup)
 
 	s.logger.Info("📝 FORMATTED MESSAGE CONTENT",
 		"original_body", msg.Body,
@@ -929,9 +902,9 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 
 	// Cria mensagem no Chatwoot
 	msgReq := MessageCreateRequest{
-		Content:     content,
-		MessageType: messageType,
-		SourceID:    fmt.Sprintf("WAID:%s", msg.ID),
+		Content:  content,
+		MsgType:  messageType,
+		SourceID: fmt.Sprintf("WAID:%s", msg.ID),
 	}
 
 	// Define atributos de conteúdo
@@ -1009,6 +982,15 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"has_media", isMediaMessage,
 		"media_type", msg.Type)
 
+	// Salvar relação zpmeow-chatwoot
+	if err := s.saveZpCwRelation(ctx, msg, chatwootMsg, conversation); err != nil {
+		s.logger.Error("❌ FAILED TO SAVE ZP-CW RELATION",
+			"error", err,
+			"zpmeow_message_id", msg.ID,
+			"chatwoot_message_id", chatwootMsg.ID)
+		// Não retorna erro para não quebrar o fluxo principal
+	}
+
 	return nil
 }
 
@@ -1048,51 +1030,6 @@ func (s *Service) extractPhoneNumber(jid string) string {
 }
 
 // formatMessageContent formata o conteúdo da mensagem para o Chatwoot
-func (s *Service) formatMessageContent(msg *WhatsAppMessage, isGroup bool) string {
-	content := msg.Body
-
-	// Para grupos, adiciona informações do participante
-	if isGroup && !msg.FromMe {
-		participantPhone := s.extractPhoneNumber(msg.Participant)
-		participantName := msg.PushName
-		if participantName == "" {
-			participantName = participantPhone
-		}
-		
-		// Formata número brasileiro se aplicável
-		formattedPhone := s.formatBrazilianPhone(participantPhone)
-		content = fmt.Sprintf("**%s - %s:**\n\n%s", formattedPhone, participantName, content)
-	}
-
-	// Converte formatação do WhatsApp para Markdown
-	content = s.convertWhatsAppFormatting(content)
-
-	return content
-}
-
-// formatBrazilianPhone formata número brasileiro
-func (s *Service) formatBrazilianPhone(phone string) string {
-	if len(phone) == 13 && strings.HasPrefix(phone, "55") {
-		// Formato: 5511999999999 -> +55 (11) 99999-9999
-		return fmt.Sprintf("+%s (%s) %s-%s", 
-			phone[:2], phone[2:4], phone[4:9], phone[9:])
-	}
-	return fmt.Sprintf("+%s", phone)
-}
-
-// convertWhatsAppFormatting converte formatação do WhatsApp para Markdown
-func (s *Service) convertWhatsAppFormatting(text string) string {
-	// *texto* -> **texto** (negrito)
-	text = regexp.MustCompile(`\*([^*\n]+)\*`).ReplaceAllString(text, "**$1**")
-	
-	// _texto_ -> *texto* (itálico)
-	text = regexp.MustCompile(`_([^_\n]+)_`).ReplaceAllString(text, "*$1*")
-	
-	// ~texto~ -> ~~texto~~ (riscado)
-	text = regexp.MustCompile(`~([^~\n]+)~`).ReplaceAllString(text, "~~$1~~")
-	
-	return text
-}
 
 // ProcessWebhook processa webhooks recebidos do Chatwoot
 func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) error {
@@ -1102,7 +1039,7 @@ func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) e
 
 	s.logger.Info("🔄 Processing Chatwoot webhook",
 		"event", payload.Event,
-		"message_type", payload.MessageType,
+		"message_type", payload.MsgType,
 		"content", payload.Content,
 		"source_id", payload.SourceID,
 		"private", payload.Private)
@@ -1128,14 +1065,14 @@ func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) e
 	}
 
 	// Processa apenas mensagens de saída (outgoing) de agentes
-	if payload.Event == "message_created" && payload.MessageType == "outgoing" {
+	if payload.Event == "message_created" && payload.MsgType == "outgoing" {
 		s.logger.Info("✅ Processing outgoing message for WhatsApp")
 		return s.processOutgoingMessage(ctx, payload)
 	}
 
 	s.logger.Info("⏭️ Skipping webhook - not an outgoing message",
 		"event", payload.Event,
-		"message_type", payload.MessageType)
+		"message_type", payload.MsgType)
 	return nil
 }
 
@@ -1171,7 +1108,7 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 		"session_id", s.sessionID,
 		"whatsapp_service_available", s.whatsappService != nil,
 		"conversationID", payload.Conversation.ID,
-		"messageType", payload.MessageType)
+		"messageType", payload.MsgType)
 
 	// Envia mensagem via WhatsApp usando o serviço zpmeow
 	if s.whatsappService != nil {
@@ -1341,45 +1278,67 @@ func (s *Service) downloadAttachment(ctx context.Context, dataURL string) ([]byt
 }
 
 // sendMediaMessage envia mensagens de mídia baseado no tipo de conteúdo (mantido para compatibilidade)
-func (s *Service) sendMediaMessage(ctx context.Context, phoneNumber string, payload *WebhookPayload) (interface{}, error) {
-	s.logger.Info("📎 SENDING MEDIA MESSAGE",
-		"content_type", payload.ContentType,
-		"to", phoneNumber)
 
-	// Por enquanto, para tipos de mídia que não conseguimos processar diretamente,
-	// enviamos como mensagem de texto com descrição
-	switch payload.ContentType {
-	case "image":
-		// TODO: Implementar download e envio de imagem
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("📷 Imagem enviada\n\n%s", payload.Content))
-	case "audio":
-		// TODO: Implementar download e envio de áudio
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("🎵 Áudio enviado\n\n%s", payload.Content))
-	case "video":
-		// TODO: Implementar download e envio de vídeo
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("🎬 Vídeo enviado\n\n%s", payload.Content))
-	case "file":
-		// TODO: Implementar download e envio de documento
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("📄 Documento enviado\n\n%s", payload.Content))
-	case "sticker":
-		// TODO: Implementar download e envio de sticker
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("🎭 Sticker enviado\n\n%s", payload.Content))
-	case "location":
-		// TODO: Implementar envio de localização
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("📍 Localização enviada\n\n%s", payload.Content))
-	case "contact":
-		// TODO: Implementar envio de contato
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber,
-			fmt.Sprintf("👤 Contato enviado\n\n%s", payload.Content))
-	default:
-		s.logger.Warn("Unknown content type, sending as text",
-			"content_type", payload.ContentType)
-		return s.whatsappService.SendTextMessage(ctx, s.sessionID, phoneNumber, payload.Content)
+// saveZpCwRelation salva a relação entre mensagem zpmeow e Chatwoot
+func (s *Service) saveZpCwRelation(ctx context.Context, whatsappMsg *WhatsAppMessage, chatwootMsg *Message, conversation *Conversation) error {
+	if s.messageRepo == nil || s.zpCwRepo == nil {
+		s.logger.Warn("🔗 [ZP-CW RELATION] Repositories not available, skipping relation save")
+		return nil
 	}
+
+	s.logger.Info("🔗 [ZP-CW RELATION] Starting to save zpmeow-chatwoot relation",
+		"msgId", whatsappMsg.ID,
+		"chatwoot_message_id", chatwootMsg.ID,
+		"conversation_id", conversation.ID)
+
+	// Buscar mensagem zpmeow pelo WhatsApp message ID
+	zpmeowMessage, err := s.messageRepo.GetMessageByWhatsAppID(ctx, s.sessionID, whatsappMsg.ID)
+	if err != nil {
+		s.logger.Error("🔗 [ZP-CW RELATION ERROR] Failed to find zpmeow message",
+			"msgId", whatsappMsg.ID,
+			"error", err)
+		return fmt.Errorf("failed to find zpmeow message: %w", err)
+	}
+
+	if zpmeowMessage == nil {
+		s.logger.Error("🔗 [ZP-CW RELATION ERROR] Zpmeow message not found",
+			"msgId", whatsappMsg.ID)
+		return fmt.Errorf("zpmeow message not found for WhatsApp ID: %s", whatsappMsg.ID)
+	}
+
+	// Determinar direção da mensagem
+	direction := "incoming"
+	if whatsappMsg.FromMe {
+		direction = "outgoing"
+	}
+
+	// AccountID removido - não mais necessário na relação
+
+	// Criar relação (campos otimizados)
+	relation := &models.ZpCwMessageModel{
+		SessionId:      s.sessionID,
+		MsgId:          zpmeowMessage.ID,
+		ChatwootMsgId:  int64(chatwootMsg.ID),
+		ChatwootConvId: int64(conversation.ID),
+		Direction:      direction,
+		SyncStatus:     "synced",
+		SourceId:       &whatsappMsg.ID,
+		Metadata:       models.JSONB{},
+	}
+
+	if err := s.zpCwRepo.CreateRelation(ctx, relation); err != nil {
+		s.logger.Error("🔗 [ZP-CW RELATION ERROR] Failed to create relation",
+			"zpmeow_message_id", zpmeowMessage.ID,
+			"chatwoot_message_id", chatwootMsg.ID,
+			"error", err)
+		return fmt.Errorf("failed to create zp-cw relation: %w", err)
+	}
+
+	s.logger.Info("🔗 [ZP-CW RELATION SUCCESS] Successfully saved zpmeow-chatwoot relation",
+		"relation_id", relation.ID,
+		"zpmeow_message_id", zpmeowMessage.ID,
+		"chatwoot_message_id", chatwootMsg.ID,
+		"direction", direction)
+
+	return nil
 }

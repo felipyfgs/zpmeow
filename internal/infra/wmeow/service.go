@@ -13,6 +13,7 @@ import (
 	"zpmeow/internal/infra/database/repository"
 	"zpmeow/internal/infra/logging"
 
+	"github.com/jmoiron/sqlx"
 	"go.mau.fi/whatsmeow"
 	waCommon "go.mau.fi/whatsmeow/proto/waCommon"
 	waProto "go.mau.fi/whatsmeow/proto/waE2E"
@@ -51,9 +52,15 @@ type MeowService struct {
 	mimeHelper          *mimeTypeHelper
 	chatwootIntegration *chatwoot.Integration
 	chatwootRepo        *repository.ChatwootRepository
+	messageRepo         *repository.MessageRepository
+	chatRepo            *repository.ChatRepository
 }
 
-func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository) WameowService {
+func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, db *sqlx.DB) WameowService {
+	// Criar repositórios de mensagem e chat
+	messageRepo := repository.NewMessageRepository(db)
+	chatRepo := repository.NewChatRepository(db)
+
 	return &MeowService{
 		clients:       make(map[string]*WameowClient),
 		sessions:      sessionRepo,
@@ -62,10 +69,16 @@ func NewMeowService(container *sqlstore.Container, waLogger waLog.Logger, sessio
 		waLogger:      waLogger,
 		messageSender: NewMessageSender(),
 		mimeHelper:    NewMimeTypeHelper(),
+		messageRepo:   messageRepo,
+		chatRepo:      chatRepo,
 	}
 }
 
-func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository) WameowService {
+func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Logger, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository, db *sqlx.DB) WameowService {
+	// Criar repositórios de mensagem e chat
+	messageRepo := repository.NewMessageRepository(db)
+	chatRepo := repository.NewChatRepository(db)
+
 	return &MeowService{
 		clients:             make(map[string]*WameowClient),
 		sessions:            sessionRepo,
@@ -76,6 +89,8 @@ func NewMeowServiceWithChatwoot(container *sqlstore.Container, waLogger waLog.Lo
 		mimeHelper:          NewMimeTypeHelper(),
 		chatwootIntegration: chatwootIntegration,
 		chatwootRepo:        chatwootRepo,
+		messageRepo:         messageRepo,
+		chatRepo:            chatRepo,
 	}
 }
 
@@ -147,9 +162,9 @@ func (m *MeowService) createNewClient(sessionID string) *WameowClient {
 
 	var eventProcessor *EventProcessor
 	if m.chatwootIntegration != nil && m.chatwootRepo != nil {
-		eventProcessor = NewEventProcessorWithChatwoot(sessionID, sessionConfig.webhookURL, m.sessions, m.chatwootIntegration, m.chatwootRepo)
+		eventProcessor = NewEventProcessorWithChatwoot(sessionID, sessionConfig.webhookURL, m.sessions, m.chatwootIntegration, m.chatwootRepo, m.messageRepo, m.chatRepo)
 	} else {
-		eventProcessor = NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions)
+		eventProcessor = NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions, m.messageRepo, m.chatRepo)
 	}
 
 	client, err := NewWameowClientWithDeviceJID(

@@ -139,7 +139,7 @@ type CommunityResponse struct {
 }
 
 type CommunityResponseData struct {
-	SessionID string         `json:"session_id"`
+	SessionId string         `json:"session_id"`
 	Action    string         `json:"action"`
 	Status    string         `json:"status"`
 	Message   string         `json:"message,omitempty"`
@@ -155,7 +155,7 @@ type CommunityListResponse struct {
 }
 
 type CommunityListData struct {
-	SessionID   string          `json:"session_id"`
+	SessionId   string          `json:"session_id"`
 	Communities []CommunityInfo `json:"communities"`
 	Count       int             `json:"count"`
 	Total       int             `json:"total"`
@@ -169,7 +169,7 @@ type CommunityActionResponse struct {
 }
 
 type CommunityActionData struct {
-	SessionID    string    `json:"session_id"`
+	SessionId    string    `json:"session_id"`
 	CommunityJID string    `json:"community_jid"`
 	Action       string    `json:"action"`
 	Status       string    `json:"status"`
@@ -185,7 +185,7 @@ type CommunitySubGroupsResponse struct {
 }
 
 type CommunitySubGroupsData struct {
-	SessionID    string          `json:"session_id"`
+	SessionId    string          `json:"session_id"`
 	CommunityJID string          `json:"community_jid"`
 	SubGroups    []CommunityInfo `json:"sub_groups"`
 	Count        int             `json:"count"`
@@ -199,7 +199,7 @@ type CommunityParticipantsResponse struct {
 }
 
 type CommunityParticipantsData struct {
-	SessionID    string             `json:"session_id"`
+	SessionId    string             `json:"session_id"`
 	CommunityJID string             `json:"community_jid"`
 	Participants []GroupParticipant `json:"participants"`
 	Count        int                `json:"count"`
@@ -222,7 +222,7 @@ func NewCommunitySuccessResponse(sessionID, action, message string, community *C
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CommunityResponseData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Message:   message,
@@ -237,7 +237,7 @@ func NewCommunityListSuccessResponse(sessionID string, communities []CommunityIn
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CommunityListData{
-			SessionID:   sessionID,
+			SessionId:   sessionID,
 			Communities: communities,
 			Count:       len(communities),
 			Total:       len(communities),
@@ -262,7 +262,7 @@ func NewCommunityActionSuccessResponse(sessionID, communityJID, action, message 
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CommunityActionData{
-			SessionID:    sessionID,
+			SessionId:    sessionID,
 			CommunityJID: communityJID,
 			Action:       action,
 			Status:       "success",
@@ -289,7 +289,7 @@ func NewCommunitySubGroupsResponse(sessionID, communityJID string, subGroups []C
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CommunitySubGroupsData{
-			SessionID:    sessionID,
+			SessionId:    sessionID,
 			CommunityJID: communityJID,
 			SubGroups:    subGroups,
 			Count:        len(subGroups),
@@ -302,7 +302,7 @@ func NewCommunityParticipantsResponse(sessionID, communityJID string, participan
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CommunityParticipantsData{
-			SessionID:    sessionID,
+			SessionId:    sessionID,
 			CommunityJID: communityJID,
 			Participants: participants,
 			Count:        len(participants),

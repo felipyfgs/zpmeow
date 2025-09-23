@@ -513,7 +513,7 @@ func (h *NewsletterHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName strin
 func (h *NewsletterHandler) CreateNewsletter(c *fiber.Ctx) error {
 	sessionID := c.Params("sessionId")
 
-	resolvedSessionID, err := h.resolveSessionID(c, sessionID)
+	resolvedSessionId, err := h.resolveSessionID(c, sessionID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.CreateNewsletterResponse{
 			Success: false,
@@ -521,7 +521,7 @@ func (h *NewsletterHandler) CreateNewsletter(c *fiber.Ctx) error {
 		})
 	}
 
-	if !h.wmeowService.IsClientConnected(resolvedSessionID) {
+	if !h.wmeowService.IsClientConnected(resolvedSessionId) {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.CreateNewsletterResponse{
 			Success: false,
 			Error:   &dto.NewsletterErrorResponse{Code: "ERROR", Message: "Session not connected"},
@@ -543,7 +543,7 @@ func (h *NewsletterHandler) CreateNewsletter(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.wmeowService.CreateNewsletter(c.Context(), resolvedSessionID, req.Name, req.Description)
+	resp, err := h.wmeowService.CreateNewsletter(c.Context(), resolvedSessionId, req.Name, req.Description)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.CreateNewsletterResponse{
 			Success: false,
@@ -670,7 +670,7 @@ func (h *NewsletterHandler) ListNewsletters(c *fiber.Ctx) error {
 	}
 
 	listResult := &dto.NewsletterListData{
-		SessionID:   sessionID,
+		SessionId:   sessionID,
 		Newsletters: result,
 		Count:       len(result),
 		Total:       len(result),
@@ -831,7 +831,7 @@ func (h *NewsletterHandler) SendNewsletterMessage(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(dto.SendNewsletterMessageResponse{
 		Success: true,
 		Data: &dto.NewsletterMessageData{
-			SessionID:     sessionID,
+			SessionId:     sessionID,
 			NewsletterJID: newsletterJID,
 			MessageID:     fmt.Sprintf("msg_%d", time.Now().Unix()),
 			ServerID:      fmt.Sprintf("srv_%d", time.Now().Unix()),

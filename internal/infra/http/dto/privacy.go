@@ -107,7 +107,7 @@ type PrivacyResponse struct {
 }
 
 type PrivacyResponseData struct {
-	SessionID string           `json:"session_id"`
+	SessionId string           `json:"session_id"`
 	Action    string           `json:"action"`
 	Status    string           `json:"status"`
 	Message   string           `json:"message,omitempty"`
@@ -123,7 +123,7 @@ type BlockedContactsResponse struct {
 }
 
 type BlockedContactsData struct {
-	SessionID       string   `json:"session_id"`
+	SessionId       string   `json:"session_id"`
 	BlockedContacts []string `json:"blocked_contacts"`
 	Count           int      `json:"count"`
 }
@@ -136,7 +136,7 @@ type BlockActionResponse struct {
 }
 
 type BlockActionData struct {
-	SessionID string    `json:"session_id"`
+	SessionId string    `json:"session_id"`
 	Action    string    `json:"action"`
 	Status    string    `json:"status"`
 	Message   string    `json:"message,omitempty"`
@@ -161,7 +161,7 @@ func NewPrivacySuccessResponse(sessionID, action, message string, settings *Priv
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &PrivacyResponseData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Message:   message,
@@ -176,7 +176,7 @@ func NewBlockedContactsSuccessResponse(sessionID string, blockedContacts []strin
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &BlockedContactsData{
-			SessionID:       sessionID,
+			SessionId:       sessionID,
 			BlockedContacts: blockedContacts,
 			Count:           len(blockedContacts),
 		},
@@ -200,7 +200,7 @@ func NewBlockActionSuccessResponse(sessionID, action, message string, contacts [
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &BlockActionData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Message:   message,
@@ -262,7 +262,7 @@ type PrivacySettingsResponse struct {
 }
 
 type PrivacySettingsData struct {
-	SessionID         string `json:"session_id"`
+	SessionId         string `json:"session_id"`
 	LastSeen          string `json:"last_seen"`
 	ProfilePhoto      string `json:"profile_photo"`
 	Status            string `json:"status"`

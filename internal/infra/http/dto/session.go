@@ -99,7 +99,7 @@ type SessionInfo struct {
 }
 
 type SessionData struct {
-	SessionID string        `json:"session_id,omitempty"`
+	SessionId string        `json:"session_id,omitempty"`
 	Action    string        `json:"action,omitempty"`
 	Status    string        `json:"status"`
 	Timestamp time.Time     `json:"timestamp"`
@@ -139,7 +139,7 @@ type QRCodeResponse struct {
 }
 
 type QRCodeData struct {
-	SessionID string    `json:"session_id"`
+	SessionId string    `json:"session_id"`
 	QRCode    string    `json:"qr_code"`
 	Status    string    `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
@@ -153,7 +153,7 @@ type PairResponse struct {
 }
 
 type PairData struct {
-	SessionID string    `json:"session_id"`
+	SessionId string    `json:"session_id"`
 	Phone     string    `json:"phone,omitempty"`
 	Status    string    `json:"status"`
 	Message   string    `json:"message,omitempty"`
@@ -181,7 +181,7 @@ func NewSessionSuccessResponse(sessionID, action string, data interface{}) *Sess
 		Success: true,
 		Code:    http.StatusOK,
 		Data: SessionData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Timestamp: time.Now(),
@@ -230,7 +230,7 @@ func NewQRCodeSuccessResponse(sessionID, qrCode string) *QRCodeResponse {
 		Success: true,
 		Code:    http.StatusOK,
 		Data: QRCodeData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			QRCode:    qrCode,
 			Status:    "qr_generated",
 			Timestamp: time.Now(),
@@ -255,7 +255,7 @@ func NewPairSuccessResponse(sessionID, phone, status, message string) *PairRespo
 		Success: true,
 		Code:    http.StatusOK,
 		Data: PairData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Phone:     phone,
 			Status:    status,
 			Message:   message,
@@ -297,7 +297,7 @@ func NewSessionListErrorResponse(code int, errorCode, message, details string) *
 }
 
 type SessionCreateData struct {
-	SessionID string       `json:"session_id,omitempty"`
+	SessionId string       `json:"session_id,omitempty"`
 	Name      string       `json:"name,omitempty"`
 	Action    string       `json:"action,omitempty"`
 	Status    string       `json:"status"`
@@ -322,7 +322,7 @@ type ConnectSessionResponse struct {
 }
 
 type SessionConnectData struct {
-	SessionID  string                 `json:"session_id"`
+	SessionId  string                 `json:"session_id"`
 	Action     string                 `json:"action,omitempty"`
 	Status     string                 `json:"status"`
 	Timestamp  time.Time              `json:"timestamp"`
@@ -339,7 +339,7 @@ type PairPhoneResponse struct {
 }
 
 type PairPhoneResponseData struct {
-	SessionID string    `json:"session_id"`
+	SessionId string    `json:"session_id"`
 	Phone     string    `json:"phone"`
 	Action    string    `json:"action,omitempty"`
 	Status    string    `json:"status"`
@@ -356,7 +356,7 @@ type SessionStatusResponse struct {
 }
 
 type SessionStatusResponseData struct {
-	SessionID     string                 `json:"session_id"`
+	SessionId     string                 `json:"session_id"`
 	Action        string                 `json:"action,omitempty"`
 	Status        string                 `json:"status"`
 	Timestamp     time.Time              `json:"timestamp"`

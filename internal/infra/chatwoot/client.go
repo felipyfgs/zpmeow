@@ -35,7 +35,7 @@ func NewClient(baseURL, token, accountID string) *Client {
 // makeRequest executa uma requisição HTTP para a API do Chatwoot
 func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body interface{}) (*http.Response, error) {
 	var reqBody io.Reader
-	
+
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
@@ -74,7 +74,7 @@ func (c *Client) makeMultipartRequest(ctx context.Context, method, endpoint stri
 		if err != nil {
 			return nil, fmt.Errorf("failed to create form file: %w", err)
 		}
-		
+
 		if _, err := io.Copy(part, file); err != nil {
 			return nil, fmt.Errorf("failed to copy file: %w", err)
 		}
@@ -252,8 +252,8 @@ func (c *Client) createFilterPayload(phoneNumber string) []map[string]interface{
 			}
 
 			filter := map[string]interface{}{
-				"attribute_key":    field,
-				"filter_operator":  "equal_to",
+				"attribute_key":   field,
+				"filter_operator": "equal_to",
 				"values":          []string{searchNumber},
 			}
 
@@ -428,15 +428,15 @@ func (c *Client) CreateMessage(ctx context.Context, conversationID int, req Mess
 // CreateMessageWithAttachment cria uma mensagem com anexo
 func (c *Client) CreateMessageWithAttachment(ctx context.Context, conversationID int, content, messageType string, file io.Reader, filename string, sourceID string) (*Message, error) {
 	endpoint := fmt.Sprintf("/conversations/%d/messages", conversationID)
-	
+
 	fields := map[string]string{
 		"message_type": messageType,
 	}
-	
+
 	if content != "" {
 		fields["content"] = content
 	}
-	
+
 	if sourceID != "" {
 		fields["source_id"] = sourceID
 	}
@@ -458,7 +458,7 @@ func (c *Client) CreateMessageWithAttachment(ctx context.Context, conversationID
 func (c *Client) UpdateConversationStatus(ctx context.Context, conversationID int, status ConversationStatus) error {
 	endpoint := fmt.Sprintf("/conversations/%d/toggle_status", conversationID)
 	req := map[string]string{"status": string(status)}
-	
+
 	resp, err := c.makeRequest(ctx, "POST", endpoint, req)
 	if err != nil {
 		return err

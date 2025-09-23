@@ -2,8 +2,6 @@ package chatwoot
 
 import (
 	"fmt"
-	"mime"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -31,9 +29,9 @@ func (m *MessageMapper) WhatsAppToChatwoot(msg *WhatsAppMessage) (*MessageCreate
 	content := m.formatWhatsAppContent(msg)
 
 	req := &MessageCreateRequest{
-		Content:     content,
-		MessageType: messageType,
-		SourceID:    fmt.Sprintf("WAID:%s", msg.ID),
+		Content:  content,
+		MsgType:  messageType,
+		SourceID: fmt.Sprintf("WAID:%s", msg.ID),
 	}
 
 	// Adiciona atributos de contexto para mensagens citadas
@@ -107,7 +105,7 @@ func (m *MessageMapper) formatTextMessage(msg *WhatsAppMessage) string {
 // formatMediaMessage formata mensagem de mídia
 func (m *MessageMapper) formatMediaMessage(msg *WhatsAppMessage, mediaType string) string {
 	content := mediaType
-	
+
 	if msg.Caption != "" {
 		content = fmt.Sprintf("%s\n\n%s", content, msg.Caption)
 	}
@@ -122,7 +120,7 @@ func (m *MessageMapper) formatMediaMessage(msg *WhatsAppMessage, mediaType strin
 // formatDocumentMessage formata mensagem de documento
 func (m *MessageMapper) formatDocumentMessage(msg *WhatsAppMessage) string {
 	content := "📄 Documento"
-	
+
 	if msg.FileName != "" {
 		content = fmt.Sprintf("📄 **%s**", msg.FileName)
 	}
@@ -157,7 +155,7 @@ func (m *MessageMapper) formatLocationMessage(msg *WhatsAppMessage) string {
 	}
 
 	// Adiciona link do Google Maps
-	mapsURL := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%f,%f", 
+	mapsURL := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%f,%f",
 		msg.Location.Latitude, msg.Location.Longitude)
 	content += fmt.Sprintf("\n🗺️ [Ver no Google Maps](%s)", mapsURL)
 
@@ -178,7 +176,7 @@ func (m *MessageMapper) formatContactMessage(msg *WhatsAppMessage) string {
 		}
 
 		content += fmt.Sprintf("**%s**\n", contact.Name)
-		
+
 		for j, phone := range contact.Phones {
 			content += fmt.Sprintf("📞 %s", phone.Number)
 			if phone.Type != "" {
@@ -200,7 +198,7 @@ func (m *MessageMapper) formatListMessage(msg *WhatsAppMessage) string {
 	}
 
 	content := "📋 **Lista:**\n\n"
-	
+
 	if msg.List.Title != "" {
 		content += fmt.Sprintf("**%s**\n\n", msg.List.Title)
 	}
@@ -261,7 +259,7 @@ func (m *MessageMapper) formatLinkPreview(msg *WhatsAppMessage, content string) 
 
 	preview := "\n\n---\n"
 	preview += "🔗 **Preview do Link:**\n"
-	
+
 	if msg.LinkPreview.Title != "" {
 		preview += fmt.Sprintf("**%s**\n", msg.LinkPreview.Title)
 	}
@@ -281,7 +279,7 @@ func (m *MessageMapper) formatLinkPreview(msg *WhatsAppMessage, content string) 
 func (m *MessageMapper) formatParticipantInfo(msg *WhatsAppMessage) string {
 	participantPhone := extractPhoneNumber(msg.Participant)
 	participantName := msg.PushName
-	
+
 	if participantName == "" {
 		participantName = participantPhone
 	}
@@ -294,13 +292,13 @@ func (m *MessageMapper) formatParticipantInfo(msg *WhatsAppMessage) string {
 func (m *MessageMapper) convertWhatsAppFormatting(text string) string {
 	// *texto* -> **texto** (negrito)
 	text = regexp.MustCompile(`\*([^*\n]+)\*`).ReplaceAllString(text, "**$1**")
-	
-	// _texto_ -> *texto* (itálico)  
+
+	// _texto_ -> *texto* (itálico)
 	text = regexp.MustCompile(`_([^_\n]+)_`).ReplaceAllString(text, "*$1*")
-	
+
 	// ~texto~ -> ~~texto~~ (riscado)
 	text = regexp.MustCompile(`~([^~\n]+)~`).ReplaceAllString(text, "~~$1~~")
-	
+
 	// ```texto``` -> `texto` (código)
 	text = regexp.MustCompile("```([^`]+)```").ReplaceAllString(text, "`$1`")
 
@@ -348,10 +346,10 @@ func (m *MessageMapper) formatChatwootContent(msg *Message) string {
 func (m *MessageMapper) convertMarkdownToWhatsApp(text string) string {
 	// **texto** -> *texto* (negrito)
 	text = regexp.MustCompile(`\*\*([^*]+)\*\*`).ReplaceAllString(text, "*$1*")
-	
+
 	// *texto* -> _texto_ (itálico)
 	text = regexp.MustCompile(`\*([^*]+)\*`).ReplaceAllString(text, "_$1_")
-	
+
 	// ~~texto~~ -> ~texto~ (riscado)
 	text = regexp.MustCompile(`~~([^~]+)~~`).ReplaceAllString(text, "~$1~")
 
@@ -419,37 +417,12 @@ func extractPhoneNumber(jid string) string {
 // formatBrazilianPhone formata número brasileiro
 func formatBrazilianPhone(phone string) string {
 	if len(phone) == 13 && strings.HasPrefix(phone, "55") {
-		return fmt.Sprintf("+%s (%s) %s-%s", 
+		return fmt.Sprintf("+%s (%s) %s-%s",
 			phone[:2], phone[2:4], phone[4:9], phone[9:])
 	}
 	if len(phone) == 12 && strings.HasPrefix(phone, "55") {
-		return fmt.Sprintf("+%s (%s) %s-%s", 
+		return fmt.Sprintf("+%s (%s) %s-%s",
 			phone[:2], phone[2:4], phone[4:8], phone[8:])
 	}
 	return fmt.Sprintf("+%s", phone)
-}
-
-// getFileExtension retorna a extensão do arquivo baseada no tipo MIME
-func getFileExtension(mimeType string) string {
-	exts, err := mime.ExtensionsByType(mimeType)
-	if err != nil || len(exts) == 0 {
-		return ""
-	}
-	return exts[0]
-}
-
-// sanitizeFileName sanitiza nome de arquivo
-func sanitizeFileName(filename string) string {
-	// Remove caracteres especiais
-	reg := regexp.MustCompile(`[<>:"/\\|?*]`)
-	filename = reg.ReplaceAllString(filename, "_")
-	
-	// Limita tamanho
-	if len(filename) > 100 {
-		ext := filepath.Ext(filename)
-		name := strings.TrimSuffix(filename, ext)
-		filename = name[:100-len(ext)] + ext
-	}
-	
-	return filename
 }

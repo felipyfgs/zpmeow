@@ -1,20 +1,20 @@
 -- Drop trigger
-DROP TRIGGER IF EXISTS trigger_messages_updated_at ON messages;
+DROP TRIGGER IF EXISTS "trigger_zpMessages_updatedAt" ON "zpMessages";
 
 -- Drop function
-DROP FUNCTION IF EXISTS update_messages_updated_at();
+DROP FUNCTION IF EXISTS "update_zpMessages_updatedAt"();
 
 -- Drop indexes
-DROP INDEX IF EXISTS idx_messages_chat_id;
-DROP INDEX IF EXISTS idx_messages_session_id;
-DROP INDEX IF EXISTS idx_messages_whatsapp_message_id;
-DROP INDEX IF EXISTS idx_messages_sender_jid;
-DROP INDEX IF EXISTS idx_messages_timestamp;
-DROP INDEX IF EXISTS idx_messages_status;
-DROP INDEX IF EXISTS idx_messages_message_type;
-DROP INDEX IF EXISTS idx_messages_is_from_me;
-DROP INDEX IF EXISTS idx_messages_quoted_message_id;
-DROP INDEX IF EXISTS idx_messages_session_whatsapp_unique;
+DROP INDEX IF EXISTS "idx_zpMessages_chatId";
+DROP INDEX IF EXISTS "idx_zpMessages_sessionId";
+DROP INDEX IF EXISTS "idx_zpMessages_msgId";
+DROP INDEX IF EXISTS "idx_zpMessages_senderJid";
+DROP INDEX IF EXISTS "idx_zpMessages_timestamp";
+DROP INDEX IF EXISTS "idx_zpMessages_status";
+DROP INDEX IF EXISTS "idx_zpMessages_msgType";
+DROP INDEX IF EXISTS "idx_zpMessages_isFromMe";
+DROP INDEX IF EXISTS "idx_zpMessages_quotedMsgId";
+DROP INDEX IF EXISTS "idx_zpMessages_session_msgId_unique";
 
 -- Drop table
-DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS "zpMessages";

@@ -1,62 +1,46 @@
--- Create chatwoot table
-CREATE TABLE IF NOT EXISTS chatwoot (
+-- Create zpChatwoot table with camelCase columns
+CREATE TABLE IF NOT EXISTS "zpChatwoot" (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    "sessionId" UUID NOT NULL REFERENCES "zpSessions"(id) ON DELETE CASCADE,
     enabled BOOLEAN DEFAULT FALSE,
-    account_id VARCHAR(50),
+    "accountId" VARCHAR(50),
     token VARCHAR(255),
     url VARCHAR(500),
-    name_inbox VARCHAR(255),
-    sign_msg BOOLEAN DEFAULT FALSE,
-    sign_delimiter VARCHAR(50) DEFAULT '\n\n',
-    number VARCHAR(20) NOT NULL,
-    reopen_conversation BOOLEAN DEFAULT FALSE,
-    conversation_pending BOOLEAN DEFAULT FALSE,
-    merge_brazil_contacts BOOLEAN DEFAULT TRUE,
-    import_contacts BOOLEAN DEFAULT FALSE,
-    import_messages BOOLEAN DEFAULT FALSE,
-    days_limit_import_messages INTEGER DEFAULT 0,
-    auto_create BOOLEAN DEFAULT TRUE,
-    organization VARCHAR(255) DEFAULT 'zpmeow',
-    logo VARCHAR(500) DEFAULT '',
-    ignore_jids JSONB DEFAULT '[]'::jsonb,
-    inbox_id INTEGER,
-    inbox_name VARCHAR(255),
-    last_sync TIMESTAMP WITH TIME ZONE,
-    sync_status VARCHAR(50) DEFAULT 'pending',
-    error_message TEXT,
-    messages_count INTEGER DEFAULT 0,
-    contacts_count INTEGER DEFAULT 0,
-    conversations_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    "nameInbox" VARCHAR(255),
+    "inboxId" INTEGER,
+    "lastSync" TIMESTAMP WITH TIME ZONE,
+    "syncStatus" VARCHAR(50) DEFAULT 'pending',
+    config JSONB DEFAULT '{}'::jsonb,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_chatwoot_session_id ON chatwoot(session_id);
-CREATE INDEX IF NOT EXISTS idx_chatwoot_enabled ON chatwoot(enabled);
-CREATE INDEX IF NOT EXISTS idx_chatwoot_sync_status ON chatwoot(sync_status);
+CREATE INDEX IF NOT EXISTS "idx_zpChatwoot_sessionId" ON "zpChatwoot"("sessionId");
+CREATE INDEX IF NOT EXISTS "idx_zpChatwoot_enabled" ON "zpChatwoot"(enabled);
+CREATE INDEX IF NOT EXISTS "idx_zpChatwoot_syncStatus" ON "zpChatwoot"("syncStatus");
 
--- Create trigger function for updated_at
-CREATE OR REPLACE FUNCTION update_chatwoot_updated_at()
+-- Create trigger function for updatedAt
+CREATE OR REPLACE FUNCTION "update_zpChatwoot_updatedAt"()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW."updatedAt" = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
 $$ language 'plpgsql';
 
 -- Create trigger
-CREATE TRIGGER trigger_chatwoot_updated_at
-    BEFORE UPDATE ON chatwoot
+CREATE TRIGGER "trigger_zpChatwoot_updatedAt"
+    BEFORE UPDATE ON "zpChatwoot"
     FOR EACH ROW
-    EXECUTE FUNCTION update_chatwoot_updated_at();
+    EXECUTE FUNCTION "update_zpChatwoot_updatedAt"();
 
 -- Comments
-COMMENT ON TABLE chatwoot IS 'Chatwoot integration configurations';
-COMMENT ON COLUMN chatwoot.id IS 'Unique configuration identifier (UUID)';
-COMMENT ON COLUMN chatwoot.session_id IS 'Reference to the WhatsApp session';
-COMMENT ON COLUMN chatwoot.enabled IS 'Whether Chatwoot integration is enabled';
-COMMENT ON COLUMN chatwoot.account_id IS 'Chatwoot account ID';
-COMMENT ON COLUMN chatwoot.token IS 'Chatwoot API access token';
-COMMENT ON COLUMN chatwoot.url IS 'Chatwoot instance URL';
+COMMENT ON TABLE "zpChatwoot" IS 'Chatwoot integration configurations (camelCase)';
+COMMENT ON COLUMN "zpChatwoot".id IS 'Unique configuration identifier (UUID)';
+COMMENT ON COLUMN "zpChatwoot"."sessionId" IS 'Reference to the WhatsApp session';
+COMMENT ON COLUMN "zpChatwoot".enabled IS 'Whether Chatwoot integration is enabled';
+COMMENT ON COLUMN "zpChatwoot"."accountId" IS 'Chatwoot account ID';
+COMMENT ON COLUMN "zpChatwoot".token IS 'Chatwoot API access token';
+COMMENT ON COLUMN "zpChatwoot".url IS 'Chatwoot instance URL';
+COMMENT ON COLUMN "zpChatwoot".config IS 'JSONB configuration for flexible settings';

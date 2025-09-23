@@ -154,7 +154,7 @@ func (h *HTTPHandler) SendConflictResponse(c *fiber.Ctx, message string, err err
 	return h.BaseHandler.SendConflictResponse(c, message, err)
 }
 
-func (h *BaseHandler) GetSessionIDFromPath(c *fiber.Ctx) string {
+func (h *BaseHandler) GetSessionIdFromPath(c *fiber.Ctx) string {
 	return c.Params("sessionId")
 }
 
@@ -178,8 +178,8 @@ func (h *BaseHandler) GetQueryParamInt(c *fiber.Ctx, key string, defaultValue in
 	return defaultValue
 }
 
-func (h *HTTPHandler) GetSessionIDFromPath(c *fiber.Ctx) string {
-	return h.BaseHandler.GetSessionIDFromPath(c)
+func (h *HTTPHandler) GetSessionIdFromPath(c *fiber.Ctx) string {
+	return h.BaseHandler.GetSessionIdFromPath(c)
 }
 
 func (h *HTTPHandler) GetQueryParam(c *fiber.Ctx, key, defaultValue string) string {

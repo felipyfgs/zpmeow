@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -37,7 +38,7 @@ func NewChatwootHandler(sessionService *application.SessionApp, chatwootIntegrat
 	}
 }
 
-// validateSessionID valida e retorna o sessionID do parâmetro
+// validateSessionId valida e retorna o sessionID do parâmetro
 func (h *ChatwootHandler) validateSessionID(c *fiber.Ctx) (string, bool) {
 	sessionID := c.Params("sessionId")
 	if sessionID == "" {
@@ -49,7 +50,7 @@ func (h *ChatwootHandler) validateSessionID(c *fiber.Ctx) (string, bool) {
 	return sessionID, true
 }
 
-// resolveSessionID resolve o sessionID ou nome para o ID real da sessão
+// resolveSessionId resolve o sessionID ou nome para o ID real da sessão
 func (h *ChatwootHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName string) (string, error) {
 	if h.sessionService == nil {
 		return sessionIDOrName, nil
@@ -66,17 +67,19 @@ func (h *ChatwootHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName string)
 
 // SetChatwootConfig configura a integração Chatwoot para uma sessão
 // @Summary Configure Chatwoot integration
-// @Description Configure Chatwoot integration for a WhatsApp session
+// @Description Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When enabled=true, accountId, token, and url are required fields.
 // @Tags Chatwoot
 // @Accept json
 // @Produce json
-// @Param sessionId path string true "Session ID"
-// @Param request body dto.ChatwootConfigRequest true "Chatwoot configuration"
-// @Success 200 {object} dto.ChatwootConfigResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/config [post]
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID or name" example("my-session")
+// @Param request body dto.ChatwootConfigRequest true "Chatwoot configuration with all available options"
+// @Success 200 {object} dto.ChatwootConfigResponse "Successfully configured Chatwoot integration"
+// @Failure 400 {object} dto.StandardErrorResponse "Bad request - validation errors or missing required fields"
+// @Failure 401 {object} dto.StandardErrorResponse "Unauthorized - API key required (use global or session-specific key)"
+// @Failure 404 {object} dto.StandardErrorResponse "Session not found"
+// @Failure 500 {object} dto.StandardErrorResponse "Internal server error"
+// @Router /session/{sessionId}/chatwoot/set [post]
 func (h *ChatwootHandler) SetChatwootConfig(c *fiber.Ctx) error {
 	sessionID, valid := h.validateSessionID(c)
 	if !valid {
@@ -136,13 +139,16 @@ func (h *ChatwootHandler) SetChatwootConfig(c *fiber.Ctx) error {
 
 // GetChatwootConfig retorna a configuração Chatwoot de uma sessão
 // @Summary Get Chatwoot configuration
-// @Description Get current Chatwoot configuration for a session
+// @Description Get current Chatwoot configuration for a session. Returns the real configuration from database if configured, or a generic "not configured" response if no configuration exists. Accepts both global API key and session-specific API key for authentication.
 // @Tags Chatwoot
 // @Produce json
-// @Param sessionId path string true "Session ID"
-// @Success 200 {object} dto.ChatwootConfigResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/config [get]
+// @Security ApiKeyAuth
+// @Param sessionId path string true "Session ID or name" example("my-session")
+// @Success 200 {object} dto.ChatwootConfigResponse "Configuration found (if configured=true) or not configured message (if configured=false)"
+// @Failure 401 {object} dto.StandardErrorResponse "Unauthorized - API key required (use global or session-specific key)"
+// @Failure 404 {object} dto.StandardErrorResponse "Session not found"
+// @Failure 500 {object} dto.StandardErrorResponse "Internal server error"
+// @Router /session/{sessionId}/chatwoot/find [get]
 func (h *ChatwootHandler) GetChatwootConfig(c *fiber.Ctx) error {
 	sessionIDOrName, valid := h.validateSessionID(c)
 	if !valid {
@@ -162,32 +168,29 @@ func (h *ChatwootHandler) GetChatwootConfig(c *fiber.Ctx) error {
 		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "DATABASE_ERROR", "Database error", err)
 	}
 
-	var config *chatwoot.ChatwootConfig
 	if dbConfig == nil {
-		// Retorna configuração padrão se não existir
-		config = &chatwoot.ChatwootConfig{Enabled: false}
-	} else {
-		// Converte do modelo do banco para configuração
-		config = h.dbModelToConfig(dbConfig)
+		// Retorna resposta genérica quando não há configuração
+		return h.SendSuccessResponse(c, fiber.StatusOK, map[string]interface{}{
+			"configured": false,
+			"message":    "Chatwoot integration not configured for this session",
+		})
 	}
 
+	// Converte do modelo do banco para configuração
+	config := h.dbModelToConfig(dbConfig)
 	response := h.configToDTO(config, sessionIDOrName, c)
-	return h.SendSuccessResponse(c, fiber.StatusOK, response)
+
+	// Adiciona flag indicando que está configurado
+	responseMap := map[string]interface{}{
+		"configured": true,
+		"config":     response,
+	}
+
+	return h.SendSuccessResponse(c, fiber.StatusOK, responseMap)
 }
 
 // UpdateChatwootConfig atualiza a configuração Chatwoot de uma sessão
-// @Summary Update Chatwoot configuration
-// @Description Update Chatwoot configuration for a session
-// @Tags Chatwoot
-// @Accept json
-// @Produce json
-// @Param sessionId path string true "Session ID"
-// @Param request body dto.ChatwootConfigRequest true "Chatwoot configuration"
-// @Success 200 {object} dto.ChatwootConfigResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/config [put]
+// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
 func (h *ChatwootHandler) UpdateChatwootConfig(c *fiber.Ctx) error {
 	sessionID, valid := h.validateSessionID(c)
 	if !valid {
@@ -231,14 +234,7 @@ func (h *ChatwootHandler) UpdateChatwootConfig(c *fiber.Ctx) error {
 }
 
 // DeleteChatwootConfig remove a configuração Chatwoot de uma sessão
-// @Summary Delete Chatwoot configuration
-// @Description Remove Chatwoot configuration for a session
-// @Tags Chatwoot
-// @Produce json
-// @Param sessionId path string true "Session ID"
-// @Success 200 {object} dto.SuccessResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/config [delete]
+// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
 func (h *ChatwootHandler) DeleteChatwootConfig(c *fiber.Ctx) error {
 	sessionID, valid := h.validateSessionID(c)
 	if !valid {
@@ -264,14 +260,7 @@ func (h *ChatwootHandler) DeleteChatwootConfig(c *fiber.Ctx) error {
 }
 
 // GetChatwootStatus retorna o status da integração Chatwoot
-// @Summary Get Chatwoot status
-// @Description Get current status of Chatwoot integration
-// @Tags Chatwoot
-// @Produce json
-// @Param sessionId path string true "Session ID"
-// @Success 200 {object} dto.ChatwootStatusResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/status [get]
+// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
 func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
 	sessionID, valid := h.validateSessionID(c)
 	if !valid {
@@ -303,23 +292,24 @@ func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
 
 	response := &dto.ChatwootStatusResponse{
 		Enabled:       dbConfig.Enabled,
-		Connected:     serviceExists && dbConfig.Enabled && dbConfig.InboxID != nil,
-		InboxName:     stringPtrToString(dbConfig.InboxName),
-		MessagesCount: dbConfig.MessagesCount,
-		ContactsCount: dbConfig.ContactsCount,
+		Connected:     serviceExists && dbConfig.Enabled && dbConfig.InboxId != nil,
+		InboxName:     stringPtrToString(dbConfig.NameInbox),
+		MessagesCount: 0, /* TODO: calcular dinamicamente */
+		ContactsCount: 0, /* TODO: calcular dinamicamente */
 	}
 
-	if dbConfig.InboxID != nil {
-		response.InboxID = dbConfig.InboxID
+	if dbConfig.InboxId != nil {
+		response.InboxID = dbConfig.InboxId
 	}
 
 	if dbConfig.LastSync != nil {
 		response.LastSync = dbConfig.LastSync.Format(time.RFC3339)
 	}
 
-	if dbConfig.ErrorMessage != nil {
-		response.ErrorMessage = *dbConfig.ErrorMessage
-	}
+	// TODO: implementar ErrorMessage usando metadata
+	// if dbConfig.ErrorMessage != nil {
+	//     response.ErrorMessage = *dbConfig.ErrorMessage
+	// }
 
 	return h.SendSuccessResponse(c, fiber.StatusOK, response)
 }
@@ -332,10 +322,10 @@ func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
 // @Produce json
 // @Param sessionId path string true "Session ID"
 // @Param payload body dto.ChatwootWebhookPayload true "Webhook payload"
-// @Success 200 {object} dto.SuccessResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Success 200 {object} dto.BaseResponse
+// @Failure 400 {object} dto.StandardErrorResponse
+// @Failure 404 {object} dto.StandardErrorResponse
+// @Failure 500 {object} dto.StandardErrorResponse
 // @Router /chatwoot/webhook/{sessionId} [post]
 func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
@@ -345,8 +335,8 @@ func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 	}
 
 	// Decodifica o sessionID se necessário
-	if decodedSessionID, err := url.QueryUnescape(sessionIDOrName); err == nil {
-		sessionIDOrName = decodedSessionID
+	if decodedSessionId, err := url.QueryUnescape(sessionIDOrName); err == nil {
+		sessionIDOrName = decodedSessionId
 	}
 
 	// Resolve sessionID ou nome para o UUID real
@@ -367,7 +357,7 @@ func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 	}
 
 	h.logger.Infof("Received Chatwoot webhook for session %s: event=%s, messageType=%s, content=%s",
-		sessionID, payload.Event, payload.MessageType, payload.Content)
+		sessionID, payload.Event, payload.MsgType, payload.Content)
 
 	// Log detalhado dos campos importantes
 	h.logger.Infof("Webhook details - Contact: %v, Conversation: %v",
@@ -401,17 +391,7 @@ func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 }
 
 // TestChatwootConnection testa a conexão com Chatwoot
-// @Summary Test Chatwoot connection
-// @Description Test connection to Chatwoot API
-// @Tags Chatwoot
-// @Accept json
-// @Produce json
-// @Param sessionId path string true "Session ID"
-// @Param request body dto.ChatwootTestConnectionRequest true "Connection test parameters"
-// @Success 200 {object} dto.ChatwootTestConnectionResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Router /session/{sessionId}/chatwoot/test [post]
+// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
 func (h *ChatwootHandler) TestChatwootConnection(c *fiber.Ctx) error {
 	sessionID, valid := h.validateSessionID(c)
 	if !valid {
@@ -534,24 +514,12 @@ func (h *ChatwootHandler) configToDTO(config *chatwoot.ChatwootConfig, sessionID
 	}
 
 	return &dto.ChatwootConfigResponse{
-		Enabled:                     config.Enabled,
-		AccountID:                   config.AccountID,
-		URL:                         config.URL,
-		NameInbox:                   config.NameInbox,
-		SignMsg:                     config.SignMsg,
-		SignDelimiter:               config.SignDelimiter,
-		Number:                      config.Number,
-		ReopenConversation:          config.ReopenConversation,
-		ConversationPending:         config.ConversationPending,
-		MergeBrazilContacts:         config.MergeBrazilContacts,
-		ImportContacts:              config.ImportContacts,
-		ImportMessages:              config.ImportMessages,
-		DaysLimitImportMessages:     config.DaysLimitImportMessages,
-		AutoCreate:                  config.AutoCreate,
-		Organization:                config.Organization,
-		Logo:                        config.Logo,
-		IgnoreJids:                  config.IgnoreJids,
-		WebhookURL:                  func() string {
+		Enabled:   config.Enabled,
+		AccountID: config.AccountID,
+		URL:       config.URL,
+		NameInbox: config.NameInbox,
+		Number:    config.Number,
+		WebhookURL: func() string {
 			webhookURL := fmt.Sprintf("%s/chatwoot/webhook/%s", baseURL, url.QueryEscape(sessionIdentifier))
 			h.logger.Infof("DEBUG: Final webhook URL generated: %s", webhookURL)
 			return webhookURL
@@ -570,22 +538,22 @@ func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPa
 		ContentAttributes: dtoPayload.ContentAttributes,
 	}
 
-	// Converte MessageType (pode ser string ou int)
-	if dtoPayload.MessageType != nil {
-		switch v := dtoPayload.MessageType.(type) {
+	// Converte MsgType (pode ser string ou int)
+	if dtoPayload.MsgType != nil {
+		switch v := dtoPayload.MsgType.(type) {
 		case string:
-			payload.MessageType = v
+			payload.MsgType = v
 		case float64:
 			if v == 0 {
-				payload.MessageType = "incoming"
+				payload.MsgType = "incoming"
 			} else if v == 1 {
-				payload.MessageType = "outgoing"
+				payload.MsgType = "outgoing"
 			}
 		case int:
 			if v == 0 {
-				payload.MessageType = "incoming"
+				payload.MsgType = "incoming"
 			} else if v == 1 {
-				payload.MessageType = "outgoing"
+				payload.MsgType = "outgoing"
 			}
 		}
 	}
@@ -620,14 +588,14 @@ func (h *ChatwootHandler) webhookDTOToInternal(dtoPayload *dto.ChatwootWebhookPa
 
 	if contact != nil {
 		payload.Contact = &chatwoot.Contact{
-			ID:           contact.ID,
-			Name:         contact.Name,
-			Avatar:       contact.Avatar,
-			AvatarURL:    contact.AvatarURL,
-			PhoneNumber:  contact.PhoneNumber,
-			Email:        contact.Email,
-			Identifier:   contact.Identifier,
-			Thumbnail:    contact.Thumbnail,
+			ID:               contact.ID,
+			Name:             contact.Name,
+			Avatar:           contact.Avatar,
+			AvatarURL:        contact.AvatarURL,
+			PhoneNumber:      contact.PhoneNumber,
+			Email:            contact.Email,
+			Identifier:       contact.Identifier,
+			Thumbnail:        contact.Thumbnail,
 			CustomAttributes: contact.CustomAttributes,
 		}
 	}
@@ -713,31 +681,22 @@ func mustParseInt(s string) int {
 // configToDBModel converte configuração para modelo do banco
 func (h *ChatwootHandler) configToDBModel(config *chatwoot.ChatwootConfig, sessionID string) *models.ChatwootModel {
 	model := &models.ChatwootModel{
-		SessionID:               sessionID,
-		Enabled:                 config.Enabled,
-		SignMsg:                 config.SignMsg,
-		SignDelimiter:           config.SignDelimiter,
-		Number:                  config.Number,
-		ReopenConversation:      config.ReopenConversation,
-		ConversationPending:     config.ConversationPending,
-		MergeBrazilContacts:     config.MergeBrazilContacts,
-		ImportContacts:          config.ImportContacts,
-		ImportMessages:          config.ImportMessages,
-		DaysLimitImportMessages: config.DaysLimitImportMessages,
-		AutoCreate:              config.AutoCreate,
-		Organization:            config.Organization,
-		Logo:                    config.Logo,
-		IgnoreJids:              models.StringArray(config.IgnoreJids),
-		SyncStatus:              "pending",
+		SessionId:  sessionID,
+		Enabled:    config.Enabled,
+		Number:     config.Number,
+		SyncStatus: "pending",
 	}
 
 	// Campos opcionais (apenas se habilitado)
 	if config.Enabled {
-		model.AccountID = &config.AccountID
+		model.AccountId = &config.AccountID
 		model.Token = &config.Token
 		model.URL = &config.URL
 		model.NameInbox = &config.NameInbox
 	}
+
+	// Criar configurações JSONB vazio por enquanto para testar
+	model.Config = models.JSONB{}
 
 	return model
 }
@@ -745,25 +704,13 @@ func (h *ChatwootHandler) configToDBModel(config *chatwoot.ChatwootConfig, sessi
 // dbModelToConfig converte modelo do banco para configuração
 func (h *ChatwootHandler) dbModelToConfig(model *models.ChatwootModel) *chatwoot.ChatwootConfig {
 	config := &chatwoot.ChatwootConfig{
-		Enabled:                 model.Enabled,
-		SignMsg:                 model.SignMsg,
-		SignDelimiter:           model.SignDelimiter,
-		Number:                  model.Number,
-		ReopenConversation:      model.ReopenConversation,
-		ConversationPending:     model.ConversationPending,
-		MergeBrazilContacts:     model.MergeBrazilContacts,
-		ImportContacts:          model.ImportContacts,
-		ImportMessages:          model.ImportMessages,
-		DaysLimitImportMessages: model.DaysLimitImportMessages,
-		AutoCreate:              model.AutoCreate,
-		Organization:            model.Organization,
-		Logo:                    model.Logo,
-		IgnoreJids:              []string(model.IgnoreJids),
+		Enabled: model.Enabled,
+		Number:  model.Number,
 	}
 
 	// Campos opcionais
-	if model.AccountID != nil {
-		config.AccountID = *model.AccountID
+	if model.AccountId != nil {
+		config.AccountID = *model.AccountId
 	}
 	if model.Token != nil {
 		config.Token = *model.Token
@@ -773,6 +720,57 @@ func (h *ChatwootHandler) dbModelToConfig(model *models.ChatwootModel) *chatwoot
 	}
 	if model.NameInbox != nil {
 		config.NameInbox = *model.NameInbox
+	}
+	// Extrair configurações do campo Config JSONB
+	if model.Config != nil && len(model.Config) > 0 {
+		var configData map[string]interface{}
+		configBytes, err := json.Marshal(model.Config)
+		if err == nil {
+			if err := json.Unmarshal(configBytes, &configData); err == nil {
+				// Mapear campos do JSONB para a configuração
+				if signMsg, ok := configData["signMsg"].(bool); ok {
+					config.SignMsg = signMsg
+				}
+				if signDelimiter, ok := configData["signDelimiter"].(string); ok {
+					config.SignDelimiter = signDelimiter
+				}
+				if reopenConversation, ok := configData["reopenConversation"].(bool); ok {
+					config.ReopenConversation = reopenConversation
+				}
+				if conversationPending, ok := configData["conversationPending"].(bool); ok {
+					config.ConversationPending = conversationPending
+				}
+				if mergeBrazilContacts, ok := configData["mergeBrazilContacts"].(bool); ok {
+					config.MergeBrazilContacts = mergeBrazilContacts
+				}
+				if importContacts, ok := configData["importContacts"].(bool); ok {
+					config.ImportContacts = importContacts
+				}
+				if importMessages, ok := configData["importMessages"].(bool); ok {
+					config.ImportMessages = importMessages
+				}
+				if daysLimit, ok := configData["daysLimitImportMessages"].(float64); ok {
+					config.DaysLimitImportMessages = int(daysLimit)
+				}
+				if autoCreate, ok := configData["autoCreate"].(bool); ok {
+					config.AutoCreate = autoCreate
+				}
+				if organization, ok := configData["organization"].(string); ok {
+					config.Organization = organization
+				}
+				if logo, ok := configData["logo"].(string); ok {
+					config.Logo = logo
+				}
+				if ignoreJids, ok := configData["ignoreJids"].([]interface{}); ok {
+					config.IgnoreJids = make([]string, len(ignoreJids))
+					for i, jid := range ignoreJids {
+						if jidStr, ok := jid.(string); ok {
+							config.IgnoreJids[i] = jidStr
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return config

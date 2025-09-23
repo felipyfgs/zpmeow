@@ -200,7 +200,7 @@ type GroupResponse struct {
 }
 
 type GroupResponseData struct {
-	SessionID string     `json:"session_id"`
+	SessionId string     `json:"session_id"`
 	Action    string     `json:"action"`
 	Status    string     `json:"status"`
 	Message   string     `json:"message,omitempty"`
@@ -216,7 +216,7 @@ type GroupListResponse struct {
 }
 
 type GroupListData struct {
-	SessionID string      `json:"session_id"`
+	SessionId string      `json:"session_id"`
 	Groups    []GroupInfo `json:"groups"`
 	Count     int         `json:"count"`
 	Total     int         `json:"total"`
@@ -230,7 +230,7 @@ type GroupActionResponse struct {
 }
 
 type GroupActionData struct {
-	SessionID    string    `json:"session_id"`
+	SessionId    string    `json:"session_id"`
 	GroupJID     string    `json:"group_jid"`
 	Action       string    `json:"action"`
 	Status       string    `json:"status"`
@@ -256,7 +256,7 @@ func NewGroupSuccessResponse(sessionID, action, message string, group *GroupInfo
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &GroupResponseData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Message:   message,
@@ -271,7 +271,7 @@ func NewGroupListSuccessResponse(sessionID string, groups []GroupInfo) *GroupLis
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &GroupListData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Groups:    groups,
 			Count:     len(groups),
 			Total:     len(groups),
@@ -296,7 +296,7 @@ func NewGroupActionSuccessResponse(sessionID, groupJID, action, message string, 
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &GroupActionData{
-			SessionID:    sessionID,
+			SessionId:    sessionID,
 			GroupJID:     groupJID,
 			Action:       action,
 			Status:       "success",

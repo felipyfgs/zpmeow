@@ -165,7 +165,7 @@ type ContactResponse struct {
 }
 
 type ContactResponseData struct {
-	SessionID string        `json:"session_id"`
+	SessionId string        `json:"session_id"`
 	Action    string        `json:"action"`
 	Contact   *ContactInfo  `json:"contact,omitempty"`
 	Contacts  []ContactInfo `json:"contacts,omitempty"`
@@ -183,7 +183,7 @@ type ContactListResponse struct {
 }
 
 type ContactListData struct {
-	SessionID string        `json:"session_id"`
+	SessionId string        `json:"session_id"`
 	Contacts  []ContactInfo `json:"contacts"`
 	Count     int           `json:"count"`
 	Limit     int           `json:"limit"`
@@ -199,7 +199,7 @@ type CheckContactResponse struct {
 }
 
 type CheckContactData struct {
-	SessionID string               `json:"session_id"`
+	SessionId string               `json:"session_id"`
 	Results   []ContactCheckResult `json:"results"`
 	Count     int                  `json:"count"`
 	Timestamp time.Time            `json:"timestamp"`
@@ -222,7 +222,7 @@ type ContactActionResponse struct {
 }
 
 type ContactActionData struct {
-	SessionID string    `json:"session_id"`
+	SessionId string    `json:"session_id"`
 	Phone     string    `json:"phone"`
 	Action    string    `json:"action"`
 	Status    string    `json:"status"`
@@ -263,7 +263,7 @@ func NewContactSuccessResponse(sessionID, action string, contact *ContactInfo) *
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &ContactResponseData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Contact:   contact,
 			Status:    "success",
@@ -277,7 +277,7 @@ func NewContactListSuccessResponse(sessionID string, contacts []ContactInfo, lim
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &ContactListData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Contacts:  contacts,
 			Count:     len(contacts),
 			Limit:     limit,
@@ -304,7 +304,7 @@ func NewCheckContactSuccessResponse(sessionID string, results []ContactCheckResu
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &CheckContactData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Results:   results,
 			Count:     len(results),
 			Timestamp: time.Now(),
@@ -329,7 +329,7 @@ func NewContactActionSuccessResponse(sessionID, phone, action, message string) *
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &ContactActionData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Phone:     phone,
 			Action:    action,
 			Status:    "success",
@@ -364,7 +364,7 @@ func NewContactsResponse(sessionID string, contacts []ContactInfo) *ContactListR
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &ContactListData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Contacts:  contacts,
 			Count:     len(contacts),
 			Total:     len(contacts),

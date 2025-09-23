@@ -20,6 +20,20 @@ definitions:
         example: https://example.com/audio.mp3
         type: string
     type: object
+  dto.BaseResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        type: string
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
   dto.BlockedContactsData:
     properties:
       blocked_contacts:
@@ -90,6 +104,285 @@ definitions:
         $ref: '#/definitions/dto.ChatErrorResponse'
       success:
         type: boolean
+    type: object
+  dto.ChatwootAccount:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.ChatwootAgent:
+    properties:
+      account_id:
+        type: integer
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        type: string
+      uid:
+        type: string
+    type: object
+  dto.ChatwootAttachment:
+    properties:
+      account_id:
+        type: integer
+      data_url:
+        type: string
+      extension:
+        type: string
+      fallback:
+        type: string
+      file_size:
+        type: integer
+      file_type:
+        type: string
+      id:
+        type: integer
+      message_id:
+        type: integer
+      thumb_url:
+        type: string
+    type: object
+  dto.ChatwootConfigRequest:
+    properties:
+      accountId:
+        example: "123"
+        type: string
+      autoCreate:
+        example: true
+        type: boolean
+      conversationPending:
+        example: true
+        type: boolean
+      daysLimitImportMessages:
+        example: 30
+        maximum: 365
+        minimum: 1
+        type: integer
+      enabled:
+        example: true
+        type: boolean
+      ignoreJids:
+        example:
+        - 554988989314@s.whatsapp.net
+        - 559999999999@s.whatsapp.net
+        items:
+          type: string
+        type: array
+      importContacts:
+        example: false
+        type: boolean
+      importMessages:
+        example: false
+        type: boolean
+      logo:
+        example: https://example.com/logo.png
+        type: string
+      mergeBrazilContacts:
+        example: true
+        type: boolean
+      nameInbox:
+        example: WhatsApp Inbox
+        type: string
+      number:
+        example: "5511999999999"
+        type: string
+      organization:
+        example: My Company
+        type: string
+      reopenConversation:
+        example: false
+        type: boolean
+      signDelimiter:
+        example: |2-
+
+
+          ---
+          Sent via WhatsApp
+        type: string
+      signMsg:
+        example: true
+        type: boolean
+      token:
+        example: your-chatwoot-api-token
+        type: string
+      url:
+        example: https://chatwoot.example.com
+        type: string
+    required:
+    - enabled
+    type: object
+  dto.ChatwootConfigResponse:
+    properties:
+      accountId:
+        type: string
+      autoCreate:
+        type: boolean
+      conversationPending:
+        type: boolean
+      daysLimitImportMessages:
+        type: integer
+      enabled:
+        type: boolean
+      ignoreJids:
+        items:
+          type: string
+        type: array
+      importContacts:
+        type: boolean
+      importMessages:
+        type: boolean
+      logo:
+        type: string
+      mergeBrazilContacts:
+        type: boolean
+      nameInbox:
+        type: string
+      number:
+        type: string
+      organization:
+        type: string
+      reopenConversation:
+        type: boolean
+      signDelimiter:
+        type: string
+      signMsg:
+        type: boolean
+      url:
+        type: string
+      webhookUrl:
+        type: string
+    type: object
+  dto.ChatwootContact:
+    properties:
+      avatar:
+        type: string
+      avatar_url:
+        type: string
+      custom_attributes:
+        additionalProperties: true
+        type: object
+      email:
+        type: string
+      id:
+        type: integer
+      identifier:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      thumbnail:
+        type: string
+    type: object
+  dto.ChatwootConversation:
+    properties:
+      account_id:
+        type: integer
+      additional_attributes:
+        additionalProperties: true
+        type: object
+      assignee:
+        $ref: '#/definitions/dto.ChatwootAgent'
+      contact:
+        $ref: '#/definitions/dto.ChatwootContact'
+      custom_attributes:
+        additionalProperties: true
+        type: object
+      id:
+        type: integer
+      inbox_id:
+        type: integer
+      meta:
+        $ref: '#/definitions/dto.ChatwootMeta'
+      status:
+        type: string
+      team:
+        $ref: '#/definitions/dto.ChatwootTeam'
+      timestamp:
+        type: integer
+      unread_count:
+        type: integer
+    type: object
+  dto.ChatwootInbox:
+    properties:
+      channel_id:
+        type: integer
+      channel_type:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone_number:
+        type: string
+    type: object
+  dto.ChatwootMeta:
+    properties:
+      assignee:
+        $ref: '#/definitions/dto.ChatwootAgent'
+      sender:
+        $ref: '#/definitions/dto.ChatwootContact'
+      team:
+        $ref: '#/definitions/dto.ChatwootTeam'
+    type: object
+  dto.ChatwootTeam:
+    properties:
+      account_id:
+        type: integer
+      allow_auto_assign:
+        type: boolean
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.ChatwootWebhookPayload:
+    properties:
+      account:
+        $ref: '#/definitions/dto.ChatwootAccount'
+      attachments:
+        items:
+          $ref: '#/definitions/dto.ChatwootAttachment'
+        type: array
+      contact:
+        $ref: '#/definitions/dto.ChatwootContact'
+      content:
+        type: string
+      content_attributes:
+        additionalProperties: true
+        type: object
+      content_type:
+        type: string
+      conversation:
+        $ref: '#/definitions/dto.ChatwootConversation'
+      created_at:
+        description: pode ser string ou número
+      event:
+        type: string
+      id:
+        type: integer
+      inbox:
+        $ref: '#/definitions/dto.ChatwootInbox'
+      message_type:
+        description: pode ser string ou número
+      private:
+        type: boolean
+      sender:
+        $ref: '#/definitions/dto.ChatwootContact'
+      source_id:
+        type: string
+    required:
+    - event
     type: object
   dto.CheckContactRequest:
     properties:
@@ -1610,6 +1903,17 @@ definitions:
     - phone
     - state
     type: object
+  dto.StandardErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
   dto.StandardResponse:
     properties:
       code:
@@ -1831,6 +2135,45 @@ info:
   title: WhatsApp API Gateway
   version: "1.0"
 paths:
+  /chatwoot/webhook/{sessionId}:
+    post:
+      consumes:
+      - application/json
+      description: Receive and process webhooks from Chatwoot
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Webhook payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChatwootWebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+      summary: Receive Chatwoot webhook
+      tags:
+      - Chatwoot
   /health:
     get:
       consumes:
@@ -2398,6 +2741,96 @@ paths:
       summary: Set chat presence
       tags:
       - Chat
+  /session/{sessionId}/chatwoot/find:
+    get:
+      description: Get current Chatwoot configuration for a session. Returns the real
+        configuration from database if configured, or a generic "not configured" response
+        if no configuration exists. Accepts both global API key and session-specific
+        API key for authentication.
+      parameters:
+      - description: Session ID or name
+        example: '"my-session"'
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration found (if configured=true) or not configured
+            message (if configured=false)
+          schema:
+            $ref: '#/definitions/dto.ChatwootConfigResponse'
+        "401":
+          description: Unauthorized - API key required (use global or session-specific
+            key)
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Chatwoot configuration
+      tags:
+      - Chatwoot
+  /session/{sessionId}/chatwoot/set:
+    post:
+      consumes:
+      - application/json
+      description: Configure Chatwoot integration for a WhatsApp session. This endpoint
+        allows you to set up the connection between your WhatsApp session and Chatwoot.
+        You can use either the global API key or the session-specific API key for
+        authentication. When enabled=true, accountId, token, and url are required
+        fields.
+      parameters:
+      - description: Session ID or name
+        example: '"my-session"'
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Chatwoot configuration with all available options
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChatwootConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully configured Chatwoot integration
+          schema:
+            $ref: '#/definitions/dto.ChatwootConfigResponse'
+        "400":
+          description: Bad request - validation errors or missing required fields
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "401":
+          description: Unauthorized - API key required (use global or session-specific
+            key)
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.StandardErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Configure Chatwoot integration
+      tags:
+      - Chatwoot
   /session/{sessionId}/community/link:
     post:
       consumes:
@@ -5902,3 +6335,5 @@ tags:
   name: Newsletters
 - description: Webhook configuration and event management endpoints
   name: Webhooks
+- description: Chatwoot integration and configuration endpoints
+  name: Chatwoot

@@ -17,13 +17,13 @@ func newValidationError(field, message string) *ValidationError {
 }
 
 type ConnectionError struct {
-	SessionID string
+	SessionId string
 	Operation string
 	Cause     error
 }
 
 func (e ConnectionError) Error() string {
-	return "connection error for session " + e.SessionID + " during " + e.Operation + ": " + e.Cause.Error()
+	return "connection error for session " + e.SessionId + " during " + e.Operation + ": " + e.Cause.Error()
 }
 
 func (e ConnectionError) Unwrap() error {
@@ -32,7 +32,7 @@ func (e ConnectionError) Unwrap() error {
 
 func newConnectionError(sessionID, operation string, cause error) *ConnectionError {
 	return &ConnectionError{
-		SessionID: sessionID,
+		SessionId: sessionID,
 		Operation: operation,
 		Cause:     cause,
 	}

@@ -45,7 +45,7 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 	}
 
 	query := `
-		INSERT INTO sessions (name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at)
+		INSERT INTO "zpSessions" (name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt")
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id
 	`
@@ -88,7 +88,7 @@ func (r *PostgresRepo) Create(ctx context.Context, sessionEntity *sessiondomain.
 }
 
 func (r *PostgresRepo) Exists(ctx context.Context, name string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM sessions WHERE name = $1)`
+	query := `SELECT EXISTS(SELECT 1 FROM "zpSessions" WHERE name = $1)`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, name).Scan(&exists)
 	if err != nil {
@@ -100,8 +100,8 @@ func (r *PostgresRepo) Exists(ctx context.Context, name string) (bool, error) {
 func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*sessiondomain.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE id = $1
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE id = $1
 	`
 
 	err := r.db.GetContext(ctx, &model, query, id)
@@ -118,8 +118,8 @@ func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*sessiondomain.S
 func (r *PostgresRepo) GetByName(ctx context.Context, name string) (*sessiondomain.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE name = $1
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE name = $1
 	`
 
 	err := r.db.GetContext(ctx, &model, query, name)
@@ -136,8 +136,8 @@ func (r *PostgresRepo) GetByName(ctx context.Context, name string) (*sessiondoma
 func (r *PostgresRepo) GetAll(ctx context.Context) ([]*sessiondomain.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions ORDER BY created_at DESC
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" ORDER BY "createdAt" DESC
 	`
 
 	err := r.db.SelectContext(ctx, &sessionModels, query)
@@ -167,9 +167,9 @@ func (r *PostgresRepo) Update(ctx context.Context, session *sessiondomain.Sessio
 	updatedAt := time.Now()
 
 	query := `
-		UPDATE sessions
-		SET name = $2, device_jid = $3, status = $4, qr_code = $5, proxy_url = $6,
-		    webhook_url = $7, webhook_events = $8, connected = $9, apikey = $10, updated_at = $11
+		UPDATE "zpSessions"
+		SET name = $2, "deviceJid" = $3, status = $4, "qrCode" = $5, "proxyUrl" = $6,
+		    "webhookUrl" = $7, "webhookEvents" = $8, connected = $9, "apiKey" = $10, "updatedAt" = $11
 		WHERE id = $1
 	`
 
@@ -209,7 +209,7 @@ func (r *PostgresRepo) Update(ctx context.Context, session *sessiondomain.Sessio
 }
 
 func (r *PostgresRepo) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM sessions WHERE id = $1`
+	query := `DELETE FROM "zpSessions" WHERE id = $1`
 
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
@@ -232,7 +232,7 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 	var sessionModels []models.SessionModel
 	var totalCount int
 
-	countQuery := `SELECT COUNT(*) FROM sessions`
+	countQuery := `SELECT COUNT(*) FROM "zpSessions"`
 	args := []interface{}{}
 	argIndex := 1
 
@@ -248,8 +248,8 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 	}
 
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions"
 	`
 
 	if status != "" {
@@ -281,8 +281,8 @@ func (r *PostgresRepo) List(ctx context.Context, limit, offset int, status strin
 func (r *PostgresRepo) GetActive(ctx context.Context) ([]*sessiondomain.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE device_jid IS NOT NULL AND device_jid != '' ORDER BY created_at DESC
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE "deviceJid" IS NOT NULL AND "deviceJid" != '' ORDER BY "createdAt" DESC
 	`
 
 	err := r.db.SelectContext(ctx, &sessionModels, query)
@@ -305,8 +305,8 @@ func (r *PostgresRepo) GetActive(ctx context.Context) ([]*sessiondomain.Session,
 func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*sessiondomain.Session, error) {
 	var sessionModels []models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE status != $1 ORDER BY created_at DESC
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE status != $1 ORDER BY "createdAt" DESC
 	`
 
 	err := r.db.SelectContext(ctx, &sessionModels, query, string("connected"))
@@ -329,8 +329,8 @@ func (r *PostgresRepo) GetInactive(ctx context.Context) ([]*sessiondomain.Sessio
 func (r *PostgresRepo) GetByApiKey(ctx context.Context, apiKey string) (*sessiondomain.Session, error) {
 	var model models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE apikey = $1
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE "apiKey" = $1
 	`
 
 	err := r.db.GetContext(ctx, &model, query, apiKey)
@@ -351,8 +351,8 @@ func (r *PostgresRepo) GetByDeviceJID(ctx context.Context, deviceJID string) (*s
 
 	var model models.SessionModel
 	query := `
-		SELECT id, name, device_jid, status, qr_code, proxy_url, webhook_url, webhook_events, connected, apikey, created_at, updated_at
-		FROM sessions WHERE device_jid = $1
+		SELECT id, name, "deviceJid", status, "qrCode", "proxyUrl", "webhookUrl", "webhookEvents", connected, "apiKey", "createdAt", "updatedAt"
+		FROM "zpSessions" WHERE "deviceJid" = $1
 	`
 
 	err := r.db.GetContext(ctx, &model, query, deviceJID)
@@ -373,8 +373,8 @@ func (r *PostgresRepo) ValidateDeviceUniqueness(ctx context.Context, sessionID, 
 
 	var count int
 	query := `
-		SELECT COUNT(*) FROM sessions
-		WHERE device_jid = $1 AND id != $2
+		SELECT COUNT(*) FROM "zpSessions"
+		WHERE "deviceJid" = $1 AND id != $2
 	`
 
 	err := r.db.GetContext(ctx, &count, query, deviceJID, sessionID)
@@ -402,8 +402,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 	}
 
 	var proxyURL sessiondomain.ProxyConfiguration
-	if model.ProxyURL != "" {
-		proxy, err := sessiondomain.NewProxyConfiguration(model.ProxyURL)
+	if model.ProxyUrl != "" {
+		proxy, err := sessiondomain.NewProxyConfiguration(model.ProxyUrl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create proxy configuration: %w", err)
 		}
@@ -411,8 +411,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 	}
 
 	var DeviceJID sessiondomain.DeviceJID
-	if model.DeviceJID != "" {
-		jid, err := sessiondomain.NewDeviceJID(model.DeviceJID)
+	if model.DeviceJid != "" {
+		jid, err := sessiondomain.NewDeviceJID(model.DeviceJid)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create device JID: %w", err)
 		}
@@ -420,8 +420,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 	}
 
 	var qrCode sessiondomain.QRCode
-	if model.QRCode != "" {
-		qr, err := sessiondomain.NewQRCode(model.QRCode)
+	if model.QrCode != "" {
+		qr, err := sessiondomain.NewQRCode(model.QrCode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create QR code: %w", err)
 		}
@@ -438,8 +438,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 	}
 
 	var events []string
-	if model.Events != "" && model.Events != "[]" {
-		if err := json.Unmarshal([]byte(model.Events), &events); err != nil {
+	if model.WebhookEvents != "" && model.WebhookEvents != "[]" {
+		if err := json.Unmarshal([]byte(model.WebhookEvents), &events); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal webhook events: %w", err)
 		}
 	}
@@ -491,8 +491,8 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*sessiondomain
 		}
 	}
 
-	if model.WebhookURL != "" {
-		if err := sessionEntity.SetWebhookEndpoint(model.WebhookURL); err != nil {
+	if model.WebhookUrl != "" {
+		if err := sessionEntity.SetWebhookEndpoint(model.WebhookUrl); err != nil {
 			return nil, fmt.Errorf("failed to set webhook URL: %w", err)
 		}
 	}

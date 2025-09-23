@@ -93,7 +93,7 @@ type NewsletterResponse struct {
 }
 
 type NewsletterResponseData struct {
-	SessionID  string          `json:"session_id"`
+	SessionId  string          `json:"session_id"`
 	Action     string          `json:"action"`
 	Status     string          `json:"status"`
 	Message    string          `json:"message,omitempty"`
@@ -109,7 +109,7 @@ type NewsletterListResponse struct {
 }
 
 type NewsletterListData struct {
-	SessionID   string           `json:"session_id"`
+	SessionId   string           `json:"session_id"`
 	Newsletters []NewsletterInfo `json:"newsletters"`
 	Count       int              `json:"count"`
 	Total       int              `json:"total"`
@@ -123,7 +123,7 @@ type NewsletterActionResponse struct {
 }
 
 type NewsletterActionData struct {
-	SessionID     string    `json:"session_id"`
+	SessionId     string    `json:"session_id"`
 	NewsletterJID string    `json:"newsletter_jid"`
 	Action        string    `json:"action"`
 	Status        string    `json:"status"`
@@ -148,7 +148,7 @@ func NewNewsletterSuccessResponse(sessionID, action, message string, newsletter 
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &NewsletterResponseData{
-			SessionID:  sessionID,
+			SessionId:  sessionID,
 			Action:     action,
 			Status:     "success",
 			Message:    message,
@@ -163,7 +163,7 @@ func NewNewsletterListSuccessResponse(sessionID string, newsletters []Newsletter
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &NewsletterListData{
-			SessionID:   sessionID,
+			SessionId:   sessionID,
 			Newsletters: newsletters,
 			Count:       len(newsletters),
 			Total:       len(newsletters),
@@ -188,7 +188,7 @@ func NewNewsletterActionSuccessResponse(sessionID, newsletterJID, action, messag
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &NewsletterActionData{
-			SessionID:     sessionID,
+			SessionId:     sessionID,
 			NewsletterJID: newsletterJID,
 			Action:        action,
 			Status:        "success",
@@ -319,7 +319,7 @@ type SendNewsletterMessageResponse struct {
 }
 
 type NewsletterMessageData struct {
-	SessionID     string    `json:"session_id"`
+	SessionId     string    `json:"session_id"`
 	NewsletterJID string    `json:"newsletter_jid"`
 	MessageID     string    `json:"message_id"`
 	ServerID      string    `json:"server_id"`

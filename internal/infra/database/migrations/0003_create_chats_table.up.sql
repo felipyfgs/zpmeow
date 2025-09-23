@@ -1,55 +1,53 @@
--- Create chats table
-CREATE TABLE IF NOT EXISTS chats (
+-- Create zpChats table with camelCase columns
+CREATE TABLE IF NOT EXISTS "zpChats" (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-    chat_jid VARCHAR(255) NOT NULL,
-    chat_name VARCHAR(255),
-    chat_type VARCHAR(50) NOT NULL DEFAULT 'individual', -- 'individual', 'group'
-    phone_number VARCHAR(50),
-    is_group BOOLEAN NOT NULL DEFAULT FALSE,
-    group_subject VARCHAR(255),
-    group_description TEXT,
-    chatwoot_conversation_id BIGINT,
-    chatwoot_contact_id BIGINT,
-    last_message_at TIMESTAMP WITH TIME ZONE,
-    unread_count INTEGER DEFAULT 0,
-    is_archived BOOLEAN DEFAULT FALSE,
+    "sessionId" UUID NOT NULL REFERENCES "zpSessions"(id) ON DELETE CASCADE,
+    "chatJid" VARCHAR(255) NOT NULL,
+    "chatName" VARCHAR(255),
+    "phoneNumber" VARCHAR(50),
+    "isGroup" BOOLEAN NOT NULL DEFAULT FALSE,
+    "groupSubject" VARCHAR(255),
+    "groupDescription" TEXT,
+    "chatwootConversationId" BIGINT,
+    "chatwootContactId" BIGINT,
+    "lastMsgAt" TIMESTAMP WITH TIME ZONE,
+    "unreadCount" INTEGER DEFAULT 0,
+    "isArchived" BOOLEAN DEFAULT FALSE,
     metadata JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_chats_session_id ON chats(session_id);
-CREATE INDEX IF NOT EXISTS idx_chats_chat_jid ON chats(chat_jid);
-CREATE INDEX IF NOT EXISTS idx_chats_phone_number ON chats(phone_number);
-CREATE INDEX IF NOT EXISTS idx_chats_chatwoot_conversation_id ON chats(chatwoot_conversation_id);
-CREATE INDEX IF NOT EXISTS idx_chats_last_message_at ON chats(last_message_at);
+CREATE INDEX IF NOT EXISTS "idx_zpChats_sessionId" ON "zpChats"("sessionId");
+CREATE INDEX IF NOT EXISTS "idx_zpChats_chatJid" ON "zpChats"("chatJid");
+CREATE INDEX IF NOT EXISTS "idx_zpChats_phoneNumber" ON "zpChats"("phoneNumber");
+CREATE INDEX IF NOT EXISTS "idx_zpChats_chatwootConversationId" ON "zpChats"("chatwootConversationId");
+CREATE INDEX IF NOT EXISTS "idx_zpChats_lastMsgAt" ON "zpChats"("lastMsgAt");
 
--- Create unique constraint for session_id + chat_jid
-CREATE UNIQUE INDEX IF NOT EXISTS idx_chats_session_chat_unique ON chats(session_id, chat_jid);
+-- Create unique constraint for sessionId + chatJid
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_zpChats_session_chat_unique" ON "zpChats"("sessionId", "chatJid");
 
--- Create trigger function for updated_at
-CREATE OR REPLACE FUNCTION update_chats_updated_at()
+-- Create trigger function for updatedAt
+CREATE OR REPLACE FUNCTION "update_zpChats_updatedAt"()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW."updatedAt" = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
 $$ language 'plpgsql';
 
 -- Create trigger
-CREATE TRIGGER trigger_chats_updated_at
-    BEFORE UPDATE ON chats
+CREATE TRIGGER "trigger_zpChats_updatedAt"
+    BEFORE UPDATE ON "zpChats"
     FOR EACH ROW
-    EXECUTE FUNCTION update_chats_updated_at();
+    EXECUTE FUNCTION "update_zpChats_updatedAt"();
 
 -- Comments
-COMMENT ON TABLE chats IS 'WhatsApp chats/conversations';
-COMMENT ON COLUMN chats.id IS 'Unique chat identifier (UUID)';
-COMMENT ON COLUMN chats.session_id IS 'Reference to the WhatsApp session';
-COMMENT ON COLUMN chats.chat_jid IS 'WhatsApp chat JID';
-COMMENT ON COLUMN chats.chat_type IS 'Type of chat: individual or group';
-COMMENT ON COLUMN chats.is_group IS 'Whether this is a group chat';
-COMMENT ON COLUMN chats.chatwoot_conversation_id IS 'Linked Chatwoot conversation ID';
-COMMENT ON COLUMN chats.chatwoot_contact_id IS 'Linked Chatwoot contact ID';
+COMMENT ON TABLE "zpChats" IS 'WhatsApp chats/conversations (camelCase)';
+COMMENT ON COLUMN "zpChats".id IS 'Unique chat identifier (UUID)';
+COMMENT ON COLUMN "zpChats"."sessionId" IS 'Reference to the WhatsApp session';
+COMMENT ON COLUMN "zpChats"."chatJid" IS 'WhatsApp chat JID';
+COMMENT ON COLUMN "zpChats"."isGroup" IS 'Whether this is a group chat';
+COMMENT ON COLUMN "zpChats"."chatwootConversationId" IS 'Linked Chatwoot conversation ID';
+COMMENT ON COLUMN "zpChats"."chatwootContactId" IS 'Linked Chatwoot contact ID';

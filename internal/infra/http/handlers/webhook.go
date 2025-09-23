@@ -154,7 +154,7 @@ func (h *WebhookHandler) SetWebhook(c *fiber.Ctx) error {
 		Data: &dto.StandardWebhookData{
 			CreatedAt: time.Now(),
 			Events:    validEvents,
-			SessionID: sessionIDOrName,
+			SessionId: sessionIDOrName,
 			Status:    "active",
 			URL:       req.URL,
 		},
@@ -220,7 +220,7 @@ func (h *WebhookHandler) GetWebhook(c *fiber.Ctx) error {
 		Data: &dto.StandardWebhookData{
 			CreatedAt: time.Now(),
 			Events:    events,
-			SessionID: sessionIDOrName,
+			SessionId: sessionIDOrName,
 			Status:    "active",
 			URL:       webhookURL,
 		},

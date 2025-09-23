@@ -21,15 +21,13 @@ func NewChatRepository(db *sqlx.DB) *ChatRepository {
 // CreateChat cria um novo chat
 func (r *ChatRepository) CreateChat(ctx context.Context, chat *models.ChatModel) error {
 	query := `
-		INSERT INTO chats (
-			session_id, chat_jid, chat_name, chat_type, phone_number, is_group,
-			group_subject, group_description, chatwoot_conversation_id, chatwoot_contact_id,
-			last_message_at, unread_count, is_archived, metadata
+		INSERT INTO "zpChats" (
+			"sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			"lastMsgAt", "unreadCount", "isArchived", metadata
 		) VALUES (
-			:session_id, :chat_jid, :chat_name, :chat_type, :phone_number, :is_group,
-			:group_subject, :group_description, :chatwoot_conversation_id, :chatwoot_contact_id,
-			:last_message_at, :unread_count, :is_archived, :metadata
-		) RETURNING id, created_at, updated_at`
+			:sessionId, :chatJid, :chatName, :phoneNumber, :isGroup,
+			:lastMsgAt, :unreadCount, :isArchived, :metadata
+		) RETURNING id, "createdAt", "updatedAt"`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, chat)
 	if err != nil {
@@ -47,15 +45,14 @@ func (r *ChatRepository) CreateChat(ctx context.Context, chat *models.ChatModel)
 	return nil
 }
 
-// GetChatBySessionAndJID busca um chat por session_id e chat_jid
+// GetChatBySessionAndJID busca um chat por sessionId e chatJid (OTIMIZADA)
 func (r *ChatRepository) GetChatBySessionAndJID(ctx context.Context, sessionID, chatJID string) (*models.ChatModel, error) {
 	var chat models.ChatModel
 	query := `
-		SELECT id, session_id, chat_jid, chat_name, chat_type, phone_number, is_group,
-			   group_subject, group_description, chatwoot_conversation_id, chatwoot_contact_id,
-			   last_message_at, unread_count, is_archived, metadata, created_at, updated_at
-		FROM chats 
-		WHERE session_id = $1 AND chat_jid = $2`
+		SELECT id, "sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			   "lastMsgAt", "unreadCount", "isArchived", metadata, "createdAt", "updatedAt"
+		FROM "zpChats"
+		WHERE "sessionId" = $1 AND "chatJid" = $2`
 
 	err := r.db.GetContext(ctx, &chat, query, sessionID, chatJID)
 	if err != nil {
@@ -72,10 +69,9 @@ func (r *ChatRepository) GetChatBySessionAndJID(ctx context.Context, sessionID, 
 func (r *ChatRepository) GetChatByID(ctx context.Context, id string) (*models.ChatModel, error) {
 	var chat models.ChatModel
 	query := `
-		SELECT id, session_id, chat_jid, chat_name, chat_type, phone_number, is_group,
-			   group_subject, group_description, chatwoot_conversation_id, chatwoot_contact_id,
-			   last_message_at, unread_count, is_archived, metadata, created_at, updated_at
-		FROM chats 
+		SELECT id, "sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			   "lastMsgAt", "unreadCount", "isArchived", metadata, "createdAt", "updatedAt"
+		FROM "zpChats"
 		WHERE id = $1`
 
 	err := r.db.GetContext(ctx, &chat, query, id)
@@ -89,46 +85,27 @@ func (r *ChatRepository) GetChatByID(ctx context.Context, id string) (*models.Ch
 	return &chat, nil
 }
 
-// GetChatsByChatwootConversationID busca chats por chatwoot_conversation_id
+// GetChatByChatwootConversationID - MÉTODO REMOVIDO (campos Chatwoot removidos)
+// Use relação separada para vincular chats com Chatwoot
 func (r *ChatRepository) GetChatByChatwootConversationID(ctx context.Context, conversationID string) (*models.ChatModel, error) {
-	var chat models.ChatModel
-	query := `
-		SELECT id, session_id, chat_jid, chat_name, chat_type, phone_number, is_group,
-			   group_subject, group_description, chatwoot_conversation_id, chatwoot_contact_id,
-			   last_message_at, unread_count, is_archived, metadata, created_at, updated_at
-		FROM chats 
-		WHERE chatwoot_conversation_id = $1`
-
-	err := r.db.GetContext(ctx, &chat, query, conversationID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to get chat by chatwoot conversation id: %w", err)
-	}
-
-	return &chat, nil
+	// TODO: Implementar busca via tabela de relação zpCwMessages
+	return nil, fmt.Errorf("método removido - usar relação separada para Chatwoot")
 }
 
 // UpdateChat atualiza um chat
 func (r *ChatRepository) UpdateChat(ctx context.Context, chat *models.ChatModel) error {
 	query := `
-		UPDATE chats SET
-			chat_name = :chat_name,
-			chat_type = :chat_type,
-			phone_number = :phone_number,
-			is_group = :is_group,
-			group_subject = :group_subject,
-			group_description = :group_description,
-			chatwoot_conversation_id = :chatwoot_conversation_id,
-			chatwoot_contact_id = :chatwoot_contact_id,
-			last_message_at = :last_message_at,
-			unread_count = :unread_count,
-			is_archived = :is_archived,
+		UPDATE "zpChats" SET
+			"chatName" = :chatName,
+			"phoneNumber" = :phoneNumber,
+			"isGroup" = :isGroup,
+			"lastMsgAt" = :lastMsgAt,
+			"unreadCount" = :unreadCount,
+			"isArchived" = :isArchived,
 			metadata = :metadata,
-			updated_at = CURRENT_TIMESTAMP
+			"updatedAt" = CURRENT_TIMESTAMP
 		WHERE id = :id
-		RETURNING updated_at`
+		RETURNING "updatedAt"`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, chat)
 	if err != nil {
@@ -146,9 +123,9 @@ func (r *ChatRepository) UpdateChat(ctx context.Context, chat *models.ChatModel)
 	return nil
 }
 
-// UpdateLastMessageAt atualiza o timestamp da última mensagem
+// UpdateLastMessageAt atualiza o timestamp da última mensagem (OTIMIZADA)
 func (r *ChatRepository) UpdateLastMessageAt(ctx context.Context, chatID string, timestamp time.Time) error {
-	query := `UPDATE chats SET last_message_at = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	query := `UPDATE "zpChats" SET "lastMsgAt" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, timestamp, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to update last message at: %w", err)
@@ -156,9 +133,9 @@ func (r *ChatRepository) UpdateLastMessageAt(ctx context.Context, chatID string,
 	return nil
 }
 
-// UpdateUnreadCount atualiza o contador de mensagens não lidas
+// UpdateUnreadCount atualiza o contador de mensagens não lidas (OTIMIZADA)
 func (r *ChatRepository) UpdateUnreadCount(ctx context.Context, chatID string, count int) error {
-	query := `UPDATE chats SET unread_count = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	query := `UPDATE "zpChats" SET "unreadCount" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, count, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to update unread count: %w", err)
@@ -166,16 +143,15 @@ func (r *ChatRepository) UpdateUnreadCount(ctx context.Context, chatID string, c
 	return nil
 }
 
-// GetChatsBySessionID busca todos os chats de uma sessão
+// GetChatsBySessionId busca todos os chats de uma sessão (OTIMIZADA)
 func (r *ChatRepository) GetChatsBySessionID(ctx context.Context, sessionID string, limit, offset int) ([]*models.ChatModel, error) {
 	var chats []*models.ChatModel
 	query := `
-		SELECT id, session_id, chat_jid, chat_name, chat_type, phone_number, is_group,
-			   group_subject, group_description, chatwoot_conversation_id, chatwoot_contact_id,
-			   last_message_at, unread_count, is_archived, metadata, created_at, updated_at
-		FROM chats 
-		WHERE session_id = $1 AND is_archived = FALSE
-		ORDER BY last_message_at DESC NULLS LAST
+		SELECT id, "sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			   "lastMsgAt", "unreadCount", "isArchived", metadata, "createdAt", "updatedAt"
+		FROM "zpChats"
+		WHERE "sessionId" = $1 AND "isArchived" = FALSE
+		ORDER BY "lastMsgAt" DESC NULLS LAST
 		LIMIT $2 OFFSET $3`
 
 	err := r.db.SelectContext(ctx, &chats, query, sessionID, limit, offset)
@@ -188,7 +164,7 @@ func (r *ChatRepository) GetChatsBySessionID(ctx context.Context, sessionID stri
 
 // DeleteChat deleta um chat
 func (r *ChatRepository) DeleteChat(ctx context.Context, id string) error {
-	query := `DELETE FROM chats WHERE id = $1`
+	query := `DELETE FROM "zpChats" WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete chat: %w", err)
@@ -198,7 +174,7 @@ func (r *ChatRepository) DeleteChat(ctx context.Context, id string) error {
 
 // CreateOrUpdateChat cria ou atualiza um chat
 func (r *ChatRepository) CreateOrUpdateChat(ctx context.Context, chat *models.ChatModel) error {
-	existing, err := r.GetChatBySessionAndJID(ctx, chat.SessionID, chat.ChatJID)
+	existing, err := r.GetChatBySessionAndJID(ctx, chat.SessionId, chat.ChatJid)
 	if err != nil {
 		return err
 	}
@@ -207,16 +183,14 @@ func (r *ChatRepository) CreateOrUpdateChat(ctx context.Context, chat *models.Ch
 		return r.CreateChat(ctx, chat)
 	}
 
-	// Atualiza o chat existente com novos dados
+	// Atualiza o chat existente com novos dados (campos otimizados)
 	existing.ChatName = chat.ChatName
-	existing.ChatType = chat.ChatType
 	existing.PhoneNumber = chat.PhoneNumber
 	existing.IsGroup = chat.IsGroup
-	existing.GroupSubject = chat.GroupSubject
-	existing.GroupDescription = chat.GroupDescription
-	existing.ChatwootConversationID = chat.ChatwootConversationID
-	existing.ChatwootContactID = chat.ChatwootContactID
 	existing.Metadata = chat.Metadata
+	// ChatType removido - redundante com IsGroup
+	// GroupSubject, GroupDescription movidos para Metadata
+	// Campos Chatwoot removidos - usar relação separada
 
 	*chat = *existing
 	return r.UpdateChat(ctx, chat)

@@ -21,19 +21,13 @@ func NewChatwootRepository(db *sqlx.DB) *ChatwootRepository {
 // Create cria uma nova configuração Chatwoot
 func (r *ChatwootRepository) Create(ctx context.Context, config *models.ChatwootModel) error {
 	query := `
-		INSERT INTO chatwoot (
-			session_id, enabled, account_id, token, url, name_inbox,
-			sign_msg, sign_delimiter, number, reopen_conversation,
-			conversation_pending, merge_brazil_contacts, import_contacts,
-			import_messages, days_limit_import_messages, auto_create,
-			organization, logo, ignore_jids, sync_status
+		INSERT INTO "zpChatwoot" (
+			"sessionId", enabled, "accountId", token, url, "nameInbox",
+			number, "inboxId", "syncStatus", config
 		) VALUES (
-			:session_id, :enabled, :account_id, :token, :url, :name_inbox,
-			:sign_msg, :sign_delimiter, :number, :reopen_conversation,
-			:conversation_pending, :merge_brazil_contacts, :import_contacts,
-			:import_messages, :days_limit_import_messages, :auto_create,
-			:organization, :logo, :ignore_jids, :sync_status
-		) RETURNING id, created_at, updated_at`
+			:"sessionId", :enabled, :"accountId", :token, :url, :"nameInbox",
+			:number, :"inboxId", :"syncStatus", :config
+		) RETURNING id, "createdAt", "updatedAt"`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, config)
 	if err != nil {
@@ -51,19 +45,14 @@ func (r *ChatwootRepository) Create(ctx context.Context, config *models.Chatwoot
 	return nil
 }
 
-// GetBySessionID busca configuração Chatwoot por ID da sessão
+// GetBySessionId busca configuração Chatwoot por ID da sessão
 func (r *ChatwootRepository) GetBySessionID(ctx context.Context, sessionID string) (*models.ChatwootModel, error) {
 	var config models.ChatwootModel
 	query := `
-		SELECT id, session_id, enabled, account_id, token, url, name_inbox,
-			   sign_msg, sign_delimiter, number, reopen_conversation,
-			   conversation_pending, merge_brazil_contacts, import_contacts,
-			   import_messages, days_limit_import_messages, auto_create,
-			   organization, logo, ignore_jids, inbox_id, inbox_name,
-			   last_sync, sync_status, error_message, messages_count,
-			   contacts_count, conversations_count, created_at, updated_at
-		FROM chatwoot 
-		WHERE session_id = $1`
+		SELECT id, "sessionId", enabled, "accountId", token, url, "nameInbox",
+			   "inboxId", "lastSync", "syncStatus", config, "createdAt", "updatedAt"
+		FROM "zpChatwoot"
+		WHERE "sessionId" = $1`
 
 	err := r.db.GetContext(ctx, &config, query, sessionID)
 	if err != nil {
@@ -80,14 +69,9 @@ func (r *ChatwootRepository) GetBySessionID(ctx context.Context, sessionID strin
 func (r *ChatwootRepository) GetByID(ctx context.Context, id string) (*models.ChatwootModel, error) {
 	var config models.ChatwootModel
 	query := `
-		SELECT id, session_id, enabled, account_id, token, url, name_inbox,
-			   sign_msg, sign_delimiter, number, reopen_conversation,
-			   conversation_pending, merge_brazil_contacts, import_contacts,
-			   import_messages, days_limit_import_messages, auto_create,
-			   organization, logo, ignore_jids, inbox_id, inbox_name,
-			   last_sync, sync_status, error_message, messages_count,
-			   contacts_count, conversations_count, created_at, updated_at
-		FROM chatwoot 
+		SELECT id, "sessionId", enabled, "accountId", token, url, "nameInbox",
+			   "inboxId", "lastSync", "syncStatus", config, "createdAt", "updatedAt"
+		FROM "zpChatwoot"
 		WHERE id = $1`
 
 	err := r.db.GetContext(ctx, &config, query, id)
@@ -104,36 +88,19 @@ func (r *ChatwootRepository) GetByID(ctx context.Context, id string) (*models.Ch
 // Update atualiza uma configuração Chatwoot existente
 func (r *ChatwootRepository) Update(ctx context.Context, config *models.ChatwootModel) error {
 	query := `
-		UPDATE chatwoot SET
+		UPDATE "zpChatwoot" SET
 			enabled = :enabled,
-			account_id = :account_id,
+			"accountId" = :"accountId",
 			token = :token,
 			url = :url,
-			name_inbox = :name_inbox,
-			sign_msg = :sign_msg,
-			sign_delimiter = :sign_delimiter,
-			number = :number,
-			reopen_conversation = :reopen_conversation,
-			conversation_pending = :conversation_pending,
-			merge_brazil_contacts = :merge_brazil_contacts,
-			import_contacts = :import_contacts,
-			import_messages = :import_messages,
-			days_limit_import_messages = :days_limit_import_messages,
-			auto_create = :auto_create,
-			organization = :organization,
-			logo = :logo,
-			ignore_jids = :ignore_jids,
-			inbox_id = :inbox_id,
-			inbox_name = :inbox_name,
-			last_sync = :last_sync,
-			sync_status = :sync_status,
-			error_message = :error_message,
-			messages_count = :messages_count,
-			contacts_count = :contacts_count,
-			conversations_count = :conversations_count,
-			updated_at = NOW()
-		WHERE session_id = :session_id
-		RETURNING updated_at`
+			"nameInbox" = :"nameInbox",
+			"inboxId" = :"inboxId",
+			"lastSync" = :"lastSync",
+			"syncStatus" = :"syncStatus",
+			config = :config,
+			"updatedAt" = NOW()
+		WHERE "sessionId" = :"sessionId"
+		RETURNING "updatedAt"`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, config)
 	if err != nil {
@@ -153,8 +120,8 @@ func (r *ChatwootRepository) Update(ctx context.Context, config *models.Chatwoot
 
 // Delete remove uma configuração Chatwoot
 func (r *ChatwootRepository) Delete(ctx context.Context, sessionID string) error {
-	query := `DELETE FROM chatwoot WHERE session_id = $1`
-	
+	query := `DELETE FROM "zpChatwoot" WHERE "sessionId" = $1`
+
 	result, err := r.db.ExecContext(ctx, query, sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to delete chatwoot config: %w", err)
@@ -175,26 +142,21 @@ func (r *ChatwootRepository) Delete(ctx context.Context, sessionID string) error
 // List lista todas as configurações Chatwoot
 func (r *ChatwootRepository) List(ctx context.Context, enabled *bool) ([]*models.ChatwootModel, error) {
 	var configs []*models.ChatwootModel
-	
+
 	query := `
-		SELECT c.id, c.session_id, c.enabled, c.account_id, c.token, c.url, c.name_inbox,
-			   c.sign_msg, c.sign_delimiter, c.number, c.reopen_conversation,
-			   c.conversation_pending, c.merge_brazil_contacts, c.import_contacts,
-			   c.import_messages, c.days_limit_import_messages, c.auto_create,
-			   c.organization, c.logo, c.ignore_jids, c.inbox_id, c.inbox_name,
-			   c.last_sync, c.sync_status, c.error_message, c.messages_count,
-			   c.contacts_count, c.conversations_count, c.created_at, c.updated_at
-		FROM chatwoot c
-		INNER JOIN sessions s ON c.session_id = s.id`
+		SELECT c.id, c."sessionId", c.enabled, c."accountId", c.token, c.url, c."nameInbox",
+			   c."inboxId", c."lastSync", c."syncStatus", c.config, c."createdAt", c."updatedAt"
+		FROM "zpChatwoot" c
+		INNER JOIN sessions s ON c."sessionId" = s.id`
 
 	args := []interface{}{}
-	
+
 	if enabled != nil {
 		query += ` WHERE c.enabled = $1`
 		args = append(args, *enabled)
 	}
-	
-	query += ` ORDER BY c.created_at DESC`
+
+	query += ` ORDER BY c."createdAt" DESC`
 
 	err := r.db.SelectContext(ctx, &configs, query, args...)
 	if err != nil {
@@ -207,27 +169,27 @@ func (r *ChatwootRepository) List(ctx context.Context, enabled *bool) ([]*models
 // ListWithSessionInfo lista configurações com informações da sessão
 func (r *ChatwootRepository) ListWithSessionInfo(ctx context.Context, enabled *bool) ([]*ChatwootWithSession, error) {
 	var configs []*ChatwootWithSession
-	
+
 	query := `
-		SELECT c.id, c.session_id, c.enabled, c.account_id, c.token, c.url, c.name_inbox,
+		SELECT c.id, c."sessionId", c.enabled, c."accountId", c.token, c.url, c."nameInbox",
 			   c.sign_msg, c.sign_delimiter, c.number, c.reopen_conversation,
 			   c.conversation_pending, c.merge_brazil_contacts, c.import_contacts,
 			   c.import_messages, c.days_limit_import_messages, c.auto_create,
-			   c.organization, c.logo, c.ignore_jids, c.inbox_id, c.inbox_name,
-			   c.last_sync, c.sync_status, c.error_message, c.messages_count,
-			   c.contacts_count, c.conversations_count, c.created_at, c.updated_at,
+			   c.organization, c.logo, c.ignore_jids, c."inboxId", c.inbox_name,
+			   c."lastSync", c."syncStatus", c.error_message, c.messages_count,
+			   c.contacts_count, c.conversations_count, c."createdAt", c."updatedAt",
 			   s.name as session_name, s.status as session_status, s.connected as session_connected
-		FROM chatwoot c
-		INNER JOIN sessions s ON c.session_id = s.id`
+		FROM "zpChatwoot" c
+		INNER JOIN sessions s ON c."sessionId" = s.id`
 
 	args := []interface{}{}
-	
+
 	if enabled != nil {
 		query += ` WHERE c.enabled = $1`
 		args = append(args, *enabled)
 	}
-	
-	query += ` ORDER BY c.created_at DESC`
+
+	query += ` ORDER BY c."createdAt" DESC`
 
 	err := r.db.SelectContext(ctx, &configs, query, args...)
 	if err != nil {
@@ -240,12 +202,12 @@ func (r *ChatwootRepository) ListWithSessionInfo(ctx context.Context, enabled *b
 // UpdateSyncStatus atualiza apenas o status de sincronização
 func (r *ChatwootRepository) UpdateSyncStatus(ctx context.Context, sessionID, status string, errorMsg *string) error {
 	query := `
-		UPDATE chatwoot SET
-			sync_status = $2,
+		UPDATE "zpChatwoot" SET
+			"syncStatus" = $2,
 			error_message = $3,
-			last_sync = NOW(),
-			updated_at = NOW()
-		WHERE session_id = $1`
+			"lastSync" = NOW(),
+			"updatedAt" = NOW()
+		WHERE "sessionId" = $1`
 
 	_, err := r.db.ExecContext(ctx, query, sessionID, status, errorMsg)
 	if err != nil {
@@ -258,12 +220,12 @@ func (r *ChatwootRepository) UpdateSyncStatus(ctx context.Context, sessionID, st
 // UpdateMetrics atualiza as métricas de uma configuração
 func (r *ChatwootRepository) UpdateMetrics(ctx context.Context, sessionID string, messagesCount, contactsCount, conversationsCount int) error {
 	query := `
-		UPDATE chatwoot SET
+		UPDATE "zpChatwoot" SET
 			messages_count = $2,
 			contacts_count = $3,
 			conversations_count = $4,
-			updated_at = NOW()
-		WHERE session_id = $1`
+			"updatedAt" = NOW()
+		WHERE "sessionId" = $1`
 
 	_, err := r.db.ExecContext(ctx, query, sessionID, messagesCount, contactsCount, conversationsCount)
 	if err != nil {
@@ -276,11 +238,11 @@ func (r *ChatwootRepository) UpdateMetrics(ctx context.Context, sessionID string
 // UpdateInboxInfo atualiza informações da inbox após criação
 func (r *ChatwootRepository) UpdateInboxInfo(ctx context.Context, sessionID string, inboxID int, inboxName string) error {
 	query := `
-		UPDATE chatwoot SET
-			inbox_id = $2,
+		UPDATE "zpChatwoot" SET
+			"inboxId" = $2,
 			inbox_name = $3,
-			updated_at = NOW()
-		WHERE session_id = $1`
+			"updatedAt" = NOW()
+		WHERE "sessionId" = $1`
 
 	_, err := r.db.ExecContext(ctx, query, sessionID, inboxID, inboxName)
 	if err != nil {
@@ -299,16 +261,16 @@ func (r *ChatwootRepository) GetEnabledConfigs(ctx context.Context) ([]*models.C
 // GetMetrics retorna métricas agregadas
 func (r *ChatwootRepository) GetMetrics(ctx context.Context) (*ChatwootMetrics, error) {
 	var metrics ChatwootMetrics
-	
+
 	query := `
 		SELECT 
 			COUNT(*) as total_configs,
 			COUNT(CASE WHEN enabled = true THEN 1 END) as enabled_configs,
-			COUNT(CASE WHEN enabled = true AND inbox_id IS NOT NULL THEN 1 END) as connected_configs,
+			COUNT(CASE WHEN enabled = true AND "inboxId" IS NOT NULL THEN 1 END) as connected_configs,
 			COALESCE(SUM(messages_count), 0) as total_messages,
 			COALESCE(SUM(contacts_count), 0) as total_contacts,
 			COALESCE(SUM(conversations_count), 0) as total_conversations
-		FROM chatwoot`
+		FROM "zpChatwoot"`
 
 	err := r.db.GetContext(ctx, &metrics, query)
 	if err != nil {
@@ -330,10 +292,10 @@ type ChatwootWithSession struct {
 
 // ChatwootMetrics representa métricas agregadas
 type ChatwootMetrics struct {
-	TotalConfigs     int `db:"total_configs" json:"total_configs"`
-	EnabledConfigs   int `db:"enabled_configs" json:"enabled_configs"`
-	ConnectedConfigs int `db:"connected_configs" json:"connected_configs"`
-	TotalMessages    int `db:"total_messages" json:"total_messages"`
-	TotalContacts    int `db:"total_contacts" json:"total_contacts"`
+	TotalConfigs       int `db:"total_configs" json:"total_configs"`
+	EnabledConfigs     int `db:"enabled_configs" json:"enabled_configs"`
+	ConnectedConfigs   int `db:"connected_configs" json:"connected_configs"`
+	TotalMessages      int `db:"total_messages" json:"total_messages"`
+	TotalContacts      int `db:"total_contacts" json:"total_contacts"`
 	TotalConversations int `db:"total_conversations" json:"total_conversations"`
 }

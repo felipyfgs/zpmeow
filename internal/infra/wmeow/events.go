@@ -26,6 +26,8 @@ type EventProcessor struct {
 	subscribedEvents    []string
 	chatwootIntegration *chatwoot.Integration
 	chatwootRepo        *repository.ChatwootRepository
+	messageRepo         *repository.MessageRepository
+	chatRepo            *repository.ChatRepository
 	mediaCache          map[string]interface{} // Cache para mensagens de mídia
 
 	receiptMutex   sync.Mutex
@@ -135,7 +137,7 @@ var eventHandlers = map[string]func(*EventProcessor, interface{}){
 	"*events.ChatPresence": (*EventProcessor).handleChatPresence,
 }
 
-func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Repository) *EventProcessor {
+func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Repository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository) *EventProcessor {
 	logger := logging.GetLogger().Sub("events").Sub(sessionID)
 	ep := &EventProcessor{
 		sessionID:        sessionID,
@@ -143,6 +145,8 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 		sessionManager:   NewSessionManager(sessionRepo, logger),
 		logger:           logger,
 		subscribedEvents: []string{},
+		messageRepo:      messageRepo,
+		chatRepo:         chatRepo,
 	}
 
 	ep.loadSubscribedEvents()
@@ -150,7 +154,7 @@ func NewEventProcessor(sessionID, webhookURL string, sessionRepo session.Reposit
 	return ep
 }
 
-func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository) *EventProcessor {
+func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo session.Repository, chatwootIntegration *chatwoot.Integration, chatwootRepo *repository.ChatwootRepository, messageRepo *repository.MessageRepository, chatRepo *repository.ChatRepository) *EventProcessor {
 	logger := logging.GetLogger().Sub("events").Sub(sessionID)
 	ep := &EventProcessor{
 		sessionID:           sessionID,
@@ -160,6 +164,8 @@ func NewEventProcessorWithChatwoot(sessionID, webhookURL string, sessionRepo ses
 		subscribedEvents:    []string{},
 		chatwootIntegration: chatwootIntegration,
 		chatwootRepo:        chatwootRepo,
+		messageRepo:         messageRepo,
+		chatRepo:            chatRepo,
 	}
 
 	ep.loadSubscribedEvents()
@@ -255,7 +261,18 @@ func (ep *EventProcessor) handleMessage(evt interface{}) {
 	msg := evt.(*events.Message)
 	ep.logger.Infof("📨 [MESSAGE DEBUG] Message received from %s in session %s (ID: %s, IsFromMe: %v)", msg.Info.Sender, ep.sessionID, msg.Info.ID, msg.Info.IsFromMe)
 
-	// Processar integração Chatwoot primeiro
+	// Salvar mensagem no banco de dados zpmeow primeiro
+	ep.logger.Infof("💾 [DATABASE DEBUG] Starting database save for session %s, message ID: %s, from: %s, type: %s",
+		ep.sessionID, msg.Info.ID, msg.Info.Sender.String(), fmt.Sprintf("%T", msg.Message))
+	if err := ep.saveMessageToDatabase(msg); err != nil {
+		ep.logger.Errorf("💾 [DATABASE ERROR] Failed to save message to database for session %s, message ID: %s, error: %v",
+			ep.sessionID, msg.Info.ID, err)
+	} else {
+		ep.logger.Infof("💾 [DATABASE DEBUG] Successfully saved message to database for session %s, message ID: %s",
+			ep.sessionID, msg.Info.ID)
+	}
+
+	// Processar integração Chatwoot
 	ep.logger.Infof("📨 [MESSAGE DEBUG] Starting Chatwoot processing for session %s", ep.sessionID)
 	ep.processChatwootMessage(msg)
 
@@ -303,7 +320,7 @@ func (ep *EventProcessor) processChatwootMessage(msg *events.Message) {
 		return
 	}
 
-	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Found Chatwoot config for session %s: enabled=%v, url=%s, accountId=%s", ep.sessionID, config.Enabled, getStringValue(config.URL), getStringValue(config.AccountID))
+	ep.logger.Infof("🔍 [CHATWOOT DEBUG] Found Chatwoot config for session %s: enabled=%v, url=%s, accountId=%s", ep.sessionID, config.Enabled, getStringValue(config.URL), getStringValue(config.AccountId))
 
 	if !config.Enabled {
 		ep.logger.Warnf("🔍 [CHATWOOT DEBUG] Chatwoot integration disabled for session %s", ep.sessionID)
@@ -355,7 +372,7 @@ func (ep *EventProcessor) convertToCharwootMessage(msg *events.Message) *chatwoo
 	}
 
 	// Detectar tipo de mensagem e extrair conteúdo
-	msgType, text, mediaURL, mimeType, fileName := ep.extractMessageContent(msg)
+	msgType, text, _, mimeType, fileName := ep.extractMessageContent(msg)
 
 	return &chatwoot.WhatsAppMessage{
 		ID:        msg.Info.ID,
@@ -364,10 +381,154 @@ func (ep *EventProcessor) convertToCharwootMessage(msg *events.Message) *chatwoo
 		Body:      text,
 		Type:      msgType,
 		Timestamp: msg.Info.Timestamp.Unix(),
-		MediaURL:  mediaURL,
 		MimeType:  mimeType,
 		FileName:  fileName,
 	}
+}
+
+// saveMessageToDatabase salva a mensagem WhatsApp no banco de dados zpmeow
+func (ep *EventProcessor) saveMessageToDatabase(msg *events.Message) error {
+	if ep.messageRepo == nil || ep.chatRepo == nil {
+		ep.logger.Warnf("💾 [DATABASE DEBUG] Message or Chat repository not available (messageRepo: %v, chatRepo: %v), skipping database save",
+			ep.messageRepo != nil, ep.chatRepo != nil)
+		return nil
+	}
+
+	ctx := context.Background()
+
+	ep.logger.Infof("💾 [DATABASE DEBUG] Converting WhatsApp message to database models for message ID: %s", msg.Info.ID)
+
+	// Extrair informações da mensagem
+	msgType, content, mediaURL, mimeType, _ := ep.extractMessageContent(msg)
+	ep.logger.Debugf("📝 [MESSAGE CONTENT] Type: %s, Content: %s, MediaURL: %s, MimeType: %s",
+		msgType, content, func() string {
+			if mediaURL != "" {
+				return mediaURL
+			} else {
+				return "nil"
+			}
+		}(),
+		func() string {
+			if mimeType != "" {
+				return mimeType
+			} else {
+				return "nil"
+			}
+		}())
+
+	// Criar ou buscar chat
+	chatJID := msg.Info.Chat.String()
+	chat, err := ep.chatRepo.GetChatBySessionAndJID(ctx, ep.sessionID, chatJID)
+	if err != nil {
+		ep.logger.Errorf("💾 [DATABASE ERROR] Failed to get chat: %v", err)
+		return fmt.Errorf("failed to get chat: %w", err)
+	}
+
+	// Se chat não existe, criar um novo
+	if chat == nil {
+		ep.logger.Infof("💾 [DATABASE DEBUG] Creating new chat for JID: %s", chatJID)
+
+		// Determinar se é grupo
+		isGroup := strings.Contains(chatJID, "@g.us")
+		// chatType removido - usar apenas isGroup
+
+		// Extrair número de telefone (para chats individuais)
+		var phoneNumber *string
+		if !isGroup {
+			phone := ep.extractPhoneNumber(chatJID)
+			phoneNumber = &phone
+		}
+
+		chat = &models.ChatModel{
+			SessionId:   ep.sessionID,
+			ChatJid:     chatJID,
+			ChatName:    nil, // Será preenchido posteriormente se disponível
+			PhoneNumber: phoneNumber,
+			IsGroup:     isGroup,
+			UnreadCount: 0,
+			IsArchived:  false,
+			Metadata:    models.JSONB{},
+		}
+
+		if err := ep.chatRepo.CreateChat(ctx, chat); err != nil {
+			ep.logger.Errorf("💾 [DATABASE ERROR] Failed to create chat: %v", err)
+			return fmt.Errorf("failed to create chat: %w", err)
+		}
+
+		ep.logger.Infof("💾 [DATABASE DEBUG] Successfully created chat with ID: %s", chat.ID)
+	}
+
+	// Criar mensagem
+	ep.logger.Infof("💾 [DATABASE DEBUG] Creating message model")
+
+	// Determinar status da mensagem
+	status := "delivered"
+	if msg.Info.IsFromMe {
+		status = "sent"
+	}
+
+	// Extrair nome do remetente
+	senderName := ""
+	if msg.Info.PushName != "" {
+		senderName = msg.Info.PushName
+	}
+
+	// Converter strings para ponteiros quando necessário
+	// Campos de mídia movidos para MediaInfo JSONB
+	// var mediaURLPtr, mimeTypePtr, fileNamePtr *string - não mais necessário
+
+	var contentPtr *string
+	if content != "" {
+		contentPtr = &content
+	}
+
+	var senderNamePtr *string
+	if senderName != "" {
+		senderNamePtr = &senderName
+	}
+
+	message := &models.MessageModel{
+		ChatId:      chat.ID,
+		SessionId:   ep.sessionID,
+		MsgId:       msg.Info.ID,
+		MsgType:     msgType,
+		Content:     contentPtr,
+		SenderJid:   msg.Info.Sender.String(),
+		SenderName:  senderNamePtr,
+		IsFromMe:    msg.Info.IsFromMe,
+		IsForwarded: false, // TODO: Detectar mensagens encaminhadas
+		IsBroadcast: false, // TODO: Detectar mensagens de broadcast
+		Status:      status,
+		Timestamp:   msg.Info.Timestamp,
+		Metadata:    models.JSONB{},
+	}
+
+	if err := ep.messageRepo.CreateMessage(ctx, message); err != nil {
+		ep.logger.Errorf("💾 [DATABASE ERROR] Failed to create message: %v", err)
+		return fmt.Errorf("failed to create message: %w", err)
+	}
+
+	ep.logger.Infof("💾 [DATABASE DEBUG] Successfully created message with ID: %s", message.ID)
+
+	// Atualizar última mensagem do chat
+	chat.LastMsgAt = &msg.Info.Timestamp
+	if err := ep.chatRepo.UpdateChat(ctx, chat); err != nil {
+		ep.logger.Warnf("💾 [DATABASE WARN] Failed to update chat last message time: %v", err)
+	}
+
+	return nil
+}
+
+// extractPhoneNumber extrai o número de telefone do JID
+func (ep *EventProcessor) extractPhoneNumber(jid string) string {
+	// Remove sufixos como @s.whatsapp.net ou @g.us
+	parts := strings.Split(jid, "@")
+	if len(parts) > 0 {
+		// Remove possível sufixo de timestamp (ex: :1234567890)
+		phoneNumber := strings.Split(parts[0], ":")[0]
+		return phoneNumber
+	}
+	return jid
 }
 
 // extractMessageContent extrai o tipo e conteúdo da mensagem
@@ -507,26 +668,14 @@ func (ep *EventProcessor) dbModelToChatwootConfig(model *models.ChatwootModel) *
 	}
 
 	config := &chatwoot.ChatwootConfig{
-		Enabled:                 model.Enabled,
-		SignMsg:                 model.SignMsg,
-		SignDelimiter:           model.SignDelimiter,
-		Number:                  model.Number,
-		ReopenConversation:      model.ReopenConversation,
-		ConversationPending:     model.ConversationPending,
-		MergeBrazilContacts:     model.MergeBrazilContacts,
-		ImportContacts:          model.ImportContacts,
-		ImportMessages:          model.ImportMessages,
-		DaysLimitImportMessages: model.DaysLimitImportMessages,
-		AutoCreate:              model.AutoCreate,
-		Organization:            model.Organization,
-		Logo:                    model.Logo,
-		IgnoreJids:              []string(model.IgnoreJids),
-		WebhookURL:              fmt.Sprintf("%s/chatwoot/webhook/%s", webhookURL, ep.sessionID),
+		Enabled:    model.Enabled,
+		Number:     model.Number,
+		WebhookURL: fmt.Sprintf("%s/chatwoot/webhook/%s", webhookURL, ep.sessionID),
 	}
 
 	// Campos opcionais
-	if model.AccountID != nil {
-		config.AccountID = *model.AccountID
+	if model.AccountId != nil {
+		config.AccountID = *model.AccountId
 	}
 	if model.Token != nil {
 		config.Token = *model.Token

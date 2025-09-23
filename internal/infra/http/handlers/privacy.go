@@ -174,7 +174,7 @@ func (h *PrivacyHandler) SetAllPrivacySettings(c *fiber.Ctx) error {
 	}
 
 	data := &dto.PrivacySettingsData{
-		SessionID:         sessionID,
+		SessionId:         sessionID,
 		LastSeen:          currentSettings.LastSeen,
 		ProfilePhoto:      currentSettings.ProfilePhoto,
 		Status:            currentSettings.Status,
@@ -244,7 +244,7 @@ func (h *PrivacyHandler) GetBlocklist(c *fiber.Ctx) error {
 	jids := blocklist
 
 	data := &dto.BlockedContactsData{
-		SessionID:       sessionID,
+		SessionId:       sessionID,
 		BlockedContacts: jids,
 		Count:           len(jids),
 	}
@@ -329,7 +329,7 @@ func (h *PrivacyHandler) UpdateBlocklist(c *fiber.Ctx) error {
 	}
 
 	data := &dto.BlockedContactsData{
-		SessionID:       sessionID,
+		SessionId:       sessionID,
 		BlockedContacts: req.Contacts,
 		Count:           len(req.Contacts),
 	}
@@ -428,7 +428,7 @@ func (h *PrivacyHandler) FindPrivacySettings(c *fiber.Ctx) error {
 
 	if len(req.Settings) == 0 {
 		data := &dto.PrivacySettingsData{
-			SessionID:         sessionID,
+			SessionId:         sessionID,
 			LastSeen:          allSettings.LastSeen,
 			ProfilePhoto:      allSettings.ProfilePhoto,
 			Status:            allSettings.Status,
@@ -446,7 +446,7 @@ func (h *PrivacyHandler) FindPrivacySettings(c *fiber.Ctx) error {
 	}
 
 	filteredData := &dto.PrivacySettingsData{
-		SessionID: sessionID,
+		SessionId: sessionID,
 		UpdatedAt: time.Now().Format(time.RFC3339),
 	}
 

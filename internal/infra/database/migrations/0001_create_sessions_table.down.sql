@@ -1,13 +1,13 @@
 -- Drop trigger
-DROP TRIGGER IF EXISTS trigger_sessions_updated_at ON sessions;
+DROP TRIGGER IF EXISTS "trigger_zpSessions_updatedAt" ON "zpSessions";
 
 -- Drop function
-DROP FUNCTION IF EXISTS update_sessions_updated_at();
+DROP FUNCTION IF EXISTS "update_zpSessions_updatedAt"();
 
 -- Drop indexes
-DROP INDEX IF EXISTS idx_sessions_name;
-DROP INDEX IF EXISTS idx_sessions_apikey;
-DROP INDEX IF EXISTS idx_sessions_status;
+DROP INDEX IF EXISTS "idx_zpSessions_name";
+DROP INDEX IF EXISTS "idx_zpSessions_apiKey";
+DROP INDEX IF EXISTS "idx_zpSessions_status";
 
 -- Drop table
-DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS "zpSessions";

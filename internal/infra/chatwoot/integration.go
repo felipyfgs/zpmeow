@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"zpmeow/internal/application/ports"
+	"zpmeow/internal/infra/database/repository"
 )
 
 // Integration representa a integração completa com Chatwoot
@@ -16,14 +17,18 @@ type Integration struct {
 	logger          *slog.Logger
 	mutex           sync.RWMutex
 	whatsappService ports.WhatsAppService
+	messageRepo     *repository.MessageRepository
+	zpCwRepo        *repository.ZpCwMessageRepository
 }
 
 // NewIntegration cria uma nova instância da integração Chatwoot
-func NewIntegration(logger *slog.Logger) *Integration {
+func NewIntegration(logger *slog.Logger, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository) *Integration {
 	return &Integration{
-		services: make(map[string]*Service),
-		configs:  make(map[string]*ChatwootConfig),
-		logger:   logger,
+		services:    make(map[string]*Service),
+		configs:     make(map[string]*ChatwootConfig),
+		logger:      logger,
+		messageRepo: messageRepo,
+		zpCwRepo:    zpCwRepo,
 	}
 }
 
@@ -53,7 +58,7 @@ func (i *Integration) RegisterInstance(instanceName string, config *ChatwootConf
 	}
 
 	// Cria serviço para a instância (whatsappService pode ser nil aqui, será definido depois)
-	service, err := NewService(config, i.logger.With("instance", instanceName), i.whatsappService, instanceName)
+	service, err := NewService(config, i.logger.With("instance", instanceName), i.whatsappService, instanceName, i.messageRepo, i.zpCwRepo)
 	if err != nil {
 		return fmt.Errorf("failed to create chatwoot service for instance %s: %w", instanceName, err)
 	}
@@ -168,7 +173,7 @@ func (i *Integration) ListInstances() []InstanceInfo {
 	instances := make([]InstanceInfo, 0, len(i.configs))
 	for instanceName, config := range i.configs {
 		_, hasService := i.services[instanceName]
-		
+
 		instances = append(instances, InstanceInfo{
 			Name:      instanceName,
 			Enabled:   config.Enabled,
@@ -216,10 +221,10 @@ func (i *Integration) Health() HealthStatus {
 	}
 
 	return HealthStatus{
-		Status:              status,
-		TotalInstances:      total,
-		EnabledInstances:    enabled,
-		ConnectedInstances:  connected,
+		Status:             status,
+		TotalInstances:     total,
+		EnabledInstances:   enabled,
+		ConnectedInstances: connected,
 	}
 }
 
@@ -272,8 +277,6 @@ func (i *Integration) ValidateConfig(config *ChatwootConfig) error {
 	return nil
 }
 
-
-
 // TestConnection testa a conexão com uma configuração Chatwoot
 func (i *Integration) TestConnection(ctx context.Context, config *ChatwootConfig) error {
 	if err := i.ValidateConfig(config); err != nil {
@@ -316,7 +319,7 @@ func (i *Integration) GetMetrics() Metrics {
 
 		if config.Enabled {
 			metrics.EnabledInstances++
-			
+
 			if _, hasService := i.services[instanceName]; hasService {
 				metrics.ConnectedInstances++
 				instanceMetric.Connected = true

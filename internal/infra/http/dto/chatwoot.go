@@ -2,46 +2,46 @@ package dto
 
 // ChatwootConfigRequest representa a requisição para configurar Chatwoot
 type ChatwootConfigRequest struct {
-	Enabled                     *bool    `json:"enabled" validate:"required"`
-	AccountID                   string   `json:"accountId" validate:"required_if=Enabled true"`
-	Token                       string   `json:"token" validate:"required_if=Enabled true"`
-	URL                         string   `json:"url" validate:"required_if=Enabled true,url"`
-	NameInbox                   string   `json:"nameInbox,omitempty"`
-	SignMsg                     *bool    `json:"signMsg,omitempty"`
-	SignDelimiter               string   `json:"signDelimiter,omitempty"`
-	Number                      string   `json:"number,omitempty"`
-	ReopenConversation          *bool    `json:"reopenConversation,omitempty"`
-	ConversationPending         *bool    `json:"conversationPending,omitempty"`
-	MergeBrazilContacts         *bool    `json:"mergeBrazilContacts,omitempty"`
-	ImportContacts              *bool    `json:"importContacts,omitempty"`
-	ImportMessages              *bool    `json:"importMessages,omitempty"`
-	DaysLimitImportMessages     *int     `json:"daysLimitImportMessages,omitempty" validate:"omitempty,min=1,max=365"`
-	AutoCreate                  *bool    `json:"autoCreate,omitempty"`
-	Organization                string   `json:"organization,omitempty"`
-	Logo                        string   `json:"logo,omitempty" validate:"omitempty,url"`
-	IgnoreJids                  []string `json:"ignoreJids,omitempty"`
+	Enabled                 *bool    `json:"enabled" validate:"required" example:"true" swaggertype:"boolean"`
+	AccountID               string   `json:"accountId" validate:"required_if=Enabled true" example:"123"`
+	Token                   string   `json:"token" validate:"required_if=Enabled true" example:"your-chatwoot-api-token"`
+	URL                     string   `json:"url" validate:"required_if=Enabled true,url" example:"https://chatwoot.example.com"`
+	NameInbox               string   `json:"nameInbox,omitempty" example:"WhatsApp Inbox"`
+	SignMsg                 *bool    `json:"signMsg,omitempty" example:"true" swaggertype:"boolean"`
+	SignDelimiter           string   `json:"signDelimiter,omitempty" example:"\n\n---\nSent via WhatsApp"`
+	Number                  string   `json:"number,omitempty" example:"5511999999999"`
+	ReopenConversation      *bool    `json:"reopenConversation,omitempty" example:"false" swaggertype:"boolean"`
+	ConversationPending     *bool    `json:"conversationPending,omitempty" example:"true" swaggertype:"boolean"`
+	MergeBrazilContacts     *bool    `json:"mergeBrazilContacts,omitempty" example:"true" swaggertype:"boolean"`
+	ImportContacts          *bool    `json:"importContacts,omitempty" example:"false" swaggertype:"boolean"`
+	ImportMessages          *bool    `json:"importMessages,omitempty" example:"false" swaggertype:"boolean"`
+	DaysLimitImportMessages *int     `json:"daysLimitImportMessages,omitempty" validate:"omitempty,min=1,max=365" example:"30"`
+	AutoCreate              *bool    `json:"autoCreate,omitempty" example:"true" swaggertype:"boolean"`
+	Organization            string   `json:"organization,omitempty" example:"My Company"`
+	Logo                    string   `json:"logo,omitempty" validate:"omitempty,url" example:"https://example.com/logo.png"`
+	IgnoreJids              []string `json:"ignoreJids,omitempty" example:"554988989314@s.whatsapp.net,559999999999@s.whatsapp.net"`
 }
 
 // ChatwootConfigResponse representa a resposta da configuração Chatwoot
 type ChatwootConfigResponse struct {
-	Enabled                     bool     `json:"enabled"`
-	AccountID                   string   `json:"accountId,omitempty"`
-	URL                         string   `json:"url,omitempty"`
-	NameInbox                   string   `json:"nameInbox,omitempty"`
-	SignMsg                     bool     `json:"signMsg"`
-	SignDelimiter               string   `json:"signDelimiter,omitempty"`
-	Number                      string   `json:"number,omitempty"`
-	ReopenConversation          bool     `json:"reopenConversation"`
-	ConversationPending         bool     `json:"conversationPending"`
-	MergeBrazilContacts         bool     `json:"mergeBrazilContacts"`
-	ImportContacts              bool     `json:"importContacts"`
-	ImportMessages              bool     `json:"importMessages"`
-	DaysLimitImportMessages     int      `json:"daysLimitImportMessages"`
-	AutoCreate                  bool     `json:"autoCreate"`
-	Organization                string   `json:"organization,omitempty"`
-	Logo                        string   `json:"logo,omitempty"`
-	IgnoreJids                  []string `json:"ignoreJids,omitempty"`
-	WebhookURL                  string   `json:"webhookUrl"`
+	Enabled                 bool     `json:"enabled"`
+	AccountID               string   `json:"accountId,omitempty"`
+	URL                     string   `json:"url,omitempty"`
+	NameInbox               string   `json:"nameInbox,omitempty"`
+	SignMsg                 bool     `json:"signMsg"`
+	SignDelimiter           string   `json:"signDelimiter,omitempty"`
+	Number                  string   `json:"number,omitempty"`
+	ReopenConversation      bool     `json:"reopenConversation"`
+	ConversationPending     bool     `json:"conversationPending"`
+	MergeBrazilContacts     bool     `json:"mergeBrazilContacts"`
+	ImportContacts          bool     `json:"importContacts"`
+	ImportMessages          bool     `json:"importMessages"`
+	DaysLimitImportMessages int      `json:"daysLimitImportMessages"`
+	AutoCreate              bool     `json:"autoCreate"`
+	Organization            string   `json:"organization,omitempty"`
+	Logo                    string   `json:"logo,omitempty"`
+	IgnoreJids              []string `json:"ignoreJids,omitempty"`
+	WebhookURL              string   `json:"webhookUrl"`
 }
 
 // ChatwootStatusResponse representa o status da integração Chatwoot
@@ -58,50 +58,50 @@ type ChatwootStatusResponse struct {
 
 // ChatwootWebhookPayload representa o payload de webhook do Chatwoot
 type ChatwootWebhookPayload struct {
-	Event       string                 `json:"event" validate:"required"`
-	MessageType interface{}            `json:"message_type,omitempty"` // pode ser string ou número
-	ID          int                    `json:"id,omitempty"`
-	Content     string                 `json:"content,omitempty"`
-	CreatedAt   interface{}            `json:"created_at,omitempty"` // pode ser string ou número
-	Private     bool                   `json:"private,omitempty"`
-	SourceID    string                 `json:"source_id,omitempty"`
-	ContentType string                 `json:"content_type,omitempty"`
+	Event             string                 `json:"event" validate:"required"`
+	MsgType           interface{}            `json:"message_type,omitempty"` // pode ser string ou número
+	ID                int                    `json:"id,omitempty"`
+	Content           string                 `json:"content,omitempty"`
+	CreatedAt         interface{}            `json:"created_at,omitempty"` // pode ser string ou número
+	Private           bool                   `json:"private,omitempty"`
+	SourceID          string                 `json:"source_id,omitempty"`
+	ContentType       string                 `json:"content_type,omitempty"`
 	ContentAttributes map[string]interface{} `json:"content_attributes,omitempty"`
-	Sender      *ChatwootContact       `json:"sender,omitempty"`
-	Contact     *ChatwootContact       `json:"contact,omitempty"`
-	Conversation *ChatwootConversation `json:"conversation,omitempty"`
-	Account     *ChatwootAccount       `json:"account,omitempty"`
-	Inbox       *ChatwootInbox         `json:"inbox,omitempty"`
-	Attachments []ChatwootAttachment   `json:"attachments,omitempty"`
+	Sender            *ChatwootContact       `json:"sender,omitempty"`
+	Contact           *ChatwootContact       `json:"contact,omitempty"`
+	Conversation      *ChatwootConversation  `json:"conversation,omitempty"`
+	Account           *ChatwootAccount       `json:"account,omitempty"`
+	Inbox             *ChatwootInbox         `json:"inbox,omitempty"`
+	Attachments       []ChatwootAttachment   `json:"attachments,omitempty"`
 }
 
 // ChatwootContact representa um contato no webhook
 type ChatwootContact struct {
-	ID           int                    `json:"id"`
-	Name         string                 `json:"name"`
-	Avatar       string                 `json:"avatar,omitempty"`
-	AvatarURL    string                 `json:"avatar_url,omitempty"`
-	PhoneNumber  string                 `json:"phone_number,omitempty"`
-	Email        string                 `json:"email,omitempty"`
-	Identifier   string                 `json:"identifier,omitempty"`
-	Thumbnail    string                 `json:"thumbnail,omitempty"`
+	ID               int                    `json:"id"`
+	Name             string                 `json:"name"`
+	Avatar           string                 `json:"avatar,omitempty"`
+	AvatarURL        string                 `json:"avatar_url,omitempty"`
+	PhoneNumber      string                 `json:"phone_number,omitempty"`
+	Email            string                 `json:"email,omitempty"`
+	Identifier       string                 `json:"identifier,omitempty"`
+	Thumbnail        string                 `json:"thumbnail,omitempty"`
 	CustomAttributes map[string]interface{} `json:"custom_attributes,omitempty"`
 }
 
 // ChatwootConversation representa uma conversa no webhook
 type ChatwootConversation struct {
-	ID                    int                    `json:"id"`
-	AccountID             int                    `json:"account_id"`
-	InboxID               int                    `json:"inbox_id"`
-	Status                string                 `json:"status"`
-	Timestamp             int64                  `json:"timestamp"`
-	UnreadCount           int                    `json:"unread_count"`
-	AdditionalAttributes  map[string]interface{} `json:"additional_attributes,omitempty"`
-	CustomAttributes      map[string]interface{} `json:"custom_attributes,omitempty"`
-	Contact               *ChatwootContact       `json:"contact,omitempty"`
-	Assignee              *ChatwootAgent         `json:"assignee,omitempty"`
-	Team                  *ChatwootTeam          `json:"team,omitempty"`
-	Meta                  *ChatwootMeta          `json:"meta,omitempty"`
+	ID                   int                    `json:"id"`
+	AccountID            int                    `json:"account_id"`
+	InboxID              int                    `json:"inbox_id"`
+	Status               string                 `json:"status"`
+	Timestamp            int64                  `json:"timestamp"`
+	UnreadCount          int                    `json:"unread_count"`
+	AdditionalAttributes map[string]interface{} `json:"additional_attributes,omitempty"`
+	CustomAttributes     map[string]interface{} `json:"custom_attributes,omitempty"`
+	Contact              *ChatwootContact       `json:"contact,omitempty"`
+	Assignee             *ChatwootAgent         `json:"assignee,omitempty"`
+	Team                 *ChatwootTeam          `json:"team,omitempty"`
+	Meta                 *ChatwootMeta          `json:"meta,omitempty"`
 }
 
 // ChatwootAgent representa um agente no webhook

@@ -23,56 +23,46 @@ func (r *MessageRepository) CreateMessage(ctx context.Context, message *models.M
 	// Se ID não foi fornecido, deixa o PostgreSQL gerar um UUID
 	if message.ID == "" {
 		query := `
-			INSERT INTO messages (
-				chat_id, session_id, whatsapp_message_id, message_type, content,
-				media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-				sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-				quoted_message_id, quoted_content, status, timestamp, reaction, metadata
+			INSERT INTO "zpMessages" (
+				"chatId", "sessionId", "msgId", "msgType", content,
+				"mediaInfo", "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+				"quotedMsgId", "quotedContent", status, timestamp, "editTimestamp", "isDeleted", "deletedAt", reaction, metadata
 			) VALUES (
-				:chat_id, :session_id, :whatsapp_message_id, :message_type, :content,
-				:media_url, :media_mime_type, :media_size, :media_filename, :thumbnail_url,
-				:sender_jid, :sender_name, :is_from_me, :is_forwarded, :is_broadcast,
-				:quoted_message_id, :quoted_content, :status, :timestamp, :reaction, :metadata
-			) RETURNING id, created_at, updated_at`
+				$1, $2, $3, $4, $5,
+				$6, $7, $8, $9, $10, $11,
+				$12, $13, $14, $15, $16, $17, $18, $19, $20
+			) RETURNING id, "createdAt", "updatedAt"`
 
-		rows, err := r.db.NamedQueryContext(ctx, query, message)
+		err := r.db.QueryRowContext(ctx, query,
+			message.ChatId, message.SessionId, message.MsgId, message.MsgType, message.Content,
+			message.MediaInfo, message.SenderJid, message.SenderName, message.IsFromMe, message.IsForwarded, message.IsBroadcast,
+			message.QuotedMsgId, message.QuotedContent, message.Status, message.Timestamp, message.EditTimestamp, message.IsDeleted, message.DeletedAt, message.Reaction, message.Metadata,
+		).Scan(&message.ID, &message.CreatedAt, &message.UpdatedAt)
+
 		if err != nil {
 			return fmt.Errorf("failed to create message: %w", err)
-		}
-		defer rows.Close()
-
-		if rows.Next() {
-			err = rows.Scan(&message.ID, &message.CreatedAt, &message.UpdatedAt)
-			if err != nil {
-				return fmt.Errorf("failed to scan created message: %w", err)
-			}
 		}
 	} else {
 		// Se ID foi fornecido, usa ele
 		query := `
-			INSERT INTO messages (
-				id, chat_id, session_id, whatsapp_message_id, message_type, content,
-				media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-				sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-				quoted_message_id, quoted_content, status, timestamp, reaction, metadata
+			INSERT INTO "zpMessages" (
+				id, "chatId", "sessionId", "msgId", "msgType", content,
+				"mediaInfo", "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+				"quotedMsgId", "quotedContent", status, timestamp, "editTimestamp", "isDeleted", "deletedAt", reaction, metadata
 			) VALUES (
-				:id, :chat_id, :session_id, :whatsapp_message_id, :message_type, :content,
-				:media_url, :media_mime_type, :media_size, :media_filename, :thumbnail_url,
-				:sender_jid, :sender_name, :is_from_me, :is_forwarded, :is_broadcast,
-				:quoted_message_id, :quoted_content, :status, :timestamp, :reaction, :metadata
-			) RETURNING created_at, updated_at`
+				$1, $2, $3, $4, $5, $6,
+				$7, $8, $9, $10, $11, $12,
+				$13, $14, $15, $16, $17, $18, $19, $20, $21
+			) RETURNING "createdAt", "updatedAt"`
 
-		rows, err := r.db.NamedQueryContext(ctx, query, message)
+		err := r.db.QueryRowContext(ctx, query,
+			message.ID, message.ChatId, message.SessionId, message.MsgId, message.MsgType, message.Content,
+			message.MediaInfo, message.SenderJid, message.SenderName, message.IsFromMe, message.IsForwarded, message.IsBroadcast,
+			message.QuotedMsgId, message.QuotedContent, message.Status, message.Timestamp, message.EditTimestamp, message.IsDeleted, message.DeletedAt, message.Reaction, message.Metadata,
+		).Scan(&message.CreatedAt, &message.UpdatedAt)
+
 		if err != nil {
 			return fmt.Errorf("failed to create message: %w", err)
-		}
-		defer rows.Close()
-
-		if rows.Next() {
-			err = rows.Scan(&message.CreatedAt, &message.UpdatedAt)
-			if err != nil {
-				return fmt.Errorf("failed to scan created message: %w", err)
-			}
 		}
 	}
 
@@ -83,12 +73,11 @@ func (r *MessageRepository) CreateMessage(ctx context.Context, message *models.M
 func (r *MessageRepository) GetMessageByID(ctx context.Context, id string) (*models.MessageModel, error) {
 	var message models.MessageModel
 	query := `
-		SELECT id, chat_id, session_id, whatsapp_message_id, message_type, content,
-			   media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-			   sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-			   quoted_message_id, quoted_content, status, timestamp, edit_timestamp,
-			   is_deleted, deleted_at, reaction, metadata, created_at, updated_at
-		FROM messages 
+		SELECT id, "chatId", "sessionId", "msgId", "msgType", content,
+			   "mediaInfo", "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+			   "quotedMsgId", "quotedContent", status, timestamp, "editTimestamp",
+			   "isDeleted", "deletedAt", reaction, metadata, "createdAt", "updatedAt"
+		FROM "zpMessages"
 		WHERE id = $1`
 
 	err := r.db.GetContext(ctx, &message, query, id)
@@ -106,13 +95,12 @@ func (r *MessageRepository) GetMessageByID(ctx context.Context, id string) (*mod
 func (r *MessageRepository) GetMessageByWhatsAppID(ctx context.Context, sessionID, whatsappMessageID string) (*models.MessageModel, error) {
 	var message models.MessageModel
 	query := `
-		SELECT id, chat_id, session_id, whatsapp_message_id, message_type, content,
-			   media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-			   sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-			   quoted_message_id, quoted_content, status, timestamp, edit_timestamp,
-			   is_deleted, deleted_at, reaction, metadata, created_at, updated_at
-		FROM messages 
-		WHERE session_id = $1 AND whatsapp_message_id = $2`
+		SELECT id, "chatId", "sessionId", "msgId", "msgType", content,
+			   "mediaInfo", "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+			   "quotedMsgId", "quotedContent", status, timestamp, "editTimestamp",
+			   "isDeleted", "deletedAt", reaction, metadata, "createdAt", "updatedAt"
+		FROM "zpMessages"
+		WHERE "sessionId" = $1 AND "msgId" = $2`
 
 	err := r.db.GetContext(ctx, &message, query, sessionID, whatsappMessageID)
 	if err != nil {
@@ -125,17 +113,17 @@ func (r *MessageRepository) GetMessageByWhatsAppID(ctx context.Context, sessionI
 	return &message, nil
 }
 
-// GetMessagesByChatID busca mensagens de um chat
-func (r *MessageRepository) GetMessagesByChatID(ctx context.Context, chatID string, limit, offset int) ([]*models.MessageModel, error) {
+// GetMessagesByChatId busca mensagens de um chat
+func (r *MessageRepository) GetMessagesByChatId(ctx context.Context, chatID string, limit, offset int) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	query := `
-		SELECT id, chat_id, session_id, whatsapp_message_id, message_type, content,
+		SELECT id, "chatId", "sessionId", msgId, "msgType", content,
 			   media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-			   sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-			   quoted_message_id, quoted_content, status, timestamp, edit_timestamp,
-			   is_deleted, deleted_at, reaction, metadata, created_at, updated_at
-		FROM messages 
-		WHERE chat_id = $1 AND is_deleted = FALSE
+			   "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+			   "quotedMsgId", "quotedContent", status, timestamp, "editTimestamp",
+			   "isDeleted", "deletedAt", reaction, metadata, "createdAt", "updatedAt"
+		FROM "zpMessages" 
+		WHERE "chatId" = $1 AND "isDeleted" = FALSE
 		ORDER BY timestamp DESC
 		LIMIT $2 OFFSET $3`
 
@@ -150,21 +138,21 @@ func (r *MessageRepository) GetMessagesByChatID(ctx context.Context, chatID stri
 // UpdateMessage atualiza uma mensagem
 func (r *MessageRepository) UpdateMessage(ctx context.Context, message *models.MessageModel) error {
 	query := `
-		UPDATE messages SET
+		UPDATE "zpMessages" SET
 			content = :content,
 			media_url = :media_url,
 			media_mime_type = :media_mime_type,
 			media_size = :media_size,
 			media_filename = :media_filename,
 			thumbnail_url = :thumbnail_url,
-			sender_name = :sender_name,
+			"senderName" = :"senderName",
 			status = :status,
-			edit_timestamp = :edit_timestamp,
+			"editTimestamp" = :"editTimestamp",
 			reaction = :reaction,
 			metadata = :metadata,
-			updated_at = CURRENT_TIMESTAMP
+			"updatedAt" = CURRENT_TIMESTAMP
 		WHERE id = :id
-		RETURNING updated_at`
+		RETURNING "updatedAt"`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, message)
 	if err != nil {
@@ -184,7 +172,7 @@ func (r *MessageRepository) UpdateMessage(ctx context.Context, message *models.M
 
 // UpdateMessageStatus atualiza o status de uma mensagem
 func (r *MessageRepository) UpdateMessageStatus(ctx context.Context, id string, status string) error {
-	query := `UPDATE messages SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	query := `UPDATE "zpMessages" SET status = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, status, id)
 	if err != nil {
 		return fmt.Errorf("failed to update message status: %w", err)
@@ -195,10 +183,10 @@ func (r *MessageRepository) UpdateMessageStatus(ctx context.Context, id string, 
 // EditMessage edita o conteúdo de uma mensagem
 func (r *MessageRepository) EditMessage(ctx context.Context, id string, newContent string) error {
 	query := `
-		UPDATE messages SET 
-			content = $1, 
-			edit_timestamp = CURRENT_TIMESTAMP,
-			updated_at = CURRENT_TIMESTAMP 
+		UPDATE "zpMessages" SET
+			content = $1,
+			"editTimestamp" = CURRENT_TIMESTAMP,
+			"updatedAt" = CURRENT_TIMESTAMP
 		WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, newContent, id)
 	if err != nil {
@@ -210,10 +198,10 @@ func (r *MessageRepository) EditMessage(ctx context.Context, id string, newConte
 // DeleteMessage marca uma mensagem como deletada
 func (r *MessageRepository) DeleteMessage(ctx context.Context, id string) error {
 	query := `
-		UPDATE messages SET 
-			is_deleted = TRUE, 
-			deleted_at = CURRENT_TIMESTAMP,
-			updated_at = CURRENT_TIMESTAMP 
+		UPDATE "zpMessages" SET
+			"isDeleted" = TRUE,
+			"deletedAt" = CURRENT_TIMESTAMP,
+			"updatedAt" = CURRENT_TIMESTAMP
 		WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
@@ -224,7 +212,7 @@ func (r *MessageRepository) DeleteMessage(ctx context.Context, id string) error 
 
 // AddReaction adiciona uma reação a uma mensagem
 func (r *MessageRepository) AddReaction(ctx context.Context, id string, reaction string) error {
-	query := `UPDATE messages SET reaction = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	query := `UPDATE "zpMessages" SET reaction = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, reaction, id)
 	if err != nil {
 		return fmt.Errorf("failed to add reaction: %w", err)
@@ -234,7 +222,7 @@ func (r *MessageRepository) AddReaction(ctx context.Context, id string, reaction
 
 // RemoveReaction remove uma reação de uma mensagem
 func (r *MessageRepository) RemoveReaction(ctx context.Context, id string) error {
-	query := `UPDATE messages SET reaction = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1`
+	query := `UPDATE "zpMessages" SET reaction = NULL, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("failed to remove reaction: %w", err)
@@ -246,13 +234,13 @@ func (r *MessageRepository) RemoveReaction(ctx context.Context, id string) error
 func (r *MessageRepository) GetUnreadMessagesByChat(ctx context.Context, chatID string) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	query := `
-		SELECT id, chat_id, session_id, whatsapp_message_id, message_type, content,
+		SELECT id, "chatId", "sessionId", msgId, "msgType", content,
 			   media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-			   sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-			   quoted_message_id, quoted_content, status, timestamp, edit_timestamp,
-			   is_deleted, deleted_at, reaction, metadata, created_at, updated_at
-		FROM messages 
-		WHERE chat_id = $1 AND is_from_me = FALSE AND status != 'read' AND is_deleted = FALSE
+			   "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+			   "quotedMsgId", "quotedContent", status, timestamp, "editTimestamp",
+			   "isDeleted", "deletedAt", reaction, metadata, "createdAt", "updatedAt"
+		FROM "zpMessages" 
+		WHERE "chatId" = $1 AND "isFromMe" = FALSE AND status != 'read' AND "isDeleted" = FALSE
 		ORDER BY timestamp ASC`
 
 	err := r.db.SelectContext(ctx, &messages, query, chatID)
@@ -269,7 +257,7 @@ func (r *MessageRepository) MarkMessagesAsRead(ctx context.Context, messageIDs [
 		return nil
 	}
 
-	query, args, err := sqlx.In(`UPDATE messages SET status = 'read', updated_at = CURRENT_TIMESTAMP WHERE id IN (?)`, messageIDs)
+	query, args, err := sqlx.In(`UPDATE "zpMessages" SET status = 'read', "updatedAt" = CURRENT_TIMESTAMP WHERE id IN (?)`, messageIDs)
 	if err != nil {
 		return fmt.Errorf("failed to build query: %w", err)
 	}
@@ -287,13 +275,13 @@ func (r *MessageRepository) MarkMessagesAsRead(ctx context.Context, messageIDs [
 func (r *MessageRepository) GetMessagesByTimeRange(ctx context.Context, chatID string, startTime, endTime time.Time, limit, offset int) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	query := `
-		SELECT id, chat_id, session_id, whatsapp_message_id, message_type, content,
+		SELECT id, "chatId", "sessionId", msgId, "msgType", content,
 			   media_url, media_mime_type, media_size, media_filename, thumbnail_url,
-			   sender_jid, sender_name, is_from_me, is_forwarded, is_broadcast,
-			   quoted_message_id, quoted_content, status, timestamp, edit_timestamp,
-			   is_deleted, deleted_at, reaction, metadata, created_at, updated_at
-		FROM messages 
-		WHERE chat_id = $1 AND timestamp BETWEEN $2 AND $3 AND is_deleted = FALSE
+			   "senderJid", "senderName", "isFromMe", "isForwarded", "isBroadcast",
+			   "quotedMsgId", "quotedContent", status, timestamp, "editTimestamp",
+			   "isDeleted", "deletedAt", reaction, metadata, "createdAt", "updatedAt"
+		FROM "zpMessages" 
+		WHERE "chatId" = $1 AND timestamp BETWEEN $2 AND $3 AND "isDeleted" = FALSE
 		ORDER BY timestamp DESC
 		LIMIT $4 OFFSET $5`
 

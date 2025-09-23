@@ -54,7 +54,7 @@ func (h *SessionHandler) sendSuccessResponse(c *fiber.Ctx, sessionID, action str
 		Success: true,
 		Code:    fiber.StatusOK,
 		Data: dto.SessionData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    action,
 			Status:    "success",
 			Timestamp: time.Now(),
@@ -175,7 +175,7 @@ func (h *SessionHandler) GetSessions(c *fiber.Ctx) error {
 func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	h.logOperation("Getting session", sessionID)
@@ -256,7 +256,7 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	h.logOperation("Deleting session", sessionID)
@@ -298,7 +298,7 @@ func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 func (h *SessionHandler) ConnectSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	h.logOperation("Connecting session", sessionID)
@@ -342,7 +342,7 @@ func (h *SessionHandler) ConnectSession(c *fiber.Ctx) error {
 		Success: true,
 		Code:    fiber.StatusOK,
 		Data: &dto.SessionConnectData{
-			SessionID:  session.SessionID().Value(),
+			SessionId:  session.SessionID().Value(),
 			Action:     "connect",
 			Status:     "success",
 			Timestamp:  time.Now(),
@@ -373,8 +373,8 @@ func (h *SessionHandler) ConnectSession(c *fiber.Ctx) error {
 func (h *SessionHandler) DisconnectSession(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		h.logger.Debugf("DisconnectSession: validateSessionID failed for %s", sessionID)
-		return nil // validateSessionID já enviou a resposta de erro
+		h.logger.Debugf("DisconnectSession: validateSessionId failed for %s", sessionID)
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	h.logOperation("Disconnecting session", sessionID)
@@ -419,7 +419,7 @@ func (h *SessionHandler) DisconnectSession(c *fiber.Ctx) error {
 func (h *SessionHandler) PairPhone(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	var req dto.PairPhoneRequest
@@ -445,7 +445,7 @@ func (h *SessionHandler) PairPhone(c *fiber.Ctx) error {
 		Success: true,
 		Code:    fiber.StatusOK,
 		Data: &dto.PairPhoneResponseData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Action:    "pair",
 			Status:    "success",
 			Timestamp: time.Now(),
@@ -474,7 +474,7 @@ func (h *SessionHandler) PairPhone(c *fiber.Ctx) error {
 func (h *SessionHandler) GetSessionStatus(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	h.logOperation("Getting status for session", sessionID)
@@ -495,7 +495,7 @@ func (h *SessionHandler) GetSessionStatus(c *fiber.Ctx) error {
 		Success: true,
 		Code:    fiber.StatusOK,
 		Data: &dto.SessionStatusResponseData{
-			SessionID:     sessionID,
+			SessionId:     sessionID,
 			Action:        "status",
 			Status:        "success",
 			Timestamp:     time.Now(),
@@ -531,7 +531,7 @@ func (h *SessionHandler) GetSessionStatus(c *fiber.Ctx) error {
 func (h *SessionHandler) UpdateSessionWebhook(c *fiber.Ctx) error {
 	sessionID, ok := h.validateSessionID(c)
 	if !ok {
-		return nil // validateSessionID já enviou a resposta de erro
+		return nil // validateSessionId já enviou a resposta de erro
 	}
 
 	var req dto.UpdateWebhookRequest

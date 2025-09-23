@@ -100,7 +100,7 @@ type MediaResponse struct {
 }
 
 type MediaResponseData struct {
-	SessionID string      `json:"session_id,omitempty"`
+	SessionId string      `json:"session_id,omitempty"`
 	Action    string      `json:"action"`
 	Status    string      `json:"status"`
 	Message   string      `json:"message,omitempty"`
@@ -117,7 +117,7 @@ type MediaListResponse struct {
 }
 
 type MediaListData struct {
-	SessionID string      `json:"session_id,omitempty"`
+	SessionId string      `json:"session_id,omitempty"`
 	Media     []MediaInfo `json:"media"`
 	Count     int         `json:"count"`
 	Total     int         `json:"total"`
@@ -175,7 +175,7 @@ func NewMediaErrorResponse(code int, errorCode, message, details string) *MediaR
 
 func NewMediaSuccessResponse(sessionID, action, message string, data interface{}) *MediaResponse {
 	responseData := &MediaResponseData{
-		SessionID: sessionID,
+		SessionId: sessionID,
 		Action:    action,
 		Status:    "success",
 		Message:   message,
@@ -199,7 +199,7 @@ func NewMediaListSuccessResponse(sessionID string, media []MediaInfo, limit, off
 		Success: true,
 		Code:    http.StatusOK,
 		Data: &MediaListData{
-			SessionID: sessionID,
+			SessionId: sessionID,
 			Media:     media,
 			Count:     len(media),
 			Total:     total,

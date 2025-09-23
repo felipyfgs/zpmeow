@@ -1,16 +1,16 @@
 -- Drop trigger
-DROP TRIGGER IF EXISTS trigger_chats_updated_at ON chats;
+DROP TRIGGER IF EXISTS "trigger_zpChats_updatedAt" ON "zpChats";
 
 -- Drop function
-DROP FUNCTION IF EXISTS update_chats_updated_at();
+DROP FUNCTION IF EXISTS "update_zpChats_updatedAt"();
 
 -- Drop indexes
-DROP INDEX IF EXISTS idx_chats_session_id;
-DROP INDEX IF EXISTS idx_chats_chat_jid;
-DROP INDEX IF EXISTS idx_chats_phone_number;
-DROP INDEX IF EXISTS idx_chats_chatwoot_conversation_id;
-DROP INDEX IF EXISTS idx_chats_last_message_at;
-DROP INDEX IF EXISTS idx_chats_session_chat_unique;
+DROP INDEX IF EXISTS "idx_zpChats_sessionId";
+DROP INDEX IF EXISTS "idx_zpChats_chatJid";
+DROP INDEX IF EXISTS "idx_zpChats_phoneNumber";
+DROP INDEX IF EXISTS "idx_zpChats_chatwootConversationId";
+DROP INDEX IF EXISTS "idx_zpChats_lastMsgAt";
+DROP INDEX IF EXISTS "idx_zpChats_session_chat_unique";
 
 -- Drop table
-DROP TABLE IF EXISTS chats;
+DROP TABLE IF EXISTS "zpChats";
