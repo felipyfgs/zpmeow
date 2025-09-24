@@ -178,7 +178,7 @@ func SetupRoutes(
 	chatwoot.Post("/set", handlers.ChatwootHandler.SetChatwootConfig)
 	chatwoot.Get("/find", handlers.ChatwootHandler.GetChatwootConfig)
 
-	// Chatwoot webhook route (public, no auth required)
+	// Chatwoot webhook route (internal, not in swagger - used by Chatwoot to send data)
 	app.Post("/chatwoot/webhook/:sessionId", handlers.ChatwootHandler.ReceiveChatwootWebhook)
 
 	app.Get("/swagger/swagger-config.json", func(c *fiber.Ctx) error {

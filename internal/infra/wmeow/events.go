@@ -208,19 +208,38 @@ func (ep *EventProcessor) logEventWithThrottling(eventType string, details strin
 }
 
 func (ep *EventProcessor) loadSubscribedEvents() {
-	sessionEntity, err := ep.sessionManager.GetSession(ep.sessionID)
-	if err != nil {
-		ep.logger.Warnf("Failed to load session for events: %v", err)
-		ep.subscribedEvents = []string{"All"}
-		ep.logger.Infof("Loaded default subscribed events: %v", ep.subscribedEvents)
-		return
-	}
+	// Carregar eventos da nova tabela zpWebhooks
+	if ep.webhookRepo != nil {
+		ctx := context.Background()
+		webhookConfig, err := ep.webhookRepo.GetBySessionID(ctx, ep.sessionID)
+		if err != nil {
+			ep.logger.Debugf("No webhook configuration found for session %s: %v", ep.sessionID, err)
+			ep.subscribedEvents = []string{"All"}
+			ep.logger.Infof("Loaded default subscribed events: %v", ep.subscribedEvents)
+			return
+		}
 
-	events := sessionEntity.GetWebhookEvents()
-	if len(events) > 0 {
-		ep.subscribedEvents = events
+		if webhookConfig != nil && len(webhookConfig.Events) > 0 {
+			ep.subscribedEvents = webhookConfig.Events
+		} else {
+			ep.subscribedEvents = []string{"All"}
+		}
 	} else {
-		ep.subscribedEvents = []string{"All"}
+		// Fallback para compatibilidade - buscar da sessão
+		sessionEntity, err := ep.sessionManager.GetSession(ep.sessionID)
+		if err != nil {
+			ep.logger.Warnf("Failed to load session for events: %v", err)
+			ep.subscribedEvents = []string{"All"}
+			ep.logger.Infof("Loaded default subscribed events: %v", ep.subscribedEvents)
+			return
+		}
+
+		events := sessionEntity.GetWebhookEvents()
+		if len(events) > 0 {
+			ep.subscribedEvents = events
+		} else {
+			ep.subscribedEvents = []string{"All"}
+		}
 	}
 
 	ep.logger.Infof("Loaded subscribed events: %v", ep.subscribedEvents)
@@ -680,7 +699,7 @@ func (ep *EventProcessor) storeMediaMessage(messageID string, mediaMsg interface
 // dbModelToChatwootConfig converte modelo do banco para configuração Chatwoot
 func (ep *EventProcessor) dbModelToChatwootConfig(model *models.ChatwootModel) *chatwoot.ChatwootConfig {
 	// Obtém o host público da variável de ambiente
-	publicHost := os.Getenv("PUBLIC_HOST")
+	publicHost := os.Getenv("SERVER_HOST")
 	if publicHost == "" {
 		publicHost = "localhost:8080" // Fallback
 	}
@@ -864,45 +883,54 @@ func (ep *EventProcessor) handleReceipt(evt interface{}) {
 	}
 	ep.receiptMutex.Unlock()
 
-	webhookPayload := map[string]interface{}{
-		"event":     "Receipt",
-		"sessionID": ep.sessionID,
-		"timestamp": now.Unix(),
-		"data":      receipt,
-	}
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "Receipt",
+			"sessionID": ep.sessionID,
+			"timestamp": now.Unix(),
+			"data":      receipt,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send receipt webhook: %v", err)
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send receipt webhook: %v", err)
+		}
 	}
 }
 
 func (ep *EventProcessor) handlePresence(evt interface{}) {
 	presence := evt.(*events.Presence)
 
-	webhookPayload := map[string]interface{}{
-		"event":     "Presence",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      presence,
-	}
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "Presence",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      presence,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send webhook: %v", err)
+		}
 	}
 }
 
 func (ep *EventProcessor) handleChatPresence(evt interface{}) {
 	chatPresence := evt.(*events.ChatPresence)
 
-	webhookPayload := map[string]interface{}{
-		"event":     "ChatPresence",
-		"sessionID": ep.sessionID,
-		"timestamp": time.Now().Unix(),
-		"data":      chatPresence,
-	}
+	webhookURL := ep.getWebhookURL()
+	if webhookURL != "" {
+		webhookPayload := map[string]interface{}{
+			"event":     "ChatPresence",
+			"sessionID": ep.sessionID,
+			"timestamp": time.Now().Unix(),
+			"data":      chatPresence,
+		}
 
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
-		ep.logger.Errorf("Failed to send webhook: %v", err)
+		if err := sendWebhook(webhookURL, webhookPayload); err != nil {
+			ep.logger.Errorf("Failed to send webhook: %v", err)
+		}
 	}
 }
 
@@ -914,8 +942,9 @@ func init() {
 }
 
 func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
-	if ep.webhookURL == "" {
-		ep.logger.Warnf("No webhook URL configured for session %s, skipping event %s", ep.sessionID, eventType)
+	webhookURL := ep.getWebhookURL()
+	if webhookURL == "" {
+		ep.logger.Debugf("No webhook URL configured for session %s, skipping event %s", ep.sessionID, eventType)
 		return
 	}
 
@@ -926,8 +955,8 @@ func (ep *EventProcessor) sendGenericEvent(eventType string, evt interface{}) {
 		"data":      evt,
 	}
 
-	ep.logger.Infof("Sending generic event: %s to webhook: %s", eventType, ep.webhookURL)
-	if err := sendWebhook(ep.webhookURL, webhookPayload); err != nil {
+	ep.logger.Infof("Sending generic event: %s to webhook: %s", eventType, webhookURL)
+	if err := sendWebhook(webhookURL, webhookPayload); err != nil {
 		ep.logger.Errorf("Failed to send generic webhook for event %s: %v", eventType, err)
 	} else {
 		ep.logger.Infof("Successfully sent generic event: %s", eventType)

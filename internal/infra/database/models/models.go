@@ -105,25 +105,26 @@ func (j JSONB) Value() (driver.Value, error) {
 
 // ChatModel representa um chat/conversa no banco de dados (OTIMIZADA)
 type ChatModel struct {
-	ID          string     `db:"id" json:"id"`
-	SessionId   string     `db:"sessionId" json:"sessionId"`     // camelCase exato com aspas duplas
-	ChatJid     string     `db:"chatJid" json:"chatJid"`         // camelCase exato com aspas duplas
-	ChatName    *string    `db:"chatName" json:"chatName"`       // camelCase exato com aspas duplas
-	PhoneNumber *string    `db:"phoneNumber" json:"phoneNumber"` // camelCase exato com aspas duplas
-	IsGroup     bool       `db:"isGroup" json:"isGroup"`         // camelCase exato com aspas duplas
-	LastMsgAt   *time.Time `db:"lastMsgAt" json:"lastMsgAt"`     // camelCase exato com aspas duplas
-	UnreadCount int        `db:"unreadCount" json:"unreadCount"` // camelCase exato com aspas duplas
-	IsArchived  bool       `db:"isArchived" json:"isArchived"`   // camelCase exato com aspas duplas
-	Metadata    JSONB      `db:"metadata" json:"metadata"`       // groupSubject, groupDescription movidos aqui
-	CreatedAt   time.Time  `db:"createdAt" json:"createdAt"`     // camelCase exato com aspas duplas
-	UpdatedAt   time.Time  `db:"updatedAt" json:"updatedAt"`     // camelCase exato com aspas duplas
-	// ChatType removido - redundante com IsGroup
-	// Campos Chatwoot removidos - usar relação separada
-	// GroupSubject, GroupDescription movidos para Metadata
+	ID                     string     `db:"id" json:"id"`
+	SessionId              string     `db:"sessionId" json:"sessionId"`                           // camelCase exato com aspas duplas
+	ChatJid                string     `db:"chatJid" json:"chatJid"`                               // camelCase exato com aspas duplas
+	ChatName               *string    `db:"chatName" json:"chatName"`                             // camelCase exato com aspas duplas
+	PhoneNumber            *string    `db:"phoneNumber" json:"phoneNumber"`                       // camelCase exato com aspas duplas
+	IsGroup                bool       `db:"isGroup" json:"isGroup"`                               // camelCase exato com aspas duplas
+	GroupSubject           *string    `db:"groupSubject" json:"groupSubject"`                     // camelCase exato com aspas duplas
+	GroupDescription       *string    `db:"groupDescription" json:"groupDescription"`             // camelCase exato com aspas duplas
+	ChatwootConversationId *int64     `db:"chatwootConversationId" json:"chatwootConversationId"` // camelCase exato com aspas duplas
+	ChatwootContactId      *int64     `db:"chatwootContactId" json:"chatwootContactId"`           // camelCase exato com aspas duplas
+	LastMsgAt              *time.Time `db:"lastMsgAt" json:"lastMsgAt"`                           // camelCase exato com aspas duplas
+	UnreadCount            int        `db:"unreadCount" json:"unreadCount"`                       // camelCase exato com aspas duplas
+	IsArchived             bool       `db:"isArchived" json:"isArchived"`                         // camelCase exato com aspas duplas
+	Metadata               JSONB      `db:"metadata" json:"metadata"`                             // Dados adicionais em JSON
+	CreatedAt              time.Time  `db:"createdAt" json:"createdAt"`                           // camelCase exato com aspas duplas
+	UpdatedAt              time.Time  `db:"updatedAt" json:"updatedAt"`                           // camelCase exato com aspas duplas
 }
 
 func (ChatModel) TableName() string {
-	return "chats"
+	return "zpChats"
 }
 
 // MessageModel representa uma mensagem no banco de dados (OTIMIZADA)

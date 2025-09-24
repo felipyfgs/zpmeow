@@ -203,3 +203,56 @@ func (r *ChatRepository) CreateOrUpdateChat(ctx context.Context, chat *models.Ch
 	*chat = *existing
 	return r.UpdateChat(ctx, chat)
 }
+
+// UpdateChatwootMapping atualiza o mapeamento Chatwoot de um chat (INTELIGENTE)
+func (r *ChatRepository) UpdateChatwootMapping(ctx context.Context, chatID string, contactID, conversationID int64) error {
+	query := `
+		UPDATE "zpChats" SET
+			"chatwootContactId" = $2,
+			"chatwootConversationId" = $3,
+			"updatedAt" = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, chatID, contactID, conversationID)
+	if err != nil {
+		return fmt.Errorf("failed to update chatwoot mapping: %w", err)
+	}
+	return nil
+}
+
+// ClearChatwootMapping limpa o mapeamento Chatwoot (quando conversação é deletada)
+func (r *ChatRepository) ClearChatwootMapping(ctx context.Context, chatID string) error {
+	query := `
+		UPDATE "zpChats" SET
+			"chatwootContactId" = NULL,
+			"chatwootConversationId" = NULL,
+			"updatedAt" = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, chatID)
+	if err != nil {
+		return fmt.Errorf("failed to clear chatwoot mapping: %w", err)
+	}
+	return nil
+}
+
+// GetChatWithChatwootMapping busca chat com mapeamento Chatwoot válido
+func (r *ChatRepository) GetChatWithChatwootMapping(ctx context.Context, sessionID, chatJid string) (*models.ChatModel, error) {
+	query := `
+		SELECT id, "sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			   "groupSubject", "groupDescription", "chatwootConversationId", "chatwootContactId",
+			   "lastMsgAt", "unreadCount", "isArchived", metadata, "createdAt", "updatedAt"
+		FROM "zpChats"
+		WHERE "sessionId" = $1 AND "chatJid" = $2`
+
+	var chat models.ChatModel
+	err := r.db.GetContext(ctx, &chat, query, sessionID, chatJid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get chat with chatwoot mapping: %w", err)
+	}
+
+	return &chat, nil
+}

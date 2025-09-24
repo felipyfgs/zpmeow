@@ -23,20 +23,22 @@ import (
 
 // Service representa o serviço de integração Chatwoot
 type Service struct {
-	client          *Client
-	config          *ChatwootConfig
-	logger          *slog.Logger
-	cache           map[string]interface{}
-	cacheMutex      sync.RWMutex
-	inbox           *Inbox
-	whatsappService ports.WhatsAppService
-	sessionID       string
-	messageRepo     *repository.MessageRepository
-	zpCwRepo        *repository.ZpCwMessageRepository
+	client             *Client
+	config             *ChatwootConfig
+	logger             *slog.Logger
+	cache              map[string]interface{}
+	cacheMutex         sync.RWMutex
+	inbox              *Inbox
+	whatsappService    ports.WhatsAppService
+	sessionID          string
+	messageRepo        *repository.MessageRepository
+	zpCwRepo           *repository.ZpCwMessageRepository
+	chatRepo           *repository.ChatRepository
+	conversationMapper *ConversationMapper
 }
 
 // NewService cria uma nova instância do serviço Chatwoot
-func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService ports.WhatsAppService, sessionID string, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository) (*Service, error) {
+func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService ports.WhatsAppService, sessionID string, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository, chatRepo *repository.ChatRepository) (*Service, error) {
 	if !config.IsActive {
 		return nil, fmt.Errorf("chatwoot integration is disabled")
 	}
@@ -53,12 +55,22 @@ func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService por
 		sessionID:       sessionID,
 		messageRepo:     messageRepo,
 		zpCwRepo:        zpCwRepo,
+		chatRepo:        chatRepo,
 	}
 
 	// Inicializa a inbox
 	if err := service.initializeInbox(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize inbox: %w", err)
 	}
+
+	// Inicializa o conversation mapper após ter a inbox
+	service.conversationMapper = NewConversationMapper(
+		client,
+		chatRepo,
+		logger,
+		sessionID,
+		service.inbox.ID,
+	)
 
 	return service, nil
 }
@@ -784,14 +796,54 @@ func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact
 		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] Failed to list contact conversations", "error", err, "contactID", contact.ID)
 	}
 
-	// Procura por conversa aberta na inbox atual
+	// 🎯 ESTRATÉGIA EVOLUTION API MELHORADA: Procura conversa com última atividade
+	var bestConversation *Conversation
+	var latestActivity float64 = 0
+
+	s.logger.Info("🔍 [EVOLUTION STRATEGY] Analyzing conversations for intelligent mapping",
+		"total_conversations", len(conversations),
+		"inbox_id", s.inbox.ID)
+
 	for _, conv := range conversations {
 		if conv.InboxID == s.inbox.ID {
 			if s.config.ReopenConversation || conv.Status != string(ConversationStatusResolved) {
-				s.setCache(cacheKey, &conv)
-				return &conv, nil
+				s.logger.Info("🔍 [EVOLUTION STRATEGY] Analyzing conversation",
+					"conversation_id", conv.ID,
+					"status", conv.Status,
+					"last_activity", conv.LastActivityAt)
+
+				// ESTRATÉGIA: Usa conversa com última atividade (mais recente)
+				var convActivity float64
+				if activityVal, ok := conv.LastActivityAt.(float64); ok {
+					convActivity = activityVal
+				} else if activityVal, ok := conv.LastActivityAt.(int); ok {
+					convActivity = float64(activityVal)
+				}
+
+				if convActivity > latestActivity {
+					latestActivity = convActivity
+					bestConversation = &conv
+					s.logger.Info("✅ [EVOLUTION STRATEGY] Found more recent conversation",
+						"conversation_id", conv.ID,
+						"last_activity", convActivity,
+						"status", conv.Status)
+				} else if bestConversation == nil {
+					// Fallback: usa primeira disponível
+					bestConversation = &conv
+					s.logger.Info("📝 [EVOLUTION STRATEGY] Using fallback conversation",
+						"conversation_id", conv.ID)
+				}
 			}
 		}
+	}
+
+	if bestConversation != nil {
+		s.logger.Info("🎯 [EVOLUTION STRATEGY] Selected conversation with latest activity",
+			"conversation_id", bestConversation.ID,
+			"status", bestConversation.Status,
+			"last_activity", bestConversation.LastActivityAt)
+		s.setCache(cacheKey, bestConversation)
+		return bestConversation, nil
 	}
 
 	// Cria nova conversa
@@ -817,6 +869,138 @@ func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact
 	s.logger.Info("✅ [CHATWOOT SERVICE DEBUG] Successfully created conversation",
 		"conversationID", conversation.ID, "contactID", contact.ID, "status", conversation.Status)
 	return conversation, nil
+}
+
+// findOrCreateConversationWithEvolutionStrategy implementa estratégia Evolution API melhorada
+func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Context, contact *Contact) (*Conversation, error) {
+	s.logger.Info("🔍 [EVOLUTION STRATEGY] Starting Evolution API strategy",
+		"contact_id", contact.ID,
+		"inbox_id", s.inbox.ID)
+
+	// Lista conversas do contato
+	conversations, err := s.client.ListContactConversations(ctx, contact.ID)
+	if err != nil {
+		s.logger.Error("❌ [EVOLUTION STRATEGY] Failed to list conversations", "error", err)
+		return nil, fmt.Errorf("failed to list conversations: %w", err)
+	}
+
+	s.logger.Info("🔍 [EVOLUTION STRATEGY] Analyzing conversations",
+		"total_conversations", len(conversations),
+		"contact_id", contact.ID,
+		"target_inbox_id", s.inbox.ID)
+
+	// ESTRATÉGIA EVOLUTION: Encontra melhor conversa baseada na última atividade
+	var bestConversation *Conversation
+	var latestActivity float64 = 0
+
+	for _, conv := range conversations {
+		// Só considera conversas da inbox correta
+		if conv.InboxID == s.inbox.ID {
+			// Só considera conversas não resolvidas (ou reabre se configurado)
+			if s.config.ReopenConversation || conv.Status != string(ConversationStatusResolved) {
+
+				// Converte LastActivityAt para float64
+				var convActivity float64
+				if activityVal, ok := conv.LastActivityAt.(float64); ok {
+					convActivity = activityVal
+				} else if activityVal, ok := conv.LastActivityAt.(int); ok {
+					convActivity = float64(activityVal)
+				}
+
+				s.logger.Info("🔍 [EVOLUTION STRATEGY] Evaluating conversation",
+					"conversation_id", conv.ID,
+					"status", conv.Status,
+					"last_activity", convActivity,
+					"inbox_id", conv.InboxID)
+
+				// Escolhe conversa com atividade mais recente
+				if convActivity > latestActivity {
+					latestActivity = convActivity
+					bestConversation = &conv
+					s.logger.Info("✅ [EVOLUTION STRATEGY] Found better conversation",
+						"conversation_id", conv.ID,
+						"last_activity", convActivity,
+						"status", conv.Status)
+				} else if bestConversation == nil {
+					// Fallback: primeira conversa válida encontrada
+					bestConversation = &conv
+					s.logger.Info("📝 [EVOLUTION STRATEGY] Using fallback conversation",
+						"conversation_id", conv.ID,
+						"status", conv.Status)
+				}
+			} else {
+				s.logger.Info("⏭️ [EVOLUTION STRATEGY] Skipping resolved conversation",
+					"conversation_id", conv.ID,
+					"status", conv.Status)
+			}
+		} else {
+			s.logger.Info("⏭️ [EVOLUTION STRATEGY] Skipping conversation from different inbox",
+				"conversation_id", conv.ID,
+				"conversation_inbox_id", conv.InboxID,
+				"target_inbox_id", s.inbox.ID)
+		}
+	}
+
+	if bestConversation != nil {
+		s.logger.Info("🎯 [EVOLUTION STRATEGY] Selected best conversation",
+			"conversation_id", bestConversation.ID,
+			"status", bestConversation.Status,
+			"last_activity", latestActivity,
+			"inbox_id", bestConversation.InboxID)
+		return bestConversation, nil
+	}
+
+	// Se não encontrou nenhuma conversa, cria nova
+	s.logger.Info("📝 [EVOLUTION STRATEGY] No suitable conversation found, creating new one",
+		"contact_id", contact.ID,
+		"inbox_id", s.inbox.ID)
+
+	conversation, err := s.client.CreateConversation(ctx, ConversationCreateRequest{
+		ContactID: contact.ID,
+		InboxID:   s.inbox.ID,
+	})
+	if err != nil {
+		s.logger.Error("❌ [EVOLUTION STRATEGY] Failed to create conversation", "error", err)
+		return nil, fmt.Errorf("failed to create conversation: %w", err)
+	}
+
+	s.logger.Info("✅ [EVOLUTION STRATEGY] Created new conversation",
+		"conversation_id", conversation.ID,
+		"contact_id", contact.ID,
+		"inbox_id", s.inbox.ID)
+
+	return conversation, nil
+}
+
+// saveConversationMappingAsync salva mapeamento de conversa de forma assíncrona
+func (s *Service) saveConversationMappingAsync(ctx context.Context, chatJid, phoneNumber string, contactID, conversationID int) {
+	s.logger.Info("💾 [ASYNC MAPPING] Starting async conversation mapping save",
+		"chat_jid", chatJid,
+		"phone_number", phoneNumber,
+		"contact_id", contactID,
+		"conversation_id", conversationID)
+
+	// Executa em goroutine separada para não bloquear processamento
+	go func() {
+		// Cria contexto com timeout para operação assíncrona
+		asyncCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		// Tenta salvar mapeamento via ConversationMapper
+		err := s.conversationMapper.SaveConversationMapping(asyncCtx, chatJid, phoneNumber, contactID, conversationID)
+		if err != nil {
+			s.logger.Error("❌ [ASYNC MAPPING] Failed to save conversation mapping",
+				"error", err,
+				"chat_jid", chatJid,
+				"conversation_id", conversationID)
+		} else {
+			s.logger.Info("✅ [ASYNC MAPPING] Successfully saved conversation mapping",
+				"chat_jid", chatJid,
+				"phone_number", phoneNumber,
+				"contact_id", contactID,
+				"conversation_id", conversationID)
+		}
+	}()
 }
 
 // ProcessWhatsAppMessage processa uma mensagem do WhatsApp e envia para o Chatwoot
@@ -876,18 +1060,55 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"contact_name", contact.Name,
 		"contact_phone", contact.PhoneNumber)
 
-	// Encontra ou cria conversa
-	s.logger.Info("💬 CREATING/FINDING CONVERSATION", "contact_id", contact.ID)
-	conversation, err := s.findOrCreateConversation(ctx, contact)
+	// 🎯 ESTRATÉGIA HÍBRIDA: Mapeamento Persistente + Evolution API Fallback
+	s.logger.Info("🔍 [HYBRID MAPPING] Starting hybrid conversation mapping",
+		"contact_id", contact.ID,
+		"chat_jid", msg.From,
+		"phone_number", phoneNumber)
+
+	// FASE 1: Tenta ConversationMapper (usa colunas zpChats)
+	mapping, err := s.conversationMapper.GetOrCreateConversationMapping(ctx, msg.From, phoneNumber)
 	if err != nil {
-		s.logger.Error("❌ FAILED TO FIND/CREATE CONVERSATION", "error", err)
-		return fmt.Errorf("failed to find or create conversation: %w", err)
+		s.logger.Error("❌ [HYBRID MAPPING] ConversationMapper failed, using Evolution fallback", "error", err)
+		mapping = nil // Força fallback
 	}
 
-	s.logger.Info("✅ CONVERSATION FOUND/CREATED",
-		"conversation_id", conversation.ID,
-		"inbox_id", conversation.InboxID,
-		"status", conversation.Status)
+	var conversationID int
+
+	if mapping != nil && mapping.IsValid {
+		// SUCESSO: Usa mapeamento persistente
+		conversationID = mapping.ConversationID
+		s.logger.Info("✅ [HYBRID MAPPING] Using persistent mapping",
+			"chat_id", mapping.ChatID,
+			"contact_id", mapping.ContactID,
+			"conversation_id", conversationID,
+			"source", "persistent_mapping")
+	} else {
+		// FALLBACK: Usa Evolution API strategy
+		s.logger.Info("🔄 [HYBRID MAPPING] Using Evolution API fallback",
+			"reason", "no_persistent_mapping")
+
+		conversation, err := s.findOrCreateConversationWithEvolutionStrategy(ctx, contact)
+		if err != nil {
+			s.logger.Error("❌ [HYBRID MAPPING] Evolution fallback failed", "error", err)
+			return fmt.Errorf("failed to find conversation with hybrid strategy: %w", err)
+		}
+
+		conversationID = conversation.ID
+
+		s.logger.Info("✅ [HYBRID MAPPING] Evolution fallback successful",
+			"conversation_id", conversationID,
+			"inbox_id", conversation.InboxID,
+			"status", conversation.Status,
+			"source", "evolution_fallback")
+
+		// IMPORTANTE: Salva mapeamento para próximas mensagens
+		go s.saveConversationMappingAsync(ctx, msg.From, phoneNumber, contact.ID, conversationID)
+	}
+
+	s.logger.Info("🎯 [HYBRID MAPPING] Final conversation selected",
+		"conversation_id", conversationID,
+		"contact_id", contact.ID)
 
 	// Determina tipo de mensagem (0 = incoming, 1 = outgoing)
 	messageType := 0 // incoming
@@ -949,7 +1170,7 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 	isMediaMessage := msg.Type == "audio" || msg.Type == "ptt" || msg.Type == "image" || msg.Type == "video" || msg.Type == "document" || msg.Type == "sticker"
 
 	s.logger.Info("🚀 CREATING MESSAGE IN CHATWOOT",
-		"conversation_id", conversation.ID,
+		"conversation_id", conversationID,
 		"content", content,
 		"message_type", messageType,
 		"source_id", msgReq.SourceID,
@@ -966,39 +1187,40 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 			"mime_type", msg.MimeType,
 			"type", msg.Type)
 
-		chatwootMsg, msgErr = s.sendMediaToChatwoot(ctx, conversation.ID, msg, messageType, msgReq.SourceID)
+		chatwootMsg, msgErr = s.sendMediaToChatwoot(ctx, conversationID, msg, messageType, msgReq.SourceID)
 		if msgErr != nil {
 			s.logger.Error("❌ FAILED TO SEND MEDIA TO CHATWOOT",
 				"error", msgErr,
-				"conversation_id", conversation.ID,
+				"conversation_id", conversationID,
 				"media_url", msg.MediaURL)
 			// Fallback: envia como mensagem de texto
 			s.logger.Info("🔄 FALLBACK: SENDING AS TEXT MESSAGE")
-			chatwootMsg, msgErr = s.client.CreateMessage(ctx, conversation.ID, msgReq)
+			chatwootMsg, msgErr = s.client.CreateMessage(ctx, conversationID, msgReq)
 		}
 	} else {
 		// Envia como mensagem de texto normal
-		chatwootMsg, msgErr = s.client.CreateMessage(ctx, conversation.ID, msgReq)
+		chatwootMsg, msgErr = s.client.CreateMessage(ctx, conversationID, msgReq)
 	}
 
 	if msgErr != nil {
 		s.logger.Error("❌ FAILED TO CREATE MESSAGE IN CHATWOOT",
 			"error", msgErr,
-			"conversation_id", conversation.ID,
+			"conversation_id", conversationID,
 			"content", content)
 		return fmt.Errorf("failed to create message in chatwoot: %w", msgErr)
 	}
 
 	s.logger.Info("✅ MESSAGE SENT TO CHATWOOT SUCCESSFULLY",
 		"chatwoot_message_id", chatwootMsg.ID,
-		"conversation_id", conversation.ID,
+		"conversation_id", conversationID,
 		"source_id", msgReq.SourceID,
 		"content", content,
 		"has_media", isMediaMessage,
 		"media_type", msg.Type)
 
-	// Salvar relação zpmeow-chatwoot
-	if err := s.saveZpCwRelation(ctx, msg, chatwootMsg, conversation); err != nil {
+	// Salvar relação zpmeow-chatwoot (criar objeto conversation temporário)
+	tempConversation := &Conversation{ID: conversationID}
+	if err := s.saveZpCwRelation(ctx, msg, chatwootMsg, tempConversation); err != nil {
 		s.logger.Error("❌ FAILED TO SAVE ZP-CW RELATION",
 			"error", err,
 			"zpmeow_message_id", msg.ID,

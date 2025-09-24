@@ -24,65 +24,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/chatwoot/webhook/{sessionId}": {
-            "post": {
-                "description": "Receive and process webhooks from Chatwoot",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chatwoot"
-                ],
-                "summary": "Receive Chatwoot webhook",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sessionId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Webhook payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ChatwootWebhookPayload"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BaseResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.StandardErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.StandardErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.StandardErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/health": {
             "get": {
                 "description": "Performs a comprehensive health check of the service and its dependencies",
@@ -1028,7 +969,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. You can use either the global API key or the session-specific API key for authentication. When isActive=true, accountId, token, and url are required fields.",
+                "description": "Configure Chatwoot integration for a WhatsApp session. This endpoint allows you to set up the connection between your WhatsApp session and Chatwoot. Required fields when isActive=true: accountId, token, url. Optional fields include nameInbox, signMsg, signDelimiter, number, reopenConversation, conversationPending, mergeBrazilContacts, importContacts, importMessages, daysLimitImportMessages, autoCreate, organization, logo, ignoreJids.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1049,7 +990,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Chatwoot configuration with all available options",
+                        "description": "Chatwoot configuration request. Required: isActive (boolean). When isActive=true, also required: accountId (string), token (string), url (string). Optional: nameInbox, signMsg, signDelimiter, number, reopenConversation, conversationPending, mergeBrazilContacts, importContacts, importMessages, daysLimitImportMessages, autoCreate, organization, logo, ignoreJids.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6536,27 +6477,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.BaseResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "error": {
-                    "$ref": "#/definitions/dto.ErrorInfo"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                },
-                "timestamp": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.BlockedContactsData": {
             "type": "object",
             "properties": {
@@ -6663,75 +6583,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ChatwootAccount": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootAgent": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "integer"
-                },
-                "display_name": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "uid": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootAttachment": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "integer"
-                },
-                "data_url": {
-                    "type": "string"
-                },
-                "extension": {
-                    "type": "string"
-                },
-                "fallback": {
-                    "type": "string"
-                },
-                "file_size": {
-                    "type": "integer"
-                },
-                "file_type": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "message_id": {
-                    "type": "integer"
-                },
-                "thumb_url": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.ChatwootConfigRequest": {
             "type": "object",
             "required": [
@@ -6739,24 +6590,29 @@ const docTemplate = `{
             ],
             "properties": {
                 "accountId": {
+                    "description": "AccountID é o ID da conta no Chatwoot (obrigatório quando isActive=true)",
                     "type": "string",
-                    "example": "123"
+                    "example": "1"
                 },
                 "autoCreate": {
+                    "description": "AutoCreate indica se deve criar automaticamente (opcional)",
                     "type": "boolean",
                     "example": true
                 },
                 "conversationPending": {
+                    "description": "ConversationPending indica se conversas devem ficar pendentes (opcional)",
                     "type": "boolean",
                     "example": true
                 },
                 "daysLimitImportMessages": {
+                    "description": "DaysLimitImportMessages é o limite de dias para importar mensagens (opcional, 1-365)",
                     "type": "integer",
                     "maximum": 365,
                     "minimum": 1,
                     "example": 30
                 },
                 "ignoreJids": {
+                    "description": "IgnoreJids é uma lista de JIDs para ignorar (opcional)",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -6767,54 +6623,67 @@ const docTemplate = `{
                     ]
                 },
                 "importContacts": {
+                    "description": "ImportContacts indica se deve importar contatos (opcional)",
                     "type": "boolean",
                     "example": false
                 },
                 "importMessages": {
+                    "description": "ImportMessages indica se deve importar mensagens (opcional)",
                     "type": "boolean",
                     "example": false
                 },
                 "isActive": {
+                    "description": "IsActive indica se a integração Chatwoot deve estar ativa (obrigatório)",
                     "type": "boolean",
                     "example": true
                 },
                 "logo": {
+                    "description": "Logo é a URL do logo da organização (opcional)",
                     "type": "string",
                     "example": "https://example.com/logo.png"
                 },
                 "mergeBrazilContacts": {
+                    "description": "MergeBrazilContacts indica se deve mesclar contatos brasileiros (opcional)",
                     "type": "boolean",
                     "example": true
                 },
                 "nameInbox": {
+                    "description": "NameInbox é o nome da inbox no Chatwoot (opcional)",
                     "type": "string",
                     "example": "WhatsApp Inbox"
                 },
                 "number": {
+                    "description": "Number é o número do WhatsApp (opcional)",
                     "type": "string",
                     "example": "5511999999999"
                 },
                 "organization": {
+                    "description": "Organization é o nome da organização (opcional)",
                     "type": "string",
                     "example": "My Company"
                 },
                 "reopenConversation": {
+                    "description": "ReopenConversation indica se deve reabrir conversas (opcional)",
                     "type": "boolean",
                     "example": false
                 },
                 "signDelimiter": {
+                    "description": "SignDelimiter é o delimitador usado na assinatura das mensagens (opcional)",
                     "type": "string",
                     "example": "\n\n---\nSent via WhatsApp"
                 },
                 "signMsg": {
+                    "description": "SignMsg indica se deve assinar mensagens (opcional)",
                     "type": "boolean",
                     "example": true
                 },
                 "token": {
+                    "description": "Token é o token de API do Chatwoot (obrigatório quando isActive=true)",
                     "type": "string",
                     "example": "your-chatwoot-api-token"
                 },
                 "url": {
+                    "description": "URL é a URL da instância Chatwoot (obrigatório quando isActive=true)",
                     "type": "string",
                     "example": "https://chatwoot.example.com"
                 }
@@ -6875,196 +6744,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "url": {
-                    "type": "string"
-                },
-                "webhookUrl": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootContact": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "avatar_url": {
-                    "type": "string"
-                },
-                "custom_attributes": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "identifier": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phone_number": {
-                    "type": "string"
-                },
-                "thumbnail": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootConversation": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "integer"
-                },
-                "additional_attributes": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "assignee": {
-                    "$ref": "#/definitions/dto.ChatwootAgent"
-                },
-                "contact": {
-                    "$ref": "#/definitions/dto.ChatwootContact"
-                },
-                "custom_attributes": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "inbox_id": {
-                    "type": "integer"
-                },
-                "meta": {
-                    "$ref": "#/definitions/dto.ChatwootMeta"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "team": {
-                    "$ref": "#/definitions/dto.ChatwootTeam"
-                },
-                "timestamp": {
-                    "type": "integer"
-                },
-                "unread_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "dto.ChatwootInbox": {
-            "type": "object",
-            "properties": {
-                "channel_id": {
-                    "type": "integer"
-                },
-                "channel_type": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phone_number": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootMeta": {
-            "type": "object",
-            "properties": {
-                "assignee": {
-                    "$ref": "#/definitions/dto.ChatwootAgent"
-                },
-                "sender": {
-                    "$ref": "#/definitions/dto.ChatwootContact"
-                },
-                "team": {
-                    "$ref": "#/definitions/dto.ChatwootTeam"
-                }
-            }
-        },
-        "dto.ChatwootTeam": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "integer"
-                },
-                "allow_auto_assign": {
-                    "type": "boolean"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ChatwootWebhookPayload": {
-            "type": "object",
-            "required": [
-                "event"
-            ],
-            "properties": {
-                "account": {
-                    "$ref": "#/definitions/dto.ChatwootAccount"
-                },
-                "attachments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ChatwootAttachment"
-                    }
-                },
-                "contact": {
-                    "$ref": "#/definitions/dto.ChatwootContact"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "content_attributes": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "content_type": {
-                    "type": "string"
-                },
-                "conversation": {
-                    "$ref": "#/definitions/dto.ChatwootConversation"
-                },
-                "created_at": {
-                    "description": "pode ser string ou número"
-                },
-                "event": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "inbox": {
-                    "$ref": "#/definitions/dto.ChatwootInbox"
-                },
-                "message_type": {
-                    "description": "pode ser string ou número"
-                },
-                "private": {
-                    "type": "boolean"
-                },
-                "sender": {
-                    "$ref": "#/definitions/dto.ChatwootContact"
-                },
-                "source_id": {
                     "type": "string"
                 }
             }

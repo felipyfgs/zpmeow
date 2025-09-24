@@ -109,7 +109,8 @@ func main() {
 	chatwootRepo := repository.NewChatwootRepository(db)
 	messageRepo := repository.NewMessageRepository(db)
 	zpCwRepo := repository.NewZpCwMessageRepository(db)
-	chatwootIntegration := chatwoot.NewIntegration(chatwootLogger, messageRepo, zpCwRepo)
+	chatRepo := repository.NewChatRepository(db)
+	chatwootIntegration := chatwoot.NewIntegration(chatwootLogger, messageRepo, zpCwRepo, chatRepo)
 
 	// Carregar configurações Chatwoot automaticamente no startup
 	if err := loadChatwootConfigurations(context.Background(), chatwootIntegration, chatwootRepo, sessionRepo, chatwootLogger); err != nil {

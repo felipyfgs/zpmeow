@@ -1,9 +1,5 @@
 package chatwoot
 
-import (
-	"time"
-)
-
 // API Request types
 type CreateContactRequest struct {
 	Name        string `json:"name"`
@@ -85,24 +81,24 @@ type Attachment struct {
 
 // API entity types (simplified)
 type Contact struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-	Email       string `json:"email"`
-	Identifier  string `json:"identifier"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	ID          int         `json:"id"`
+	Name        string      `json:"name"`
+	PhoneNumber string      `json:"phone_number"`
+	Email       string      `json:"email"`
+	Identifier  string      `json:"identifier"`
+	CreatedAt   interface{} `json:"created_at"` // Pode ser string ou número
+	UpdatedAt   interface{} `json:"updated_at"` // Pode ser string ou número
 }
 
 type Conversation struct {
-	ID             int       `json:"id"`
-	ContactID      int       `json:"contact_id"`
-	InboxID        int       `json:"inbox_id"`
-	Status         string    `json:"status"`
-	UnreadCount    int       `json:"unread_count"`
-	LastActivityAt time.Time `json:"last_activity_at"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID             int         `json:"id"`
+	ContactID      int         `json:"contact_id"`
+	InboxID        int         `json:"inbox_id"`
+	Status         string      `json:"status"`
+	UnreadCount    int         `json:"unread_count"`
+	LastActivityAt interface{} `json:"last_activity_at"` // Pode ser string ou número
+	CreatedAt      interface{} `json:"created_at"`       // Pode ser string ou número
+	UpdatedAt      interface{} `json:"updated_at"`       // Pode ser string ou número
 }
 
 type Inbox struct {
@@ -126,8 +122,8 @@ type Message struct {
 	Content        string       `json:"content"`
 	MessageType    int          `json:"message_type"`
 	ConversationID int          `json:"conversation_id"`
-	CreatedAt      time.Time    `json:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at"`
+	CreatedAt      interface{}  `json:"created_at"` // Pode ser string ou número
+	UpdatedAt      interface{}  `json:"updated_at"` // Pode ser string ou número
 	Attachments    []Attachment `json:"attachments,omitempty"`
 }
 

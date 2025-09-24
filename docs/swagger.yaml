@@ -20,20 +20,6 @@ definitions:
         example: https://example.com/audio.mp3
         type: string
     type: object
-  dto.BaseResponse:
-    properties:
-      code:
-        type: integer
-      data: {}
-      error:
-        $ref: '#/definitions/dto.ErrorInfo'
-      message:
-        type: string
-      success:
-        type: boolean
-      timestamp:
-        type: string
-    type: object
   dto.BlockedContactsData:
     properties:
       blocked_contacts:
@@ -105,68 +91,30 @@ definitions:
       success:
         type: boolean
     type: object
-  dto.ChatwootAccount:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  dto.ChatwootAgent:
-    properties:
-      account_id:
-        type: integer
-      display_name:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      role:
-        type: string
-      uid:
-        type: string
-    type: object
-  dto.ChatwootAttachment:
-    properties:
-      account_id:
-        type: integer
-      data_url:
-        type: string
-      extension:
-        type: string
-      fallback:
-        type: string
-      file_size:
-        type: integer
-      file_type:
-        type: string
-      id:
-        type: integer
-      message_id:
-        type: integer
-      thumb_url:
-        type: string
-    type: object
   dto.ChatwootConfigRequest:
     properties:
       accountId:
-        example: "123"
+        description: AccountID é o ID da conta no Chatwoot (obrigatório quando isActive=true)
+        example: "1"
         type: string
       autoCreate:
+        description: AutoCreate indica se deve criar automaticamente (opcional)
         example: true
         type: boolean
       conversationPending:
+        description: ConversationPending indica se conversas devem ficar pendentes
+          (opcional)
         example: true
         type: boolean
       daysLimitImportMessages:
+        description: DaysLimitImportMessages é o limite de dias para importar mensagens
+          (opcional, 1-365)
         example: 30
         maximum: 365
         minimum: 1
         type: integer
       ignoreJids:
+        description: IgnoreJids é uma lista de JIDs para ignorar (opcional)
         example:
         - 554988989314@s.whatsapp.net
         - 559999999999@s.whatsapp.net
@@ -174,33 +122,45 @@ definitions:
           type: string
         type: array
       importContacts:
+        description: ImportContacts indica se deve importar contatos (opcional)
         example: false
         type: boolean
       importMessages:
+        description: ImportMessages indica se deve importar mensagens (opcional)
         example: false
         type: boolean
       isActive:
+        description: IsActive indica se a integração Chatwoot deve estar ativa (obrigatório)
         example: true
         type: boolean
       logo:
+        description: Logo é a URL do logo da organização (opcional)
         example: https://example.com/logo.png
         type: string
       mergeBrazilContacts:
+        description: MergeBrazilContacts indica se deve mesclar contatos brasileiros
+          (opcional)
         example: true
         type: boolean
       nameInbox:
+        description: NameInbox é o nome da inbox no Chatwoot (opcional)
         example: WhatsApp Inbox
         type: string
       number:
+        description: Number é o número do WhatsApp (opcional)
         example: "5511999999999"
         type: string
       organization:
+        description: Organization é o nome da organização (opcional)
         example: My Company
         type: string
       reopenConversation:
+        description: ReopenConversation indica se deve reabrir conversas (opcional)
         example: false
         type: boolean
       signDelimiter:
+        description: SignDelimiter é o delimitador usado na assinatura das mensagens
+          (opcional)
         example: |2-
 
 
@@ -208,12 +168,15 @@ definitions:
           Sent via WhatsApp
         type: string
       signMsg:
+        description: SignMsg indica se deve assinar mensagens (opcional)
         example: true
         type: boolean
       token:
+        description: Token é o token de API do Chatwoot (obrigatório quando isActive=true)
         example: your-chatwoot-api-token
         type: string
       url:
+        description: URL é a URL da instância Chatwoot (obrigatório quando isActive=true)
         example: https://chatwoot.example.com
         type: string
     required:
@@ -257,132 +220,6 @@ definitions:
         type: boolean
       url:
         type: string
-      webhookUrl:
-        type: string
-    type: object
-  dto.ChatwootContact:
-    properties:
-      avatar:
-        type: string
-      avatar_url:
-        type: string
-      custom_attributes:
-        additionalProperties: true
-        type: object
-      email:
-        type: string
-      id:
-        type: integer
-      identifier:
-        type: string
-      name:
-        type: string
-      phone_number:
-        type: string
-      thumbnail:
-        type: string
-    type: object
-  dto.ChatwootConversation:
-    properties:
-      account_id:
-        type: integer
-      additional_attributes:
-        additionalProperties: true
-        type: object
-      assignee:
-        $ref: '#/definitions/dto.ChatwootAgent'
-      contact:
-        $ref: '#/definitions/dto.ChatwootContact'
-      custom_attributes:
-        additionalProperties: true
-        type: object
-      id:
-        type: integer
-      inbox_id:
-        type: integer
-      meta:
-        $ref: '#/definitions/dto.ChatwootMeta'
-      status:
-        type: string
-      team:
-        $ref: '#/definitions/dto.ChatwootTeam'
-      timestamp:
-        type: integer
-      unread_count:
-        type: integer
-    type: object
-  dto.ChatwootInbox:
-    properties:
-      channel_id:
-        type: integer
-      channel_type:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      phone_number:
-        type: string
-    type: object
-  dto.ChatwootMeta:
-    properties:
-      assignee:
-        $ref: '#/definitions/dto.ChatwootAgent'
-      sender:
-        $ref: '#/definitions/dto.ChatwootContact'
-      team:
-        $ref: '#/definitions/dto.ChatwootTeam'
-    type: object
-  dto.ChatwootTeam:
-    properties:
-      account_id:
-        type: integer
-      allow_auto_assign:
-        type: boolean
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  dto.ChatwootWebhookPayload:
-    properties:
-      account:
-        $ref: '#/definitions/dto.ChatwootAccount'
-      attachments:
-        items:
-          $ref: '#/definitions/dto.ChatwootAttachment'
-        type: array
-      contact:
-        $ref: '#/definitions/dto.ChatwootContact'
-      content:
-        type: string
-      content_attributes:
-        additionalProperties: true
-        type: object
-      content_type:
-        type: string
-      conversation:
-        $ref: '#/definitions/dto.ChatwootConversation'
-      created_at:
-        description: pode ser string ou número
-      event:
-        type: string
-      id:
-        type: integer
-      inbox:
-        $ref: '#/definitions/dto.ChatwootInbox'
-      message_type:
-        description: pode ser string ou número
-      private:
-        type: boolean
-      sender:
-        $ref: '#/definitions/dto.ChatwootContact'
-      source_id:
-        type: string
-    required:
-    - event
     type: object
   dto.CheckContactRequest:
     properties:
@@ -2135,45 +1972,6 @@ info:
   title: WhatsApp API Gateway
   version: "1.0"
 paths:
-  /chatwoot/webhook/{sessionId}:
-    post:
-      consumes:
-      - application/json
-      description: Receive and process webhooks from Chatwoot
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: Webhook payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ChatwootWebhookPayload'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.BaseResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.StandardErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/dto.StandardErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.StandardErrorResponse'
-      summary: Receive Chatwoot webhook
-      tags:
-      - Chatwoot
   /health:
     get:
       consumes:
@@ -2784,11 +2582,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Configure Chatwoot integration for a WhatsApp session. This endpoint
+      description: 'Configure Chatwoot integration for a WhatsApp session. This endpoint
         allows you to set up the connection between your WhatsApp session and Chatwoot.
-        You can use either the global API key or the session-specific API key for
-        authentication. When isActive=true, accountId, token, and url are required
-        fields.
+        Required fields when isActive=true: accountId, token, url. Optional fields
+        include nameInbox, signMsg, signDelimiter, number, reopenConversation, conversationPending,
+        mergeBrazilContacts, importContacts, importMessages, daysLimitImportMessages,
+        autoCreate, organization, logo, ignoreJids.'
       parameters:
       - description: Session ID or name
         example: '"my-session"'
@@ -2796,7 +2595,11 @@ paths:
         name: sessionId
         required: true
         type: string
-      - description: Chatwoot configuration with all available options
+      - description: 'Chatwoot configuration request. Required: isActive (boolean).
+          When isActive=true, also required: accountId (string), token (string), url
+          (string). Optional: nameInbox, signMsg, signDelimiter, number, reopenConversation,
+          conversationPending, mergeBrazilContacts, importContacts, importMessages,
+          daysLimitImportMessages, autoCreate, organization, logo, ignoreJids.'
         in: body
         name: request
         required: true

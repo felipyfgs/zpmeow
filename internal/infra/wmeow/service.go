@@ -151,9 +151,9 @@ func (m *MeowService) createNewClient(sessionID string) *WameowClient {
 
 	var eventProcessor *EventProcessor
 	if m.chatwootIntegration != nil && m.chatwootRepo != nil {
-		eventProcessor = NewEventProcessorWithChatwoot(sessionID, sessionConfig.webhookURL, m.sessions, m.chatwootIntegration, m.chatwootRepo, m.messageRepo, m.chatRepo)
+		eventProcessor = NewEventProcessorWithChatwoot(sessionID, m.sessions, m.chatwootIntegration, m.chatwootRepo, m.messageRepo, m.chatRepo, m.webhookRepo)
 	} else {
-		eventProcessor = NewEventProcessor(sessionID, sessionConfig.webhookURL, m.sessions, m.messageRepo, m.chatRepo)
+		eventProcessor = NewEventProcessor(sessionID, m.sessions, m.messageRepo, m.chatRepo, m.webhookRepo)
 	}
 
 	client, err := NewWameowClientWithDeviceJID(
@@ -559,7 +559,7 @@ func (m *MeowService) DownloadMedia(ctx context.Context, sessionID, messageID st
 	m.logger.Debugf("Downloading media for message %s in session %s", messageID, sessionID)
 
 	// Busca a mensagem no histórico para obter informações de mídia
-	mediaMessage, err := m.findMediaMessage(ctx, client, messageID)
+	mediaMessage, err := m.findMediaMessage(client, messageID)
 	if err != nil {
 		m.logger.Errorf("Failed to find media message %s: %v", messageID, err)
 		return nil, "", fmt.Errorf("failed to find media message: %w", err)
@@ -586,7 +586,7 @@ func (m *MeowService) DownloadMedia(ctx context.Context, sessionID, messageID st
 }
 
 // findMediaMessage busca uma mensagem de mídia no cache
-func (m *MeowService) findMediaMessage(ctx context.Context, client *WameowClient, messageID string) (whatsmeow.DownloadableMessage, error) {
+func (m *MeowService) findMediaMessage(client *WameowClient, messageID string) (whatsmeow.DownloadableMessage, error) {
 	// Busca no cache de mídia do EventProcessor
 	if client.eventHandler != nil && client.eventHandler.mediaCache != nil {
 		if mediaMsg, exists := client.eventHandler.mediaCache[messageID]; exists {

@@ -1,25 +1,63 @@
 package dto
 
-// ChatwootConfigRequest representa a requisição para configurar Chatwoot
+// ChatwootConfigRequest representa a requisição para configurar a integração Chatwoot
+// Campos obrigatórios: isActive
+// Quando isActive=true, também são obrigatórios: accountId, token, url
+// Todos os outros campos são opcionais
 type ChatwootConfigRequest struct {
-	IsActive                *bool    `json:"isActive" validate:"required" example:"true" swaggertype:"boolean"`
-	AccountID               string   `json:"accountId" validate:"required_if=IsActive true" example:"123"`
-	Token                   string   `json:"token" validate:"required_if=IsActive true" example:"your-chatwoot-api-token"`
-	URL                     string   `json:"url" validate:"required_if=IsActive true,url" example:"https://chatwoot.example.com"`
-	NameInbox               string   `json:"nameInbox,omitempty" example:"WhatsApp Inbox"`
-	SignMsg                 *bool    `json:"signMsg,omitempty" example:"true" swaggertype:"boolean"`
-	SignDelimiter           string   `json:"signDelimiter,omitempty" example:"\n\n---\nSent via WhatsApp"`
-	Number                  string   `json:"number,omitempty" example:"5511999999999"`
-	ReopenConversation      *bool    `json:"reopenConversation,omitempty" example:"false" swaggertype:"boolean"`
-	ConversationPending     *bool    `json:"conversationPending,omitempty" example:"true" swaggertype:"boolean"`
-	MergeBrazilContacts     *bool    `json:"mergeBrazilContacts,omitempty" example:"true" swaggertype:"boolean"`
-	ImportContacts          *bool    `json:"importContacts,omitempty" example:"false" swaggertype:"boolean"`
-	ImportMessages          *bool    `json:"importMessages,omitempty" example:"false" swaggertype:"boolean"`
-	DaysLimitImportMessages *int     `json:"daysLimitImportMessages,omitempty" validate:"omitempty,min=1,max=365" example:"30"`
-	AutoCreate              *bool    `json:"autoCreate,omitempty" example:"true" swaggertype:"boolean"`
-	Organization            string   `json:"organization,omitempty" example:"My Company"`
-	Logo                    string   `json:"logo,omitempty" validate:"omitempty,url" example:"https://example.com/logo.png"`
-	IgnoreJids              []string `json:"ignoreJids,omitempty" example:"554988989314@s.whatsapp.net,559999999999@s.whatsapp.net"`
+	// IsActive indica se a integração Chatwoot deve estar ativa (obrigatório)
+	IsActive *bool `json:"isActive" validate:"required" example:"true" swaggertype:"boolean"`
+
+	// AccountID é o ID da conta no Chatwoot (obrigatório quando isActive=true)
+	AccountID string `json:"accountId" validate:"required_if=IsActive true" example:"1"`
+
+	// Token é o token de API do Chatwoot (obrigatório quando isActive=true)
+	Token string `json:"token" validate:"required_if=IsActive true" example:"your-chatwoot-api-token"`
+
+	// URL é a URL da instância Chatwoot (obrigatório quando isActive=true)
+	URL string `json:"url" validate:"required_if=IsActive true,url" example:"https://chatwoot.example.com"`
+
+	// NameInbox é o nome da inbox no Chatwoot (opcional)
+	NameInbox string `json:"nameInbox,omitempty" example:"WhatsApp Inbox"`
+
+	// SignMsg indica se deve assinar mensagens (opcional)
+	SignMsg *bool `json:"signMsg,omitempty" example:"true" swaggertype:"boolean"`
+
+	// SignDelimiter é o delimitador usado na assinatura das mensagens (opcional)
+	SignDelimiter string `json:"signDelimiter,omitempty" example:"\n\n---\nSent via WhatsApp"`
+
+	// Number é o número do WhatsApp (opcional)
+	Number string `json:"number,omitempty" example:"5511999999999"`
+
+	// ReopenConversation indica se deve reabrir conversas (opcional)
+	ReopenConversation *bool `json:"reopenConversation,omitempty" example:"false" swaggertype:"boolean"`
+
+	// ConversationPending indica se conversas devem ficar pendentes (opcional)
+	ConversationPending *bool `json:"conversationPending,omitempty" example:"true" swaggertype:"boolean"`
+
+	// MergeBrazilContacts indica se deve mesclar contatos brasileiros (opcional)
+	MergeBrazilContacts *bool `json:"mergeBrazilContacts,omitempty" example:"true" swaggertype:"boolean"`
+
+	// ImportContacts indica se deve importar contatos (opcional)
+	ImportContacts *bool `json:"importContacts,omitempty" example:"false" swaggertype:"boolean"`
+
+	// ImportMessages indica se deve importar mensagens (opcional)
+	ImportMessages *bool `json:"importMessages,omitempty" example:"false" swaggertype:"boolean"`
+
+	// DaysLimitImportMessages é o limite de dias para importar mensagens (opcional, 1-365)
+	DaysLimitImportMessages *int `json:"daysLimitImportMessages,omitempty" validate:"omitempty,min=1,max=365" example:"30"`
+
+	// AutoCreate indica se deve criar automaticamente (opcional)
+	AutoCreate *bool `json:"autoCreate,omitempty" example:"true" swaggertype:"boolean"`
+
+	// Organization é o nome da organização (opcional)
+	Organization string `json:"organization,omitempty" example:"My Company"`
+
+	// Logo é a URL do logo da organização (opcional)
+	Logo string `json:"logo,omitempty" validate:"omitempty,url" example:"https://example.com/logo.png"`
+
+	// IgnoreJids é uma lista de JIDs para ignorar (opcional)
+	IgnoreJids []string `json:"ignoreJids,omitempty" example:"554988989314@s.whatsapp.net,559999999999@s.whatsapp.net"`
 }
 
 // ChatwootConfigResponse representa a resposta da configuração Chatwoot
@@ -41,7 +79,6 @@ type ChatwootConfigResponse struct {
 	Organization            string   `json:"organization,omitempty"`
 	Logo                    string   `json:"logo,omitempty"`
 	IgnoreJids              []string `json:"ignoreJids,omitempty"`
-	WebhookURL              string   `json:"webhookUrl"`
 }
 
 // ChatwootStatusResponse representa o status da integração Chatwoot
@@ -56,7 +93,91 @@ type ChatwootStatusResponse struct {
 	ErrorMessage  string `json:"errorMessage,omitempty"`
 }
 
-// ChatwootWebhookPayload representa o payload de webhook do Chatwoot
+// ChatwootTestConnectionRequest representa a requisição para testar conexão
+type ChatwootTestConnectionRequest struct {
+	AccountID string `json:"accountId" validate:"required"`
+	Token     string `json:"token" validate:"required"`
+	URL       string `json:"url" validate:"required,url"`
+}
+
+// ChatwootTestConnectionResponse representa a resposta do teste de conexão
+type ChatwootTestConnectionResponse struct {
+	Success      bool                   `json:"success"`
+	Message      string                 `json:"message"`
+	AccountInfo  *ChatwootAccountInfo   `json:"accountInfo,omitempty"`
+	InboxesCount int                    `json:"inboxesCount,omitempty"`
+	ErrorDetails map[string]interface{} `json:"errorDetails,omitempty"`
+}
+
+// ChatwootAccountInfo representa informações da conta
+type ChatwootAccountInfo struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Timezone string `json:"timezone,omitempty"`
+	Locale   string `json:"locale,omitempty"`
+}
+
+// ChatwootSyncRequest representa a requisição para sincronizar dados
+type ChatwootSyncRequest struct {
+	SyncContacts bool `json:"syncContacts"`
+	SyncMessages bool `json:"syncMessages"`
+	DaysLimit    *int `json:"daysLimit,omitempty" validate:"omitempty,min=1,max=365"`
+}
+
+// ChatwootSyncResponse representa a resposta da sincronização
+type ChatwootSyncResponse struct {
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	ContactsSynced int    `json:"contactsSynced,omitempty"`
+	MessagesSynced int    `json:"messagesSynced,omitempty"`
+	ErrorMessage   string `json:"errorMessage,omitempty"`
+}
+
+// ChatwootMetricsResponse representa métricas da integração
+type ChatwootMetricsResponse struct {
+	TotalMessages      int `json:"totalMessages"`
+	MessagesToday      int `json:"messagesToday"`
+	TotalContacts      int `json:"totalContacts"`
+	ContactsToday      int `json:"contactsToday"`
+	TotalConversations int `json:"totalConversations"`
+	OpenConversations  int `json:"openConversations"`
+	AvgResponseTime    int `json:"avgResponseTime"` // em segundos
+}
+
+// ChatwootLogsRequest representa a requisição para obter logs
+type ChatwootLogsRequest struct {
+	Level     string `json:"level,omitempty" validate:"omitempty,oneof=debug info warn error"`
+	StartDate string `json:"startDate,omitempty" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	EndDate   string `json:"endDate,omitempty" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	Limit     *int   `json:"limit,omitempty" validate:"omitempty,min=1,max=1000"`
+}
+
+// ChatwootLogsResponse representa a resposta dos logs
+type ChatwootLogsResponse struct {
+	Logs       []ChatwootLogEntry `json:"logs"`
+	TotalCount int                `json:"totalCount"`
+	HasMore    bool               `json:"hasMore"`
+}
+
+// ChatwootLogEntry representa uma entrada de log
+type ChatwootLogEntry struct {
+	Timestamp string                 `json:"timestamp"`
+	Level     string                 `json:"level"`
+	Message   string                 `json:"message"`
+	Context   map[string]interface{} `json:"context,omitempty"`
+	Error     string                 `json:"error,omitempty"`
+}
+
+// ChatwootHealthResponse representa a resposta de health check
+type ChatwootHealthResponse struct {
+	Status       string `json:"status"`
+	Service      string `json:"service"`
+	Version      string `json:"version,omitempty"`
+	Uptime       string `json:"uptime,omitempty"`
+	LastActivity string `json:"lastActivity,omitempty"`
+}
+
+// ChatwootWebhookPayload representa o payload de webhook do Chatwoot (interno)
 type ChatwootWebhookPayload struct {
 	Event             string                 `json:"event" validate:"required"`
 	MsgType           interface{}            `json:"message_type,omitempty"` // pode ser string ou número
@@ -157,88 +278,4 @@ type ChatwootAttachment struct {
 	ThumbURL  string `json:"thumb_url,omitempty"`
 	FileSize  int64  `json:"file_size"`
 	Fallback  string `json:"fallback,omitempty"`
-}
-
-// ChatwootTestConnectionRequest representa a requisição para testar conexão
-type ChatwootTestConnectionRequest struct {
-	AccountID string `json:"accountId" validate:"required"`
-	Token     string `json:"token" validate:"required"`
-	URL       string `json:"url" validate:"required,url"`
-}
-
-// ChatwootTestConnectionResponse representa a resposta do teste de conexão
-type ChatwootTestConnectionResponse struct {
-	Success      bool                   `json:"success"`
-	Message      string                 `json:"message"`
-	AccountInfo  *ChatwootAccountInfo   `json:"accountInfo,omitempty"`
-	InboxesCount int                    `json:"inboxesCount,omitempty"`
-	ErrorDetails map[string]interface{} `json:"errorDetails,omitempty"`
-}
-
-// ChatwootAccountInfo representa informações da conta
-type ChatwootAccountInfo struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Timezone string `json:"timezone,omitempty"`
-	Locale   string `json:"locale,omitempty"`
-}
-
-// ChatwootSyncRequest representa a requisição para sincronizar dados
-type ChatwootSyncRequest struct {
-	SyncContacts bool `json:"syncContacts"`
-	SyncMessages bool `json:"syncMessages"`
-	DaysLimit    *int `json:"daysLimit,omitempty" validate:"omitempty,min=1,max=365"`
-}
-
-// ChatwootSyncResponse representa a resposta da sincronização
-type ChatwootSyncResponse struct {
-	Success        bool   `json:"success"`
-	Message        string `json:"message"`
-	ContactsSynced int    `json:"contactsSynced,omitempty"`
-	MessagesSynced int    `json:"messagesSynced,omitempty"`
-	ErrorMessage   string `json:"errorMessage,omitempty"`
-}
-
-// ChatwootMetricsResponse representa métricas da integração
-type ChatwootMetricsResponse struct {
-	TotalMessages      int `json:"totalMessages"`
-	MessagesToday      int `json:"messagesToday"`
-	TotalContacts      int `json:"totalContacts"`
-	ContactsToday      int `json:"contactsToday"`
-	TotalConversations int `json:"totalConversations"`
-	OpenConversations  int `json:"openConversations"`
-	AvgResponseTime    int `json:"avgResponseTime"` // em segundos
-}
-
-// ChatwootLogsRequest representa a requisição para obter logs
-type ChatwootLogsRequest struct {
-	Level     string `json:"level,omitempty" validate:"omitempty,oneof=debug info warn error"`
-	StartDate string `json:"startDate,omitempty" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	EndDate   string `json:"endDate,omitempty" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	Limit     *int   `json:"limit,omitempty" validate:"omitempty,min=1,max=1000"`
-}
-
-// ChatwootLogsResponse representa a resposta dos logs
-type ChatwootLogsResponse struct {
-	Logs       []ChatwootLogEntry `json:"logs"`
-	TotalCount int                `json:"totalCount"`
-	HasMore    bool               `json:"hasMore"`
-}
-
-// ChatwootLogEntry representa uma entrada de log
-type ChatwootLogEntry struct {
-	Timestamp string                 `json:"timestamp"`
-	Level     string                 `json:"level"`
-	Message   string                 `json:"message"`
-	Context   map[string]interface{} `json:"context,omitempty"`
-	Error     string                 `json:"error,omitempty"`
-}
-
-// ChatwootHealthResponse representa a resposta de health check
-type ChatwootHealthResponse struct {
-	Status       string `json:"status"`
-	Service      string `json:"service"`
-	Version      string `json:"version,omitempty"`
-	Uptime       string `json:"uptime,omitempty"`
-	LastActivity string `json:"lastActivity,omitempty"`
 }

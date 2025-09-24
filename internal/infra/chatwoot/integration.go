@@ -19,16 +19,18 @@ type Integration struct {
 	whatsappService ports.WhatsAppService
 	messageRepo     *repository.MessageRepository
 	zpCwRepo        *repository.ZpCwMessageRepository
+	chatRepo        *repository.ChatRepository
 }
 
 // NewIntegration cria uma nova instância da integração Chatwoot
-func NewIntegration(logger *slog.Logger, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository) *Integration {
+func NewIntegration(logger *slog.Logger, messageRepo *repository.MessageRepository, zpCwRepo *repository.ZpCwMessageRepository, chatRepo *repository.ChatRepository) *Integration {
 	return &Integration{
 		services:    make(map[string]*Service),
 		configs:     make(map[string]*ChatwootConfig),
 		logger:      logger,
 		messageRepo: messageRepo,
 		zpCwRepo:    zpCwRepo,
+		chatRepo:    chatRepo,
 	}
 }
 
@@ -58,7 +60,7 @@ func (i *Integration) RegisterInstance(instanceName string, config *ChatwootConf
 	}
 
 	// Cria serviço para a instância (whatsappService pode ser nil aqui, será definido depois)
-	service, err := NewService(config, i.logger.With("instance", instanceName), i.whatsappService, instanceName, i.messageRepo, i.zpCwRepo)
+	service, err := NewService(config, i.logger.With("instance", instanceName), i.whatsappService, instanceName, i.messageRepo, i.zpCwRepo, i.chatRepo)
 	if err != nil {
 		return fmt.Errorf("failed to create chatwoot service for instance %s: %w", instanceName, err)
 	}
