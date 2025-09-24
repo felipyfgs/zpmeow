@@ -1364,18 +1364,14 @@ func (m *MeowService) JoinGroupWithInvite(ctx context.Context, sessionID, groupJ
 }
 
 func (m *MeowService) LeaveGroup(ctx context.Context, sessionID, groupJID string) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().LeaveGroup(jid)
@@ -1661,13 +1657,9 @@ func (m *MeowService) GetLinkedGroupsParticipants(ctx context.Context, sessionID
 }
 
 func (m *MeowService) CheckUser(ctx context.Context, sessionID string, phones []string) ([]ports.UserCheckResult, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
+	if err != nil {
+		return nil, err
 	}
 
 	var validPhones []string
@@ -1780,13 +1772,9 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID string, phones 
 }
 
 func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*ports.AvatarResult, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
+	if err != nil {
+		return nil, err
 	}
 
 	jid, err := parsePhoneToJID(phone)
@@ -1812,13 +1800,9 @@ func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*
 }
 
 func (m *MeowService) GetContacts(ctx context.Context, sessionID string, limit, offset int) ([]ports.ContactResult, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
+	if err != nil {
+		return nil, err
 	}
 
 	contacts, err := client.GetClient().Store.Contacts.GetAllContacts(ctx)
@@ -2266,18 +2250,14 @@ func (m *MeowService) GetGroupInviteLink(ctx context.Context, sessionID, groupJI
 }
 
 func (m *MeowService) SetGroupName(ctx context.Context, sessionID, groupJID, name string) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().SetGroupName(jid, name)
@@ -2292,18 +2272,14 @@ func (m *MeowService) SetGroupName(ctx context.Context, sessionID, groupJID, nam
 }
 
 func (m *MeowService) SetGroupTopic(ctx context.Context, sessionID, groupJID, topic string) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().SetGroupTopic(jid, "", "", topic)
@@ -2318,74 +2294,44 @@ func (m *MeowService) SetGroupTopic(ctx context.Context, sessionID, groupJID, to
 }
 
 func (m *MeowService) SetGroupPhoto(ctx context.Context, sessionID, groupJID string, photo []byte) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
-	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
-	}
-
 	if len(photo) == 0 {
 		return fmt.Errorf("photo data cannot be empty")
 	}
 
-	pictureID, err := client.GetClient().SetGroupPhoto(jid, photo)
-	if err != nil {
-		return fmt.Errorf("failed to set group photo: %w", err)
-	}
+	return m.executeGroupOperation(sessionID, groupJID, GroupOpSetPhoto, func(client *WameowClient, jid waTypes.JID) error {
+		pictureID, err := client.GetClient().SetGroupPhoto(jid, photo)
+		if err != nil {
+			return fmt.Errorf("failed to set group photo: %w", err)
+		}
 
-	m.logger.Debugf("Successfully set group photo (ID: %s) for group %s in session %s",
-		pictureID, groupJID, sessionID)
-
-	return nil
+		m.logger.Debugf("Successfully set group photo (ID: %s) for group %s in session %s",
+			pictureID, groupJID, sessionID)
+		return nil
+	})
 }
 
 func (m *MeowService) RemoveGroupPhoto(ctx context.Context, sessionID, groupJID string) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
+	return m.executeGroupOperation(sessionID, groupJID, GroupOpRemovePhoto, func(client *WameowClient, jid waTypes.JID) error {
+		_, err := client.GetClient().SetGroupPhoto(jid, nil)
+		if err != nil {
+			return fmt.Errorf("failed to remove group photo: %w", err)
+		}
 
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
-	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
-	}
-
-	_, err = client.GetClient().SetGroupPhoto(jid, nil)
-	if err != nil {
-		return fmt.Errorf("failed to remove group photo: %w", err)
-	}
-
-	m.logger.Debugf("Successfully removed group photo for group %s in session %s",
-		groupJID, sessionID)
-
-	return nil
+		m.logger.Debugf("Successfully removed group photo for group %s in session %s",
+			groupJID, sessionID)
+		return nil
+	})
 }
 
 func (m *MeowService) SetGroupAnnounce(ctx context.Context, sessionID, groupJID string, announceOnly bool) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().SetGroupAnnounce(jid, announceOnly)
@@ -2405,18 +2351,14 @@ func (m *MeowService) SetGroupAnnounce(ctx context.Context, sessionID, groupJID 
 }
 
 func (m *MeowService) SetGroupLocked(ctx context.Context, sessionID, groupJID string, locked bool) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().SetGroupLocked(jid, locked)
@@ -2436,18 +2378,14 @@ func (m *MeowService) SetGroupLocked(ctx context.Context, sessionID, groupJID st
 }
 
 func (m *MeowService) SetGroupJoinApprovalMode(ctx context.Context, sessionID, groupJID string, requireApproval bool) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	jid, err := waTypes.ParseJID(groupJID)
+	client, err := m.validateAndGetConnectedClient(sessionID)
 	if err != nil {
-		return fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
 	}
 
 	err = client.GetClient().SetGroupJoinApprovalMode(jid, requireApproval)

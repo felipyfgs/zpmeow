@@ -14,14 +14,16 @@ import (
 )
 
 type GroupHandler struct {
-	groupService *application.GroupApp
-	wmeowService wmeow.WameowService
+	groupService      *application.GroupApp
+	wmeowService      wmeow.WameowService
+	operationHelper   *GroupOperationHelper
 }
 
 func NewGroupHandler(groupService *application.GroupApp, wmeowService wmeow.WameowService) *GroupHandler {
 	return &GroupHandler{
-		groupService: groupService,
-		wmeowService: wmeowService,
+		groupService:    groupService,
+		wmeowService:    wmeowService,
+		operationHelper: NewGroupOperationHelper(),
 	}
 }
 
@@ -45,43 +47,10 @@ func (h *GroupHandler) resolveSessionID(_ *fiber.Ctx, sessionIDOrName string) (s
 // @Failure 500 {object} dto.GroupResponse "Failed to create group"
 // @Router /session/{sessionId}/group/create [post]
 func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
-	sessionIDOrName := c.Params("sessionId")
-	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusBadRequest,
-			"MISSING_SESSION_ID",
-			"Session ID is required",
-			"Session ID must be provided in the URL path",
-		))
-	}
-
-	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusNotFound,
-			"SESSION_NOT_FOUND",
-			"Session not found",
-			err.Error(),
-		))
-	}
-
 	var req dto.CreateGroupRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusBadRequest,
-			"INVALID_REQUEST",
-			"Invalid request format",
-			err.Error(),
-		))
-	}
-
-	if err := req.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusBadRequest,
-			"VALIDATION_ERROR",
-			"Request validation failed",
-			err.Error(),
-		))
+	sessionID, err := h.operationHelper.ValidateSessionAndParseRequest(c, &req, h.resolveSessionID)
+	if err != nil {
+		return err // Error already handled by helper
 	}
 
 	ctx := c.Context()
@@ -118,34 +87,10 @@ func (h *GroupHandler) CreateGroup(c *fiber.Ctx) error {
 // @Failure 500 {object} dto.GroupResponse "Failed to get group info"
 // @Router /session/{sessionId}/group/info [post]
 func (h *GroupHandler) GetGroupInfo(c *fiber.Ctx) error {
-	sessionIDOrName := c.Params("sessionId")
-	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusBadRequest,
-			"MISSING_SESSION_ID",
-			"Session ID is required",
-			"Session ID must be provided in the URL path",
-		))
-	}
-
-	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusNotFound,
-			"SESSION_NOT_FOUND",
-			"Session not found",
-			err.Error(),
-		))
-	}
-
 	var req dto.GetGroupInfoRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
-			fiber.StatusBadRequest,
-			"INVALID_REQUEST",
-			"Invalid request format",
-			err.Error(),
-		))
+	sessionID, err := h.operationHelper.ValidateSessionAndParseRequest(c, &req, h.resolveSessionID)
+	if err != nil {
+		return err // Error already handled by helper
 	}
 
 	ctx := c.Context()

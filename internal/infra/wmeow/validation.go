@@ -166,3 +166,95 @@ func IsConnectionError(err error) bool {
 	var connErr *ConnectionError
 	return errors.As(err, &connErr)
 }
+
+// parseAndValidateJID parses a string to JID and validates it
+func parseAndValidateJID(jidStr string) (waTypes.JID, error) {
+	if strings.TrimSpace(jidStr) == "" {
+		return waTypes.EmptyJID, newValidationError("jid", "cannot be empty")
+	}
+
+	jid, err := waTypes.ParseJID(jidStr)
+	if err != nil {
+		return waTypes.EmptyJID, fmt.Errorf("invalid JID %s: %w", jidStr, err)
+	}
+
+	return jid, nil
+}
+
+// validateClientConnection validates that a client exists and is connected
+func validateClientConnection(client *WameowClient, sessionID string) error {
+	if client == nil {
+		return fmt.Errorf("client not found for session %s", sessionID)
+	}
+
+	if !client.IsConnected() {
+		return fmt.Errorf("client not connected for session %s", sessionID)
+	}
+
+	return nil
+}
+
+// validateAndGetConnectedClient combines client retrieval and validation
+func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowClient, error) {
+	client := m.getClient(sessionID)
+	if err := validateClientConnection(client, sessionID); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+
+
+// validateGroupJID validates and parses a group JID
+func validateGroupJID(groupJID string) (waTypes.JID, error) {
+	jid, err := parseAndValidateJID(groupJID)
+	if err != nil {
+		return waTypes.EmptyJID, fmt.Errorf("invalid group JID %s: %w", groupJID, err)
+	}
+
+	// Additional validation for group JIDs if needed
+	if !strings.Contains(jid.Server, "g.us") {
+		return waTypes.EmptyJID, fmt.Errorf("JID %s is not a group JID", groupJID)
+	}
+
+	return jid, nil
+}
+
+// validateContactJID validates and parses a contact JID
+func validateContactJID(contactJID string) (waTypes.JID, error) {
+	jid, err := parseAndValidateJID(contactJID)
+	if err != nil {
+		return waTypes.EmptyJID, fmt.Errorf("invalid contact JID %s: %w", contactJID, err)
+	}
+
+	return jid, nil
+}
+
+// GroupOperationType defines the type of group operation
+type GroupOperationType string
+
+const (
+	GroupOpSetName         GroupOperationType = "set_name"
+	GroupOpSetTopic        GroupOperationType = "set_topic"
+	GroupOpSetAnnounce     GroupOperationType = "set_announce"
+	GroupOpSetLocked       GroupOperationType = "set_locked"
+	GroupOpSetApproval     GroupOperationType = "set_approval"
+	GroupOpSetPhoto        GroupOperationType = "set_photo"
+	GroupOpRemovePhoto     GroupOperationType = "remove_photo"
+	GroupOpLeave           GroupOperationType = "leave"
+)
+
+// executeGroupOperation executes a generic group operation with common validation
+func (m *MeowService) executeGroupOperation(sessionID, groupJID string, operation GroupOperationType, operationFunc func(*WameowClient, waTypes.JID) error) error {
+	client, err := m.validateAndGetConnectedClient(sessionID)
+	if err != nil {
+		return err
+	}
+
+	jid, err := validateGroupJID(groupJID)
+	if err != nil {
+		return err
+	}
+
+	return operationFunc(client, jid)
+}

@@ -234,3 +234,114 @@ func (h *HTTPHandler) BindQuery(c *fiber.Ctx, obj interface{}) error {
 func (h *HTTPHandler) BindURI(c *fiber.Ctx, obj interface{}) error {
 	return h.BaseHandler.BindURI(c, obj)
 }
+
+// SessionValidationHelper provides common session validation logic
+type SessionValidationHelper struct {
+	*BaseHandler
+}
+
+func NewSessionValidationHelper() *SessionValidationHelper {
+	return &SessionValidationHelper{
+		BaseHandler: NewBaseHandler("session-validation"),
+	}
+}
+
+// ValidateAndGetSessionID validates session ID from path and returns it
+func (h *SessionValidationHelper) ValidateAndGetSessionID(c *fiber.Ctx) (string, error) {
+	sessionIDOrName := c.Params("sessionId")
+	if sessionIDOrName == "" {
+		return "", fmt.Errorf("session ID is required")
+	}
+	return sessionIDOrName, nil
+}
+
+// HandleSessionValidationError sends standardized session validation error response
+func (h *SessionValidationHelper) HandleSessionValidationError(c *fiber.Ctx, err error, errorType string) error {
+	switch errorType {
+	case "missing":
+		return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
+			fiber.StatusBadRequest,
+			"MISSING_SESSION_ID",
+			"Session ID is required",
+			"Session ID must be provided in the URL path",
+		))
+	case "not_found":
+		return c.Status(fiber.StatusNotFound).JSON(dto.NewGroupErrorResponse(
+			fiber.StatusNotFound,
+			"SESSION_NOT_FOUND",
+			"Session not found",
+			err.Error(),
+		))
+	default:
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.NewGroupErrorResponse(
+			fiber.StatusInternalServerError,
+			"SESSION_ERROR",
+			"Session validation error",
+			err.Error(),
+		))
+	}
+}
+
+// HandleRequestParsingError sends standardized request parsing error response
+func (h *SessionValidationHelper) HandleRequestParsingError(c *fiber.Ctx, err error) error {
+	return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
+		fiber.StatusBadRequest,
+		"INVALID_REQUEST",
+		"Invalid request format",
+		err.Error(),
+	))
+}
+
+// HandleValidationError sends standardized validation error response
+func (h *SessionValidationHelper) HandleValidationError(c *fiber.Ctx, err error) error {
+	return c.Status(fiber.StatusBadRequest).JSON(dto.NewGroupErrorResponse(
+		fiber.StatusBadRequest,
+		"VALIDATION_ERROR",
+		"Request validation failed",
+		err.Error(),
+	))
+}
+
+// GroupOperationHelper provides common group operation patterns
+type GroupOperationHelper struct {
+	*SessionValidationHelper
+}
+
+func NewGroupOperationHelper() *GroupOperationHelper {
+	return &GroupOperationHelper{
+		SessionValidationHelper: NewSessionValidationHelper(),
+	}
+}
+
+// ValidateSessionAndParseRequest handles common session validation and request parsing
+func (h *GroupOperationHelper) ValidateSessionAndParseRequest(c *fiber.Ctx, req interface{}, resolveSessionFunc func(*fiber.Ctx, string) (string, error)) (string, error) {
+	// Validate session ID
+	sessionIDOrName, err := h.ValidateAndGetSessionID(c)
+	if err != nil {
+		h.HandleSessionValidationError(c, err, "missing")
+		return "", err
+	}
+
+	sessionID, err := resolveSessionFunc(c, sessionIDOrName)
+	if err != nil {
+		h.HandleSessionValidationError(c, err, "not_found")
+		return "", err
+	}
+
+	// Parse and validate request if provided
+	if req != nil {
+		if err := c.BodyParser(req); err != nil {
+			h.HandleRequestParsingError(c, err)
+			return "", err
+		}
+
+		if validator, ok := req.(interface{ Validate() error }); ok {
+			if err := validator.Validate(); err != nil {
+				h.HandleValidationError(c, err)
+				return "", err
+			}
+		}
+	}
+
+	return sessionID, nil
+}
