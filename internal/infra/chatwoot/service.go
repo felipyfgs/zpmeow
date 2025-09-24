@@ -1124,10 +1124,10 @@ func (s *Service) resolveWhatsAppRecipient(ctx context.Context, phoneNumber stri
 		"original_phone", phoneNumber,
 		"clean_phone", cleanPhoneNumber)
 
-	// Busca chats existentes para encontrar o JID correto
-	chats, err := s.whatsappService.ListChats(ctx, s.sessionID, cleanPhoneNumber, 1)
+	// Busca chats existentes no repositório para encontrar o JID correto
+	chats, err := s.chatRepo.GetChatsByPhoneNumber(ctx, s.sessionID, cleanPhoneNumber)
 	if err != nil {
-		s.logger.Warn("⚠️ Failed to list chats for phone number",
+		s.logger.Warn("⚠️ Failed to find chats by phone number",
 			"phone_number", cleanPhoneNumber,
 			"error", err)
 		return cleanPhoneNumber, nil // Usa número limpo como fallback
@@ -1135,7 +1135,16 @@ func (s *Service) resolveWhatsAppRecipient(ctx context.Context, phoneNumber stri
 
 	// Se encontrou chats, usa o JID do chat mais recente
 	if len(chats) > 0 {
+		// Pega a conversa com última interação mais recente
 		latestChat := chats[0]
+		for _, chat := range chats {
+			if chat.LastMsgAt != nil && latestChat.LastMsgAt != nil && chat.LastMsgAt.After(*latestChat.LastMsgAt) {
+				latestChat = chat
+			} else if chat.LastMsgAt != nil && latestChat.LastMsgAt == nil {
+				latestChat = chat
+			}
+		}
+
 		targetChatJID := latestChat.ChatJid
 
 		s.logger.Info("✅ FOUND LATEST CHAT FOR PHONE NUMBER",
@@ -1225,139 +1234,10 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 	return s.sendToWhatsAppService(ctx, recipient, data)
 }
 
-	contactPhone := ""
-	contactIdentifier := ""
-	if phone, ok := payload.Contact["phone_number"].(string); ok {
-		contactPhone = phone
-	}
-	if identifier, ok := payload.Contact["identifier"].(string); ok {
-		contactIdentifier = identifier
-	}
-
-	s.logger.Info("📞 EXTRACTED PHONE NUMBER",
-		"raw_phone", phoneNumber,
-		"contact_phone", contactPhone,
-		"contact_identifier", contactIdentifier)
-
-	if phoneNumber == "" {
-		s.logger.Error("❌ Could not extract phone number from contact")
-		return fmt.Errorf("could not extract phone number from contact")
-	}
-
+// cleanPhoneNumber limpa e normaliza o número de telefone
+func (s *Service) cleanPhoneNumber(phoneNumber string) string {
 	// Remove o prefixo + do número se presente
-	cleanPhoneNumber := strings.TrimPrefix(phoneNumber, "+")
-
-	// Extract conversation ID
-	conversationID := 0
-	if payload.Conversation != nil {
-		if id, ok := payload.Conversation["id"].(float64); ok {
-			conversationID = int(id)
-		}
-	}
-
-	// 🎯 SOLUÇÃO SIMPLES: Busca última conversa com interação para este número
-	targetChatJID := ""
-	chats, err := s.chatRepo.GetChatsByPhoneNumber(context.Background(), s.sessionID, cleanPhoneNumber)
-	if err != nil {
-		s.logger.Error("❌ Failed to find chats by phone number",
-			"phone_number", cleanPhoneNumber,
-			"session_id", s.sessionID,
-			"error", err)
-	} else if len(chats) > 0 {
-		// Pega a conversa com última interação mais recente
-		latestChat := chats[0]
-		for _, chat := range chats {
-			if chat.LastMsgAt != nil && latestChat.LastMsgAt != nil && chat.LastMsgAt.After(*latestChat.LastMsgAt) {
-				latestChat = chat
-			} else if chat.LastMsgAt != nil && latestChat.LastMsgAt == nil {
-				latestChat = chat
-			}
-		}
-		targetChatJID = latestChat.ChatJid
-		lastMsgAtStr := "nil"
-		if latestChat.LastMsgAt != nil {
-			lastMsgAtStr = latestChat.LastMsgAt.String()
-		}
-		s.logger.Info("✅ FOUND LATEST CHAT FOR PHONE NUMBER",
-			"phone_number", cleanPhoneNumber,
-			"target_chat_jid", targetChatJID,
-			"last_msg_at", lastMsgAtStr,
-			"total_chats_found", len(chats))
-	} else {
-		s.logger.Warn("⚠️ No chats found for phone number",
-			"phone_number", cleanPhoneNumber,
-			"session_id", s.sessionID)
-	}
-
-	s.logger.Info("📨 SENDING MESSAGE TO WHATSAPP",
-		"to", cleanPhoneNumber,
-		"target_chat_jid", targetChatJID,
-		"content", content,
-		"session_id", s.sessionID,
-		"whatsapp_service_available", s.whatsappService != nil,
-		"conversationID", conversationID,
-		"messageType", messageType)
-
-	// Envia mensagem via WhatsApp usando o serviço zpmeow
-	if s.whatsappService != nil {
-		// Usa targetChatJID se disponível, senão usa o número limpo
-		recipient := cleanPhoneNumber
-		if targetChatJID != "" {
-			recipient = targetChatJID
-		}
-
-		s.logger.Info("🚀 CALLING WHATSAPP SERVICE",
-			"session_id", s.sessionID,
-			"to", recipient,
-			"original_phone", cleanPhoneNumber,
-			"target_chat_jid", targetChatJID,
-			"content", content,
-			"content_type", contentType,
-			"has_attachments", len(attachments) > 0)
-
-		// Determina o tipo de mensagem e envia adequadamente
-		var err error
-
-		// Verifica se há anexos na mensagem
-		if len(attachments) > 0 {
-			_, err = s.sendAttachmentMessage(ctx, recipient, attachments)
-		} else if content != "" {
-			_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, recipient, content)
-		} else {
-			s.logger.Warn("⚠️ MESSAGE WITH NO CONTENT OR ATTACHMENTS",
-				"to", recipient,
-				"content_type", contentType)
-			return fmt.Errorf("message has no content or attachments")
-		}
-
-		if err != nil {
-			s.logger.Error("❌ FAILED TO SEND MESSAGE TO WHATSAPP",
-				"error", err,
-				"to", recipient,
-				"original_phone", cleanPhoneNumber,
-				"target_chat_jid", targetChatJID,
-				"session_id", s.sessionID,
-				"content_type", contentType)
-			return fmt.Errorf("failed to send message to WhatsApp: %w", err)
-		}
-
-		// Log de sucesso
-		s.logger.Info("✅ MESSAGE SENT TO WHATSAPP SUCCESSFULLY",
-			"to", cleanPhoneNumber,
-			"content", content,
-			"session_id", s.sessionID,
-			"content_type", contentType,
-			"has_attachments", len(attachments) > 0)
-
-		return nil
-	}
-
-	s.logger.Warn("⚠️ WHATSAPP SERVICE NOT AVAILABLE",
-		"to", cleanPhoneNumber,
-		"session_id", s.sessionID,
-		"content", content)
-
-	return nil
+	return strings.TrimPrefix(phoneNumber, "+")
 }
 
 // extractPhoneFromContactMap extrai número de telefone do contato a partir de um map

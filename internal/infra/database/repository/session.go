@@ -379,105 +379,158 @@ func (r *PostgresRepo) ValidateDeviceUniqueness(ctx context.Context, sessionID, 
 	return nil
 }
 
-func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*session.Session, error) {
+// SessionBuilder ajuda na construção de entidades Session a partir de modelos
+type SessionBuilder struct {
+	model *models.SessionModel
+}
 
-	sessionID, err := session.NewSessionID(model.ID)
+// NewSessionBuilder cria um novo builder
+func NewSessionBuilder(model *models.SessionModel) *SessionBuilder {
+	return &SessionBuilder{model: model}
+}
+
+// buildValueObjects cria os value objects necessários
+func (b *SessionBuilder) buildValueObjects() (session.SessionID, session.SessionName, error) {
+	sessionID, err := session.NewSessionID(b.model.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session ID: %w", err)
+		return session.SessionID{}, session.SessionName{}, fmt.Errorf("failed to create session ID: %w", err)
 	}
 
-	sessionName, err := session.NewSessionName(model.Name)
+	sessionName, err := session.NewSessionName(b.model.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session name: %w", err)
+		return session.SessionID{}, session.SessionName{}, fmt.Errorf("failed to create session name: %w", err)
 	}
 
+	return sessionID, sessionName, nil
+}
+
+// buildOptionalFields cria os campos opcionais
+func (b *SessionBuilder) buildOptionalFields() (session.ProxyConfiguration, session.DeviceJID, session.QRCode, session.ApiKey, error) {
 	var proxyURL session.ProxyConfiguration
-	if model.ProxyUrl != "" {
-		proxy, err := session.NewProxyConfiguration(model.ProxyUrl)
+	var deviceJID session.DeviceJID
+	var qrCode session.QRCode
+	var apiKey session.ApiKey
+
+	// Proxy URL
+	if b.model.ProxyUrl != "" {
+		proxy, err := session.NewProxyConfiguration(b.model.ProxyUrl)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create proxy configuration: %w", err)
+			return proxyURL, deviceJID, qrCode, apiKey, fmt.Errorf("failed to create proxy configuration: %w", err)
 		}
 		proxyURL = proxy
 	}
 
-	var DeviceJID session.DeviceJID
-	if model.DeviceJid != "" {
-		jid, err := session.NewDeviceJID(model.DeviceJid)
+	// Device JID
+	if b.model.DeviceJid != "" {
+		jid, err := session.NewDeviceJID(b.model.DeviceJid)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create device JID: %w", err)
+			return proxyURL, deviceJID, qrCode, apiKey, fmt.Errorf("failed to create device JID: %w", err)
 		}
-		DeviceJID = jid
+		deviceJID = jid
 	}
 
-	var qrCode session.QRCode
-	if model.QrCode != "" {
-		qr, err := session.NewQRCode(model.QrCode)
+	// QR Code
+	if b.model.QrCode != "" {
+		qr, err := session.NewQRCode(b.model.QrCode)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create QR code: %w", err)
+			return proxyURL, deviceJID, qrCode, apiKey, fmt.Errorf("failed to create QR code: %w", err)
 		}
 		qrCode = qr
 	}
 
-	var apiKey session.ApiKey
-	if model.ApiKey != "" {
-		key, err := session.NewApiKey(model.ApiKey)
+	// API Key
+	if b.model.ApiKey != "" {
+		key, err := session.NewApiKey(b.model.ApiKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create API key: %w", err)
+			return proxyURL, deviceJID, qrCode, apiKey, fmt.Errorf("failed to create API key: %w", err)
 		}
 		apiKey = key
 	}
 
-	// Webhook events agora são gerenciados pela tabela zpWebhooks separada
+	return proxyURL, deviceJID, qrCode, apiKey, nil
+}
 
-	sessionEntity, err := session.NewSession(sessionID.Value(), sessionName.Value())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create session entity: %w", err)
-	}
-
-	if model.Status != string(session.StatusDisconnected) {
-		switch session.Status(model.Status) {
+// configureStatus configura o status da sessão
+func (b *SessionBuilder) configureStatus(sessionEntity *session.Session) error {
+	if b.model.Status != string(session.StatusDisconnected) {
+		switch session.Status(b.model.Status) {
 		case session.StatusConnecting:
 			if err := sessionEntity.Connect(); err != nil {
-				return nil, fmt.Errorf("failed to set connecting status: %w", err)
+				return fmt.Errorf("failed to set connecting status: %w", err)
 			}
 		case session.StatusConnected:
 			if err := sessionEntity.Connect(); err != nil {
-				return nil, fmt.Errorf("failed to set connecting status: %w", err)
+				return fmt.Errorf("failed to set connecting status: %w", err)
 			}
 			if err := sessionEntity.SetConnected(); err != nil {
-				return nil, fmt.Errorf("failed to set connected status: %w", err)
+				return fmt.Errorf("failed to set connected status: %w", err)
 			}
 		case session.StatusError:
 			sessionEntity.SetError("Restored from database")
 		}
 	}
+	return nil
+}
 
+// configureOptionalProperties configura propriedades opcionais
+func (b *SessionBuilder) configureOptionalProperties(sessionEntity *session.Session, proxyURL session.ProxyConfiguration, deviceJID session.DeviceJID, qrCode session.QRCode, apiKey session.ApiKey) error {
 	if !proxyURL.IsEmpty() {
 		if err := sessionEntity.SetProxyConfiguration(proxyURL.Value()); err != nil {
-			return nil, fmt.Errorf("failed to set proxy URL: %w", err)
+			return fmt.Errorf("failed to set proxy URL: %w", err)
 		}
 	}
 
-	if !DeviceJID.IsEmpty() {
-		if err := sessionEntity.Authenticate(DeviceJID.Value()); err != nil {
-			return nil, fmt.Errorf("failed to set device JID: %w", err)
+	if !deviceJID.IsEmpty() {
+		if err := sessionEntity.Authenticate(deviceJID.Value()); err != nil {
+			return fmt.Errorf("failed to set device JID: %w", err)
 		}
 	}
 
 	if !qrCode.IsEmpty() {
 		if err := sessionEntity.SetQRCode(qrCode.Value()); err != nil {
-			return nil, fmt.Errorf("failed to set QR code: %w", err)
+			return fmt.Errorf("failed to set QR code: %w", err)
 		}
 	}
 
 	if !apiKey.IsEmpty() {
 		if err := sessionEntity.SetApiKey(apiKey.Value()); err != nil {
-			return nil, fmt.Errorf("failed to set API key: %w", err)
+			return fmt.Errorf("failed to set API key: %w", err)
 		}
 	}
 
-	// Webhook URL e events agora são gerenciados pela tabela zpWebhooks separada
-	// A configuração de webhook deve ser feita através do WebhookRepository
+	return nil
+}
+
+func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*session.Session, error) {
+	builder := NewSessionBuilder(model)
+
+	// Cria value objects básicos
+	sessionID, sessionName, err := builder.buildValueObjects()
+	if err != nil {
+		return nil, err
+	}
+
+	// Cria campos opcionais
+	proxyURL, deviceJID, qrCode, apiKey, err := builder.buildOptionalFields()
+	if err != nil {
+		return nil, err
+	}
+
+	// Cria entidade Session
+	sessionEntity, err := session.NewSession(sessionID.Value(), sessionName.Value())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create session entity: %w", err)
+	}
+
+	// Configura status
+	if err := builder.configureStatus(sessionEntity); err != nil {
+		return nil, err
+	}
+
+	// Configura propriedades opcionais
+	if err := builder.configureOptionalProperties(sessionEntity, proxyURL, deviceJID, qrCode, apiKey); err != nil {
+		return nil, err
+	}
 
 	return sessionEntity, nil
 }
