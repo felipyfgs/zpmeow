@@ -75,7 +75,7 @@ func (m *MeowService) DownloadMedia(ctx context.Context, sessionID, messageID st
 	return nil, fmt.Errorf("download media not fully implemented")
 }
 
-func (m *MeowService) GetMediaInfo(ctx context.Context, sessionID, messageID string) (*ports.MediaInfo, error) {
+func (m *MeowService) GetMediaInfo(ctx context.Context, sessionID, messageID string) (*MediaInfo, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)

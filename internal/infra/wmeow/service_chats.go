@@ -106,7 +106,7 @@ func (m *MeowService) ListChats(ctx context.Context, sessionID, phone string, li
 	return result, nil
 }
 
-func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID string, limit int, before string) ([]ports.MessageInfo, error) {
+func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID string, limit int, before string) ([]MessageInfo, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -138,9 +138,9 @@ func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID str
 		return nil, fmt.Errorf("failed to get chat history: %w", err)
 	}
 
-	var result []ports.MessageInfo
+	var result []MessageInfo
 	for _, msg := range messages {
-		msgInfo := ports.MessageInfo{
+		msgInfo := MessageInfo{
 			ID:        msg.Info.ID,
 			FromMe:    msg.Info.IsFromMe,
 			Timestamp: msg.Info.Timestamp,
@@ -337,4 +337,55 @@ func (m *MeowService) SetDisappearingTimer(ctx context.Context, sessionID, chatJ
 
 	m.logger.Debugf("Set disappearing timer to %v for chat %s in session %s", timer, chatJID, sessionID)
 	return nil
+}
+
+// Additional methods required by ChatManager interface
+
+func (m *MeowService) GetChats(ctx context.Context, sessionID string, limit, offset int) ([]ports.ChatInfo, error) {
+	return m.ListChats(ctx, sessionID, "", limit)
+}
+
+func (m *MeowService) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*ports.ChatInfo, error) {
+	client := m.getClient(sessionID)
+	if client == nil {
+		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	}
+
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	}
+
+	jid, err := waTypes.ParseJID(chatJID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+	}
+
+	chatInfo := &ports.ChatInfo{
+		JID:     chatJID,
+		IsGroup: jid.Server == waTypes.GroupServer,
+	}
+
+	if !chatInfo.IsGroup {
+		// Get contact info for individual chat
+		contact, err := client.GetClient().Store.Contacts.GetContact(jid)
+		if err == nil && contact.PushName != "" {
+			chatInfo.Name = contact.PushName
+		}
+
+		if jid.Server == waTypes.DefaultUserServer {
+			phone := jid.User
+			if !strings.HasPrefix(phone, "+") {
+				phone = "+" + phone
+			}
+			chatInfo.Phone = phone
+		}
+	} else {
+		// Get group info
+		groupInfo, err := client.GetClient().GetGroupInfo(jid)
+		if err == nil {
+			chatInfo.Name = groupInfo.Name
+		}
+	}
+
+	return chatInfo, nil
 }

@@ -253,7 +253,7 @@ func (m *MeowService) GetGroupInviteLink(ctx context.Context, sessionID, groupJI
 	return m.GetInviteLink(ctx, sessionID, groupJID, false)
 }
 
-func (m *MeowService) AddParticipant(ctx context.Context, sessionID, groupJID string, participants []string) error {
+func (m *MeowService) AddParticipants(ctx context.Context, sessionID, groupJID string, participants []string) error {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return fmt.Errorf("client not found for session %s", sessionID)
@@ -291,7 +291,7 @@ func (m *MeowService) AddParticipant(ctx context.Context, sessionID, groupJID st
 	return nil
 }
 
-func (m *MeowService) RemoveParticipant(ctx context.Context, sessionID, groupJID string, participants []string) error {
+func (m *MeowService) RemoveParticipants(ctx context.Context, sessionID, groupJID string, participants []string) error {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return fmt.Errorf("client not found for session %s", sessionID)
@@ -576,4 +576,74 @@ func (m *MeowService) GetLinkedGroupsParticipants(ctx context.Context, sessionID
 
 	m.logger.Debugf("Retrieved %d linked groups participants for community %s in session %s", len(result), communityJID, sessionID)
 	return result, nil
+}
+
+// Additional methods required by GroupManager interface
+
+func (m *MeowService) GetInviteInfo(ctx context.Context, sessionID, inviteLink string) (*ports.GroupInfo, error) {
+	// TODO: Implement GetInviteInfo
+	return nil, fmt.Errorf("GetInviteInfo not implemented yet")
+}
+
+func (m *MeowService) GetGroupInfoFromInvite(ctx context.Context, sessionID, groupJID, inviter, code string, expiration int64) (*ports.GroupInfo, error) {
+	// TODO: Implement GetGroupInfoFromInvite
+	return nil, fmt.Errorf("GetGroupInfoFromInvite not implemented yet")
+}
+
+func (m *MeowService) UpdateParticipants(ctx context.Context, sessionID, groupJID, action string, participants []string) error {
+	switch action {
+	case "add":
+		return m.AddParticipants(ctx, sessionID, groupJID, participants)
+	case "remove":
+		return m.RemoveParticipants(ctx, sessionID, groupJID, participants)
+	case "promote":
+		return m.PromoteParticipant(ctx, sessionID, groupJID, participants)
+	case "demote":
+		return m.DemoteParticipant(ctx, sessionID, groupJID, participants)
+	default:
+		return fmt.Errorf("invalid action: %s", action)
+	}
+}
+
+func (m *MeowService) SetGroupName(ctx context.Context, sessionID, groupJID, name string) error {
+	return m.UpdateGroupName(ctx, sessionID, groupJID, name)
+}
+
+func (m *MeowService) SetGroupTopic(ctx context.Context, sessionID, groupJID, topic string) error {
+	return m.UpdateGroupDescription(ctx, sessionID, groupJID, topic)
+}
+
+func (m *MeowService) RemoveGroupPhoto(ctx context.Context, sessionID, groupJID string) error {
+	// TODO: Implement RemoveGroupPhoto
+	return fmt.Errorf("RemoveGroupPhoto not implemented yet")
+}
+
+func (m *MeowService) SetGroupAnnounce(ctx context.Context, sessionID, groupJID string, announceOnly bool) error {
+	// TODO: Implement SetGroupAnnounce
+	return fmt.Errorf("SetGroupAnnounce not implemented yet")
+}
+
+func (m *MeowService) SetGroupLocked(ctx context.Context, sessionID, groupJID string, locked bool) error {
+	// TODO: Implement SetGroupLocked
+	return fmt.Errorf("SetGroupLocked not implemented yet")
+}
+
+func (m *MeowService) SetGroupEphemeral(ctx context.Context, sessionID, groupJID string, ephemeral bool, duration int) error {
+	// TODO: Implement SetGroupEphemeral
+	return fmt.Errorf("SetGroupEphemeral not implemented yet")
+}
+
+func (m *MeowService) SetGroupJoinApprovalMode(ctx context.Context, sessionID, groupJID string, requireApproval bool) error {
+	// TODO: Implement SetGroupJoinApprovalMode
+	return fmt.Errorf("SetGroupJoinApprovalMode not implemented yet")
+}
+
+func (m *MeowService) SetGroupJoinApproval(ctx context.Context, sessionID, groupJID string, requireApproval bool) error {
+	// TODO: Implement SetGroupJoinApproval
+	return fmt.Errorf("SetGroupJoinApproval not implemented yet")
+}
+
+func (m *MeowService) SetGroupMemberAddMode(ctx context.Context, sessionID, groupJID string, mode string) error {
+	// TODO: Implement SetGroupMemberAddMode
+	return fmt.Errorf("SetGroupMemberAddMode not implemented yet")
 }

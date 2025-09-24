@@ -154,7 +154,7 @@ func (m *MeowService) GetContactInfo(ctx context.Context, sessionID, phone strin
 	return result, nil
 }
 
-func (m *MeowService) GetUserInfo(ctx context.Context, sessionID, phone string) (*ports.UserInfo, error) {
+func (m *MeowService) GetUserInfo(ctx context.Context, sessionID, phone string) (*UserInfo, error) {
 	client := m.getClient(sessionID)
 	if client == nil {
 		return nil, fmt.Errorf("client not found for session %s", sessionID)
@@ -179,7 +179,7 @@ func (m *MeowService) GetUserInfo(ctx context.Context, sessionID, phone string) 
 	}
 
 	info := userInfo[0]
-	result := &ports.UserInfo{
+	result := &UserInfo{
 		JID:    jid.String(),
 		Phone:  phone,
 		Status: info.Status,
@@ -282,17 +282,23 @@ func (m *MeowService) UnblockUser(ctx context.Context, sessionID, phone string) 
 	return nil
 }
 
-// Helper methods for contact management
+// Additional methods required by ContactManager interface
 
-func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
+func (m *MeowService) CheckContact(ctx context.Context, sessionID, phone string) (*ports.UserCheckResult, error) {
+	// Use CheckUser instead of GetContactInfo to match interface
+	results, err := m.CheckUser(ctx, sessionID, []string{phone})
+	if err != nil {
+		return nil, err
 	}
 
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	if len(results) == 0 {
+		return &ports.UserCheckResult{
+			Phone:       phone,
+			IsOnWhatsApp: false,
+		}, nil
 	}
 
-	return client, nil
+	return &results[0], nil
 }
+
+// Helper methods for contact management - validateAndGetConnectedClient moved to service.go

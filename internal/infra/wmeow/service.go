@@ -108,18 +108,39 @@ func (m *MeowService) createNewClient(sessionID string) *WameowClient {
 		return nil
 	}
 
-	client := NewWameowClient(
-		sessionConfig,
+	// Create event processor
+	var eventProcessor *EventProcessor
+	if m.chatwootIntegration != nil {
+		eventProcessor = NewEventProcessorWithChatwoot(
+			sessionID,
+			m.sessions,
+			m.chatwootIntegration,
+			m.chatwootRepo,
+			m.messageRepo,
+			m.chatRepo,
+			m.webhookRepo,
+		)
+	} else {
+		eventProcessor = NewEventProcessor(
+			sessionID,
+			m.sessions,
+			m.messageRepo,
+			m.chatRepo,
+			m.webhookRepo,
+		)
+	}
+
+	client, err := NewWameowClient(
+		sessionID,
 		m.container,
 		m.waLogger,
-		m.logger,
+		eventProcessor,
 		m.sessions,
-		m.chatwootIntegration,
-		m.chatwootRepo,
-		m.messageRepo,
-		m.chatRepo,
-		m.webhookRepo,
 	)
+	if err != nil {
+		m.logger.Errorf("Failed to create WameowClient for session %s: %v", sessionID, err)
+		return nil
+	}
 
 	m.clients[sessionID] = client
 	return client
@@ -139,11 +160,11 @@ func (m *MeowService) loadSessionConfiguration(sessionID string) *SessionConfigu
 
 	return &SessionConfiguration{
 		SessionID:   sessionID,
-		PhoneNumber: sessionEntity.PhoneNumber(),
-		Status:      sessionEntity.Status(),
-		QRCode:      sessionEntity.QRCode(),
-		Connected:   sessionEntity.Connected(),
-		Webhook:     sessionEntity.Webhook(),
+		PhoneNumber: "", // TODO: Get phone number from session entity
+		Status:      string(sessionEntity.Status()),
+		QRCode:      sessionEntity.QRCode().Value(),
+		Connected:   sessionEntity.IsConnected(),
+		Webhook:     "", // TODO: Get webhook from session entity
 	}
 }
 
@@ -163,7 +184,7 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 	}
 
 	for _, sessionEntity := range sessions {
-		sessionID := sessionEntity.ID()
+		sessionID := sessionEntity.ID().Value()
 		m.logger.Infof("Attempting to connect session %s on startup", sessionID)
 
 		client := m.getOrCreateClient(sessionID)
@@ -208,11 +229,11 @@ func (m *MeowService) validateAndGetClientForSending(sessionID string) (*WameowC
 
 // Helpers para componentes (usados pelos arquivos especializados)
 func (m *MeowService) getValidator() MessageValidator {
-	return NewMessageValidator()
+	return &messageValidatorWrapper{validator: NewMessageValidator()}
 }
 
 func (m *MeowService) getMessageBuilder() MessageBuilder {
-	return NewMessageBuilder()
+	return &messageBuilderWrapper{builder: NewMessageBuilder()}
 }
 
 func (m *MeowService) getMessageSender() *messageSender {
@@ -246,4 +267,18 @@ func (m *MeowService) GetChatwootIntegration() *chatwoot.Integration {
 
 func (m *MeowService) GetLogger() logging.Logger {
 	return m.logger
+}
+
+// Additional helper methods
+func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowClient, error) {
+	client := m.getClient(sessionID)
+	if client == nil {
+		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	}
+
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	}
+
+	return client, nil
 }

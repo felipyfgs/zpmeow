@@ -194,14 +194,7 @@ func validateClientConnection(client *WameowClient, sessionID string) error {
 	return nil
 }
 
-// validateAndGetConnectedClient combines client retrieval and validation
-func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if err := validateClientConnection(client, sessionID); err != nil {
-		return nil, err
-	}
-	return client, nil
-}
+// validateAndGetConnectedClient moved to service.go
 
 // validateGroupJID validates and parses a group JID
 func validateGroupJID(groupJID string) (waTypes.JID, error) {

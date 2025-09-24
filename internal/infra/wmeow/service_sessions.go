@@ -94,7 +94,7 @@ func (m *MeowService) IsClientConnected(sessionID string) bool {
 	return client.IsConnected()
 }
 
-func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) error {
+func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) (string, error) {
 	m.logger.Infof("Connecting session %s", sessionID)
 
 	client := m.getOrCreateClient(sessionID)
@@ -103,11 +103,11 @@ func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) erro
 	}
 
 	if err := client.Connect(); err != nil {
-		return fmt.Errorf("failed to connect session %s: %w", sessionID, err)
+		return "", fmt.Errorf("failed to connect session %s: %w", sessionID, err)
 	}
 
 	m.logger.Infof("Session %s connected successfully", sessionID)
-	return nil
+	return "connected", nil
 }
 
 func (m *MeowService) DisconnectSession(ctx context.Context, sessionID string) error {
