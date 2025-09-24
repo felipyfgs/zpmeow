@@ -8,7 +8,7 @@ RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o meow-server cmd/server/main.go
 
-FROM alpine:latest
+FROM alpine:3.19
 
 WORKDIR /root/
 

@@ -208,75 +208,15 @@ func (m *MeowService) DeleteChat(ctx context.Context, sessionID, chatJID string)
 }
 
 func (m *MeowService) MuteChat(ctx context.Context, sessionID, chatJID string, mute bool, duration time.Duration) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
+	if err := m.validateClientConnection(sessionID); err != nil {
+		return err
 	}
 
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
+	if m.chatRepo == nil {
+		return m.logMuteAction(chatJID, mute, duration, sessionID)
 	}
 
-	// Removed unused variables for compilation
-
-	// Mute functionality - store mute status locally
-	if m.chatRepo != nil {
-		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
-		if err != nil {
-			m.logger.Warnf("Failed to get chat from database: %v", err)
-		} else if chat != nil {
-			// Store mute status and duration in metadata
-			if chat.Metadata == nil {
-				chat.Metadata = make(models.JSONB)
-			}
-
-			chat.Metadata["muted"] = mute
-			if mute && duration > 0 {
-				muteUntil := time.Now().Add(duration)
-				chat.Metadata["muteUntil"] = muteUntil.Unix()
-			} else {
-				delete(chat.Metadata, "muteUntil")
-			}
-
-			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
-				m.logger.Errorf("Failed to update chat mute status: %v", err)
-				return fmt.Errorf("failed to update chat mute status: %w", err)
-			}
-		} else {
-			// Chat doesn't exist in database, create it with mute status
-			jid, err := waTypes.ParseJID(chatJID)
-			if err != nil {
-				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
-			}
-
-			metadata := make(models.JSONB)
-			metadata["muted"] = mute
-			if mute && duration > 0 {
-				muteUntil := time.Now().Add(duration)
-				metadata["muteUntil"] = muteUntil.Unix()
-			}
-
-			newChat := &models.ChatModel{
-				SessionId: sessionID,
-				ChatJid:   chatJID,
-				IsGroup:   jid.Server == waTypes.GroupServer,
-				Metadata:  metadata,
-			}
-
-			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
-				m.logger.Errorf("Failed to create chat with mute status: %v", err)
-				return fmt.Errorf("failed to create chat with mute status: %w", err)
-			}
-		}
-	}
-
-	action := "muted"
-	if !mute {
-		action = "unmuted"
-	}
-
-	m.logger.Debugf("Chat %s %s for %v in session %s", chatJID, action, duration, sessionID)
-	return nil
+	return m.updateChatMuteStatus(ctx, sessionID, chatJID, mute, duration)
 }
 
 func (m *MeowService) UnmuteChat(ctx context.Context, sessionID, chatJID string) error {
@@ -294,71 +234,15 @@ func (m *MeowService) UnmuteChat(ctx context.Context, sessionID, chatJID string)
 }
 
 func (m *MeowService) PinChat(ctx context.Context, sessionID, chatJID string, pin bool) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
+	if err := m.validateClientConnection(sessionID); err != nil {
+		return err
 	}
 
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
+	if m.chatRepo == nil {
+		return m.logPinAction(chatJID, pin, sessionID)
 	}
 
-	// Pin functionality - store pin status locally (WhatsApp doesn't have server-side pin API)
-	if m.chatRepo != nil {
-		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
-		if err != nil {
-			m.logger.Warnf("Failed to get chat from database: %v", err)
-		} else if chat != nil {
-			// Store pin status in metadata
-			if chat.Metadata == nil {
-				chat.Metadata = make(models.JSONB)
-			}
-
-			chat.Metadata["pinned"] = pin
-			if pin {
-				chat.Metadata["pinnedAt"] = time.Now().Unix()
-			} else {
-				delete(chat.Metadata, "pinnedAt")
-			}
-
-			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
-				m.logger.Errorf("Failed to update chat pin status: %v", err)
-				return fmt.Errorf("failed to update chat pin status: %w", err)
-			}
-		} else {
-			// Chat doesn't exist in database, create it with pin status
-			jid, err := waTypes.ParseJID(chatJID)
-			if err != nil {
-				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
-			}
-
-			metadata := make(models.JSONB)
-			metadata["pinned"] = pin
-			if pin {
-				metadata["pinnedAt"] = time.Now().Unix()
-			}
-
-			newChat := &models.ChatModel{
-				SessionId: sessionID,
-				ChatJid:   chatJID,
-				IsGroup:   jid.Server == waTypes.GroupServer,
-				Metadata:  metadata,
-			}
-
-			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
-				m.logger.Errorf("Failed to create chat with pin status: %v", err)
-				return fmt.Errorf("failed to create chat with pin status: %w", err)
-			}
-		}
-	}
-
-	action := "pinned"
-	if !pin {
-		action = "unpinned"
-	}
-
-	m.logger.Debugf("Chat %s %s for session %s", chatJID, action, sessionID)
-	return nil
+	return m.updateChatPinStatus(ctx, sessionID, chatJID, pin)
 }
 
 func (m *MeowService) SetDisappearingTimer(ctx context.Context, sessionID, chatJID string, timer time.Duration) error {
@@ -426,4 +310,159 @@ func (m *MeowService) GetChatInfo(ctx context.Context, sessionID, chatJID string
 	}
 
 	return chatInfo, nil
+}
+
+// Helper functions to reduce complexity
+
+func (m *MeowService) validateClientConnection(sessionID string) error {
+	client := m.getClient(sessionID)
+	if client == nil {
+		return fmt.Errorf("client not found for session %s", sessionID)
+	}
+	if !client.IsConnected() {
+		return fmt.Errorf("client not connected for session %s", sessionID)
+	}
+	return nil
+}
+
+func (m *MeowService) logMuteAction(chatJID string, mute bool, duration time.Duration, sessionID string) error {
+	action := "muted"
+	if !mute {
+		action = "unmuted"
+	}
+	m.logger.Debugf("Chat %s %s for %v in session %s", chatJID, action, duration, sessionID)
+	return nil
+}
+
+func (m *MeowService) updateChatMuteStatus(ctx context.Context, sessionID, chatJID string, mute bool, duration time.Duration) error {
+	chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+	if err != nil {
+		m.logger.Warnf("Failed to get chat from database: %v", err)
+		return m.logMuteAction(chatJID, mute, duration, sessionID)
+	}
+
+	if chat != nil {
+		return m.updateExistingChatMute(ctx, chat, mute, duration, chatJID, sessionID)
+	}
+
+	return m.createChatWithMuteStatus(ctx, sessionID, chatJID, mute, duration)
+}
+
+func (m *MeowService) updateExistingChatMute(ctx context.Context, chat *models.ChatModel, mute bool, duration time.Duration, chatJID, sessionID string) error {
+	if chat.Metadata == nil {
+		chat.Metadata = make(models.JSONB)
+	}
+
+	chat.Metadata["muted"] = mute
+	if mute && duration > 0 {
+		muteUntil := time.Now().Add(duration)
+		chat.Metadata["muteUntil"] = muteUntil.Unix()
+	} else {
+		delete(chat.Metadata, "muteUntil")
+	}
+
+	if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+		m.logger.Errorf("Failed to update chat mute status: %v", err)
+		return fmt.Errorf("failed to update chat mute status: %w", err)
+	}
+
+	return m.logMuteAction(chatJID, mute, duration, sessionID)
+}
+
+func (m *MeowService) createChatWithMuteStatus(ctx context.Context, sessionID, chatJID string, mute bool, duration time.Duration) error {
+	jid, err := waTypes.ParseJID(chatJID)
+	if err != nil {
+		return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+	}
+
+	metadata := make(models.JSONB)
+	metadata["muted"] = mute
+	if mute && duration > 0 {
+		muteUntil := time.Now().Add(duration)
+		metadata["muteUntil"] = muteUntil.Unix()
+	}
+
+	newChat := &models.ChatModel{
+		SessionId: sessionID,
+		ChatJid:   chatJID,
+		IsGroup:   jid.Server == waTypes.GroupServer,
+		Metadata:  metadata,
+	}
+
+	if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+		m.logger.Errorf("Failed to create chat with mute status: %v", err)
+		return fmt.Errorf("failed to create chat with mute status: %w", err)
+	}
+
+	return m.logMuteAction(chatJID, mute, duration, sessionID)
+}
+
+func (m *MeowService) logPinAction(chatJID string, pin bool, sessionID string) error {
+	action := "pinned"
+	if !pin {
+		action = "unpinned"
+	}
+	m.logger.Debugf("Chat %s %s for session %s", chatJID, action, sessionID)
+	return nil
+}
+
+func (m *MeowService) updateChatPinStatus(ctx context.Context, sessionID, chatJID string, pin bool) error {
+	chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+	if err != nil {
+		m.logger.Warnf("Failed to get chat from database: %v", err)
+		return m.logPinAction(chatJID, pin, sessionID)
+	}
+
+	if chat != nil {
+		return m.updateExistingChatPin(ctx, chat, pin, chatJID, sessionID)
+	}
+
+	return m.createChatWithPinStatus(ctx, sessionID, chatJID, pin)
+}
+
+func (m *MeowService) updateExistingChatPin(ctx context.Context, chat *models.ChatModel, pin bool, chatJID, sessionID string) error {
+	if chat.Metadata == nil {
+		chat.Metadata = make(models.JSONB)
+	}
+
+	chat.Metadata["pinned"] = pin
+	if pin {
+		chat.Metadata["pinnedAt"] = time.Now().Unix()
+	} else {
+		delete(chat.Metadata, "pinnedAt")
+	}
+
+	if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+		m.logger.Errorf("Failed to update chat pin status: %v", err)
+		return fmt.Errorf("failed to update chat pin status: %w", err)
+	}
+
+	return m.logPinAction(chatJID, pin, sessionID)
+}
+
+func (m *MeowService) createChatWithPinStatus(ctx context.Context, sessionID, chatJID string, pin bool) error {
+	jid, err := waTypes.ParseJID(chatJID)
+	if err != nil {
+		return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+	}
+
+	metadata := make(models.JSONB)
+	metadata["pinned"] = pin
+	if pin {
+		metadata["pinnedAt"] = time.Now().Unix()
+	}
+
+	newChat := &models.ChatModel{
+		SessionId: sessionID,
+		ChatJid:   chatJID,
+		IsGroup:   jid.Server == waTypes.GroupServer,
+		Metadata:  metadata,
+	}
+
+	if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+		m.logger.Errorf("Failed to create chat with pin status: %v", err)
+		return fmt.Errorf("failed to create chat with pin status: %w", err)
+	}
+
+	return m.logPinAction(chatJID, pin, sessionID)
 }
