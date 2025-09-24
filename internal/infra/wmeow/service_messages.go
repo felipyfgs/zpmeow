@@ -245,23 +245,4 @@ func (m *MeowService) SendMediaMessage(ctx context.Context, sessionID, phone str
 
 // Helper methods for message sending
 
-func (m *MeowService) validateAndGetClientForSending(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	return client, nil
-}
-
-func (m *MeowService) getValidator() MessageValidator {
-	return NewMessageValidator()
-}
-
-func (m *MeowService) getMessageBuilder() MessageBuilder {
-	return NewMessageBuilder()
-}
+// Helper methods moved to service.go

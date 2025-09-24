@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"zpmeow/internal/domain/session"
+
+	"go.mau.fi/whatsmeow"
 )
 
 // SessionManager methods - gestão de sessões e conexões
@@ -25,38 +27,34 @@ func (m *MeowService) StopClient(sessionID string) error {
 
 	client := m.getClient(sessionID)
 	if client == nil {
-		m.logger.Warnf("StopClient: Client not found for session %s", sessionID)
+		m.logger.Debugf("StopClient: No client found for session %s", sessionID)
 		return fmt.Errorf("client not found for session %s", sessionID)
 	}
 
-	m.logger.Debugf("StopClient: Found client for session %s, disconnecting...", sessionID)
-	client.Disconnect()
+	m.logger.Debugf("StopClient: Found client for session %s, calling Disconnect()", sessionID)
+	if err := client.Disconnect(); err != nil {
+		m.logger.Debugf("StopClient: Disconnect() failed for session %s: %v", sessionID, err)
+		return fmt.Errorf("failed to disconnect client: %w", err)
+	}
 
-	m.mu.Lock()
-	delete(m.clients, sessionID)
-	m.mu.Unlock()
-
-	m.logger.Infof("Client stopped and removed for session %s", sessionID)
+	m.logger.Debugf("StopClient: Disconnect() succeeded for session %s, removing client", sessionID)
+	m.removeClient(sessionID)
+	m.logger.Debugf("StopClient: Completed successfully for session %s", sessionID)
 	return nil
 }
 
 func (m *MeowService) LogoutClient(sessionID string) error {
 	m.logger.Infof("Logging out client for session %s", sessionID)
-
 	client := m.getClient(sessionID)
 	if client == nil {
 		return fmt.Errorf("client not found for session %s", sessionID)
 	}
 
 	if err := client.Logout(); err != nil {
-		return fmt.Errorf("failed to logout client for session %s: %w", sessionID, err)
+		return fmt.Errorf("failed to logout client: %w", err)
 	}
 
-	m.mu.Lock()
-	delete(m.clients, sessionID)
-	m.mu.Unlock()
-
-	m.logger.Infof("Client logged out and removed for session %s", sessionID)
+	m.removeClient(sessionID)
 	return nil
 }
 
@@ -96,128 +94,40 @@ func (m *MeowService) IsClientConnected(sessionID string) bool {
 	return client.IsConnected()
 }
 
-func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
-	m.logger.Info("Connecting sessions on startup")
-
-	sessions, err := m.sessions.GetAll(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get sessions: %w", err)
-	}
-
-	for _, sess := range sessions {
-		if sess.IsConnected() || sess.IsConnecting() {
-			m.logger.Infof("Auto-connecting session %s", sess.ID().Value())
-			
-			if err := m.StartClient(sess.ID().Value()); err != nil {
-				m.logger.Errorf("Failed to auto-connect session %s: %v", sess.ID().Value(), err)
-				
-				// Update session status to error
-				if updateErr := sess.SetError(fmt.Sprintf("Auto-connect failed: %v", err)); updateErr != nil {
-					m.logger.Errorf("Failed to update session status to error: %v", updateErr)
-				}
-				
-				if saveErr := m.sessions.Update(ctx, sess); saveErr != nil {
-					m.logger.Errorf("Failed to save session with error status: %v", saveErr)
-				}
-				continue
-			}
-			
-			// Give some time between connections to avoid overwhelming
-			time.Sleep(1 * time.Second)
-		}
-	}
-
-	m.logger.Info("Startup connection process completed")
-	return nil
-}
-
-func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) (string, error) {
+func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) error {
 	m.logger.Infof("Connecting session %s", sessionID)
 
-	if err := m.StartClient(sessionID); err != nil {
-		return "", fmt.Errorf("failed to start client for session %s: %w", sessionID, err)
+	client := m.getOrCreateClient(sessionID)
+	if client == nil {
+		return fmt.Errorf("failed to create client for session %s", sessionID)
 	}
 
-	qrCode, err := m.GetQRCode(sessionID)
-	if err != nil {
-		m.logger.Warnf("Failed to get QR code for session %s: %v", sessionID, err)
-		return "", nil
+	if err := client.Connect(); err != nil {
+		return fmt.Errorf("failed to connect session %s: %w", sessionID, err)
 	}
 
-	return qrCode, nil
+	m.logger.Infof("Session %s connected successfully", sessionID)
+	return nil
 }
 
 func (m *MeowService) DisconnectSession(ctx context.Context, sessionID string) error {
 	m.logger.Infof("Disconnecting session %s", sessionID)
 
-	if err := m.StopClient(sessionID); err != nil {
-		return fmt.Errorf("failed to stop client for session %s: %w", sessionID, err)
+	client := m.getClient(sessionID)
+	if client == nil {
+		return fmt.Errorf("client not found for session %s", sessionID)
 	}
 
+	if err := client.Disconnect(); err != nil {
+		return fmt.Errorf("failed to disconnect session %s: %w", sessionID, err)
+	}
+
+	m.logger.Infof("Session %s disconnected successfully", sessionID)
 	return nil
 }
 
-// Helper methods for session management
-
-func (m *MeowService) getClient(sessionID string) *WameowClient {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.clients[sessionID]
-}
-
-func (m *MeowService) getOrCreateClient(sessionID string) *WameowClient {
-	client := m.getClient(sessionID)
-	if client != nil {
-		return client
-	}
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	if client, exists := m.clients[sessionID]; exists {
-		return client
-	}
-
-	client = m.createNewClient(sessionID)
-	if client != nil {
-		m.clients[sessionID] = client
-	}
-
-	return client
-}
-
-func (m *MeowService) createNewClient(sessionID string) *WameowClient {
-	sessionConfig := m.loadSessionConfiguration(sessionID)
-
-	var eventProcessor *EventProcessor
-	if m.chatwootIntegration != nil && m.chatwootRepo != nil {
-		eventProcessor = NewEventProcessorWithChatwoot(sessionID, m.sessions, m.chatwootIntegration, m.chatwootRepo, m.messageRepo, m.chatRepo, m.webhookRepo)
-	} else {
-		eventProcessor = NewEventProcessor(sessionID, m.sessions, m.messageRepo, m.chatRepo, m.webhookRepo)
-	}
-
-	client, err := NewWameowClientWithDeviceJID(
-		sessionID,
-		sessionConfig.deviceJID,
-		m.container,
-		m.waLogger,
-		eventProcessor,
-		m.sessions,
-	)
-	if err != nil {
-		m.logger.Errorf("Failed to create WameowClient for session %s: %v", sessionID, err)
-		return nil
-	}
-
-	return client
-}
-
-type sessionConfiguration struct {
-	deviceJID string
-}
-
-func (m *MeowService) loadSessionConfiguration(sessionID string) *sessionConfiguration {
+// Internal helper for session configuration (different from service.go)
+func (m *MeowService) loadSessionConfigurationInternal(sessionID string) *sessionConfiguration {
 	config := &sessionConfiguration{}
 
 	// Try to load session from repository
@@ -228,7 +138,7 @@ func (m *MeowService) loadSessionConfiguration(sessionID string) *sessionConfigu
 	}
 
 	if sess != nil && sess.IsAuthenticated() {
-		config.deviceJID = sess.DeviceJID().Value()
+		config.deviceJID = sess.ID().Value()
 	}
 
 	return config
