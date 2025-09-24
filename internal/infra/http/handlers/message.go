@@ -18,14 +18,16 @@ import (
 )
 
 type MessageHandler struct {
-	sessionService *application.SessionApp
-	wmeowService   wmeow.WameowService
+	sessionService   *application.SessionApp
+	wmeowService     wmeow.WameowService
+	operationHelper  *GroupOperationHelper
 }
 
 func NewMessageHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *MessageHandler {
 	return &MessageHandler{
-		sessionService: sessionService,
-		wmeowService:   wmeowService,
+		sessionService:  sessionService,
+		wmeowService:    wmeowService,
+		operationHelper: NewGroupOperationHelper(),
 	}
 }
 

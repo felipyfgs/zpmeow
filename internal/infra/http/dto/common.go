@@ -196,3 +196,89 @@ func NewNotImplementedErrorResponse(feature string) *StandardErrorResponse {
 }
 
 type StandardResponse = BaseResponse
+
+// ResponseBuilder provides a fluent interface for building responses
+type ResponseBuilder struct {
+	success   bool
+	code      int
+	action    string
+	message   string
+	data      interface{}
+	errorInfo *ErrorInfo
+}
+
+// NewResponseBuilder creates a new response builder
+func NewResponseBuilder() *ResponseBuilder {
+	return &ResponseBuilder{}
+}
+
+// Success sets the response as successful
+func (rb *ResponseBuilder) Success() *ResponseBuilder {
+	rb.success = true
+	return rb
+}
+
+// Error sets the response as error
+func (rb *ResponseBuilder) Error() *ResponseBuilder {
+	rb.success = false
+	return rb
+}
+
+// WithCode sets the HTTP status code
+func (rb *ResponseBuilder) WithCode(code int) *ResponseBuilder {
+	rb.code = code
+	return rb
+}
+
+// WithAction sets the action field
+func (rb *ResponseBuilder) WithAction(action string) *ResponseBuilder {
+	rb.action = action
+	return rb
+}
+
+// WithMessage sets the message field
+func (rb *ResponseBuilder) WithMessage(message string) *ResponseBuilder {
+	rb.message = message
+	return rb
+}
+
+// WithData sets the data field
+func (rb *ResponseBuilder) WithData(data interface{}) *ResponseBuilder {
+	rb.data = data
+	return rb
+}
+
+// WithError sets the error information
+func (rb *ResponseBuilder) WithError(code, message, details string) *ResponseBuilder {
+	rb.errorInfo = &ErrorInfo{
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+	return rb
+}
+
+// BuildBase builds a BaseResponse
+func (rb *ResponseBuilder) BuildBase() *BaseResponse {
+	return &BaseResponse{
+		Success:   rb.success,
+		Code:      rb.code,
+		Message:   rb.message,
+		Data:      rb.data,
+		Error:     rb.errorInfo,
+		Timestamp: time.Now(),
+	}
+}
+
+// BuildAction builds an ActionResponse
+func (rb *ResponseBuilder) BuildAction() *ActionResponse {
+	return &ActionResponse{
+		Success:   rb.success,
+		Code:      rb.code,
+		Action:    rb.action,
+		Message:   rb.message,
+		Data:      rb.data,
+		Error:     rb.errorInfo,
+		Timestamp: time.Now(),
+	}
+}

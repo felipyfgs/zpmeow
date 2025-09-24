@@ -2060,9 +2060,9 @@ func (m *MeowService) GetMediaProgress(ctx context.Context, sessionID, mediaID s
 }
 
 func (m *MeowService) ConvertMedia(ctx context.Context, sessionID, mediaID, targetFormat string) (string, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return "", fmt.Errorf("client not found for session %s", sessionID)
+	_, err := m.validateAndGetClient(sessionID)
+	if err != nil {
+		return "", err
 	}
 
 	m.logger.Debugf("Converted media %s to %s for session %s", mediaID, targetFormat, sessionID)
@@ -2070,9 +2070,9 @@ func (m *MeowService) ConvertMedia(ctx context.Context, sessionID, mediaID, targ
 }
 
 func (m *MeowService) CompressMedia(ctx context.Context, sessionID, mediaID string, quality int) (string, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return "", fmt.Errorf("client not found for session %s", sessionID)
+	_, err := m.validateAndGetClient(sessionID)
+	if err != nil {
+		return "", err
 	}
 
 	m.logger.Debugf("Compressed media %s with quality %d for session %s", mediaID, quality, sessionID)
@@ -2080,9 +2080,9 @@ func (m *MeowService) CompressMedia(ctx context.Context, sessionID, mediaID stri
 }
 
 func (m *MeowService) GetMediaMetadata(ctx context.Context, sessionID, mediaID string) (map[string]interface{}, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	_, err := m.validateAndGetClient(sessionID)
+	if err != nil {
+		return nil, err
 	}
 
 	metadata := map[string]interface{}{
