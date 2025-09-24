@@ -7,9 +7,8 @@ import (
 	"zpmeow/internal/application/ports"
 
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	waTypes "go.mau.fi/whatsmeow/types"
-	"google.golang.org/protobuf/proto"
 )
 
 // MessageSender methods - envio de mensagens
@@ -30,7 +29,7 @@ func (m *MeowService) SendTextMessage(ctx context.Context, sessionID, to, text s
 	}
 
 	message := &waProto.Message{
-		Conversation: proto.String(text),
+		Conversation: &text,
 	}
 
 	resp, err := client.GetClient().SendMessage(ctx, jid, message)

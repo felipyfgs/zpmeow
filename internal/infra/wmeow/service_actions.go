@@ -58,10 +58,11 @@ func (m *MeowService) DeleteMessage(ctx context.Context, sessionID, chatJID, mes
 		return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
 	}
 
-	// Use the RevokeMessage method for message deletion
+	// Use the BuildRevoke method for message deletion
 	if forEveryone {
-		// Revoke for everyone
-		_, err = client.GetClient().RevokeMessage(jid, messageID)
+		// Revoke for everyone using the new BuildRevoke method
+		revokeMsg := client.GetClient().BuildRevoke(jid, waTypes.EmptyJID, messageID)
+		_, err = client.GetClient().SendMessage(ctx, jid, revokeMsg)
 	} else {
 		// Delete for me only - this is handled locally
 		err = m.messageRepo.DeleteMessage(ctx, messageID)

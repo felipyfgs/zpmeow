@@ -208,46 +208,7 @@ func (m *MeowService) ConnectOnStartup(ctx context.Context) error {
 }
 
 // Helpers para validação (usados pelos arquivos especializados)
-func (m *MeowService) validateAndGetClient(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-	return client, nil
-}
-
-func (m *MeowService) validateAndGetClientForSending(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	return client, nil
-}
-
-// Helpers para componentes (usados pelos arquivos especializados)
-func (m *MeowService) getValidator() interface{} {
-	// For now, return a simple validator
-	return map[string]interface{}{
-		"type": "simple_validator",
-	}
-}
-
-func (m *MeowService) getMessageBuilder() *WhatsAppMessageBuilder {
-	return NewWhatsAppMessageBuilder()
-}
-
-func (m *MeowService) getMessageSender() *messageSender {
-	return m.messageSender
-}
-
-func (m *MeowService) getMimeHelper() *mimeTypeHelper {
-	return m.mimeHelper
-}
+// Note: Some helper functions were removed as they were unused
 
 // Getters para repositórios (usados pelos arquivos especializados)
 func (m *MeowService) GetMessageRepo() *repository.MessageRepository {
@@ -275,18 +236,7 @@ func (m *MeowService) GetLogger() logging.Logger {
 }
 
 // Additional helper methods
-func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowClient, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
-	}
-
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	return client, nil
-}
+// Note: validateAndGetConnectedClient was removed as it was unused
 
 // Helper functions for session configuration
 func extractPhoneFromSession(sessionEntity *session.Session) string {

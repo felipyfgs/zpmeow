@@ -35,7 +35,7 @@ func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID str
 
 	// For now, return empty message history
 	// TODO: Implement proper message retrieval when repository method is available
-	m.logger.Debugf("GetChatHistory: %s for session %s (returning empty for now)", chatJID, sessionID)
+	m.logger.Debugf("GetChatHistory: %s for session %s (returning empty for now, limit: %d)", chatJID, sessionID, limit)
 
 	var result []ports.ChatMessage
 	// Return empty result for now

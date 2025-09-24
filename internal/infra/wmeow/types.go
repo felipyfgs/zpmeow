@@ -3,9 +3,7 @@ package wmeow
 import (
 	"fmt"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"google.golang.org/protobuf/proto"
-	"time"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	"zpmeow/internal/application/ports"
 )
 
@@ -103,49 +101,53 @@ func NewWhatsAppMessageBuilder() *WhatsAppMessageBuilder {
 
 func (w *WhatsAppMessageBuilder) BuildTextMessage(text string) (*waProto.Message, error) {
 	return &waProto.Message{
-		Conversation: proto.String(text),
+		Conversation: &text,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildImageMessage(data []byte, caption string) (*waProto.Message, error) {
 	// For now, return a simple text message
 	return &waProto.Message{
-		Conversation: proto.String(caption),
+		Conversation: &caption,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildAudioMessage(data []byte, ptt bool) (*waProto.Message, error) {
 	// For now, return a simple text message
+	audioMsg := "Audio message"
 	return &waProto.Message{
-		Conversation: proto.String("Audio message"),
+		Conversation: &audioMsg,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildVideoMessage(data []byte, caption string) (*waProto.Message, error) {
 	// For now, return a simple text message
 	return &waProto.Message{
-		Conversation: proto.String(caption),
+		Conversation: &caption,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildDocumentMessage(data []byte, filename, mimetype string) (*waProto.Message, error) {
 	// For now, return a simple text message
+	docMsg := "Document: " + filename
 	return &waProto.Message{
-		Conversation: proto.String("Document: " + filename),
+		Conversation: &docMsg,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildStickerMessage(data []byte) (*waProto.Message, error) {
 	// For now, return a simple text message
+	stickerMsg := "Sticker"
 	return &waProto.Message{
-		Conversation: proto.String("Sticker"),
+		Conversation: &stickerMsg,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildContactMessage(contacts []ports.ContactInfo) (*waProto.Message, error) {
 	// For now, return a simple text message
+	contactMsg := "Contact message"
 	return &waProto.Message{
-		Conversation: proto.String("Contact message"),
+		Conversation: &contactMsg,
 	}, nil
 }
 
@@ -153,14 +155,15 @@ func (w *WhatsAppMessageBuilder) BuildLocationMessage(latitude, longitude float6
 	// For now, return a simple text message
 	locationText := fmt.Sprintf("Location: %s at %f,%f", name, latitude, longitude)
 	return &waProto.Message{
-		Conversation: proto.String(locationText),
+		Conversation: &locationText,
 	}, nil
 }
 
 func (w *WhatsAppMessageBuilder) BuildTemplateMessage(template map[string]interface{}) (*waProto.Message, error) {
 	// For now, return a simple text message
+	templateMsg := "Template message"
 	return &waProto.Message{
-		Conversation: proto.String("Template message"),
+		Conversation: &templateMsg,
 	}, nil
 }
 
@@ -168,7 +171,7 @@ func (w *WhatsAppMessageBuilder) BuildButtonMessage(text string, buttons []map[s
 	// For now, return a simple text message
 	buttonText := fmt.Sprintf("%s (with %d buttons)", text, len(buttons))
 	return &waProto.Message{
-		Conversation: proto.String(buttonText),
+		Conversation: &buttonText,
 	}, nil
 }
 
@@ -176,7 +179,7 @@ func (w *WhatsAppMessageBuilder) BuildListMessage(text, buttonText string, secti
 	// For now, return a simple text message
 	listText := fmt.Sprintf("%s (with %d sections)", text, len(sections))
 	return &waProto.Message{
-		Conversation: proto.String(listText),
+		Conversation: &listText,
 	}, nil
 }
 
@@ -184,34 +187,12 @@ func (w *WhatsAppMessageBuilder) BuildPollMessage(question string, options []str
 	// For now, return a simple text message
 	pollText := fmt.Sprintf("Poll: %s (with %d options)", question, len(options))
 	return &waProto.Message{
-		Conversation: proto.String(pollText),
+		Conversation: &pollText,
 	}, nil
 }
 
 // Helper functions
-
-func parsePhoneToJID(phone string) (string, error) {
-	// Simple phone to JID conversion
-	if phone == "" {
-		return "", fmt.Errorf("phone number cannot be empty")
-	}
-
-	// Remove any non-numeric characters except +
-	cleanPhone := phone
-	if cleanPhone[0] == '+' {
-		cleanPhone = cleanPhone[1:]
-	}
-
-	return cleanPhone + "@s.whatsapp.net", nil
-}
-
-func formatTimestamp(timestamp time.Time) int64 {
-	return timestamp.Unix()
-}
-
-func getCurrentTimestamp() int64 {
-	return time.Now().Unix()
-}
+// Note: parsePhoneToJID, formatTimestamp, and getCurrentTimestamp were removed as they were unused
 
 // Error types
 type WhatsAppError struct {

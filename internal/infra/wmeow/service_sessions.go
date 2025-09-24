@@ -122,19 +122,4 @@ func (m *MeowService) DisconnectSession(ctx context.Context, sessionID string) e
 }
 
 // Internal helper for session configuration (different from service.go)
-func (m *MeowService) loadSessionConfigurationInternal(sessionID string) map[string]interface{} {
-	config := map[string]interface{}{}
-
-	// Try to load session from repository
-	sess, err := m.sessions.GetByID(context.Background(), sessionID)
-	if err != nil {
-		m.logger.Warnf("Failed to load session %s from repository: %v", sessionID, err)
-		return config
-	}
-
-	if sess != nil && sess.IsAuthenticated() {
-		config["deviceJID"] = sess.ID().Value()
-	}
-
-	return config
-}
+// Note: loadSessionConfigurationInternal was removed as it was unused
