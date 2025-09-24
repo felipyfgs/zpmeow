@@ -1,7 +1,7 @@
 # meow meow API - Makefile
 
 # Go parameters
-GOCMD=go
+GOCMD=GOTOOLCHAIN=go1.24.6 go
 GOBUILD=$(GOCMD) build
 GOMOD=$(GOCMD) mod
 BINARY_NAME=meow

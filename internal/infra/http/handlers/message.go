@@ -18,9 +18,9 @@ import (
 )
 
 type MessageHandler struct {
-	sessionService   *application.SessionApp
-	wmeowService     wmeow.WameowService
-	operationHelper  *GroupOperationHelper
+	sessionService  *application.SessionApp
+	wmeowService    wmeow.WameowService
+	operationHelper *GroupOperationHelper
 }
 
 func NewMessageHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *MessageHandler {

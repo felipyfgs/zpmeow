@@ -14,9 +14,9 @@ import (
 )
 
 type GroupHandler struct {
-	groupService      *application.GroupApp
-	wmeowService      wmeow.WameowService
-	operationHelper   *GroupOperationHelper
+	groupService    *application.GroupApp
+	wmeowService    wmeow.WameowService
+	operationHelper *GroupOperationHelper
 }
 
 func NewGroupHandler(groupService *application.GroupApp, wmeowService wmeow.WameowService) *GroupHandler {

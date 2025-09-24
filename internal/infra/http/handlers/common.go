@@ -318,26 +318,26 @@ func (h *GroupOperationHelper) ValidateSessionAndParseRequest(c *fiber.Ctx, req 
 	// Validate session ID
 	sessionIDOrName, err := h.ValidateAndGetSessionID(c)
 	if err != nil {
-		h.HandleSessionValidationError(c, err, "missing")
+		_ = h.HandleSessionValidationError(c, err, "missing")
 		return "", err
 	}
 
 	sessionID, err := resolveSessionFunc(c, sessionIDOrName)
 	if err != nil {
-		h.HandleSessionValidationError(c, err, "not_found")
+		_ = h.HandleSessionValidationError(c, err, "not_found")
 		return "", err
 	}
 
 	// Parse and validate request if provided
 	if req != nil {
 		if err := c.BodyParser(req); err != nil {
-			h.HandleRequestParsingError(c, err)
+			_ = h.HandleRequestParsingError(c, err)
 			return "", err
 		}
 
 		if validator, ok := req.(interface{ Validate() error }); ok {
 			if err := validator.Validate(); err != nil {
-				h.HandleValidationError(c, err)
+				_ = h.HandleValidationError(c, err)
 				return "", err
 			}
 		}

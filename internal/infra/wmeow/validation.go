@@ -203,8 +203,6 @@ func (m *MeowService) validateAndGetConnectedClient(sessionID string) (*WameowCl
 	return client, nil
 }
 
-
-
 // validateGroupJID validates and parses a group JID
 func validateGroupJID(groupJID string) (waTypes.JID, error) {
 	jid, err := parseAndValidateJID(groupJID)
@@ -220,28 +218,18 @@ func validateGroupJID(groupJID string) (waTypes.JID, error) {
 	return jid, nil
 }
 
-// validateContactJID validates and parses a contact JID
-func validateContactJID(contactJID string) (waTypes.JID, error) {
-	jid, err := parseAndValidateJID(contactJID)
-	if err != nil {
-		return waTypes.EmptyJID, fmt.Errorf("invalid contact JID %s: %w", contactJID, err)
-	}
-
-	return jid, nil
-}
-
 // GroupOperationType defines the type of group operation
 type GroupOperationType string
 
 const (
-	GroupOpSetName         GroupOperationType = "set_name"
-	GroupOpSetTopic        GroupOperationType = "set_topic"
-	GroupOpSetAnnounce     GroupOperationType = "set_announce"
-	GroupOpSetLocked       GroupOperationType = "set_locked"
-	GroupOpSetApproval     GroupOperationType = "set_approval"
-	GroupOpSetPhoto        GroupOperationType = "set_photo"
-	GroupOpRemovePhoto     GroupOperationType = "remove_photo"
-	GroupOpLeave           GroupOperationType = "leave"
+	GroupOpSetName     GroupOperationType = "set_name"
+	GroupOpSetTopic    GroupOperationType = "set_topic"
+	GroupOpSetAnnounce GroupOperationType = "set_announce"
+	GroupOpSetLocked   GroupOperationType = "set_locked"
+	GroupOpSetApproval GroupOperationType = "set_approval"
+	GroupOpSetPhoto    GroupOperationType = "set_photo"
+	GroupOpRemovePhoto GroupOperationType = "remove_photo"
+	GroupOpLeave       GroupOperationType = "leave"
 )
 
 // executeGroupOperation executes a generic group operation with common validation
