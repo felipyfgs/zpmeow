@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Client implements Chatwoot API client
@@ -25,7 +26,9 @@ type Client struct {
 // NewClient creates a new Chatwoot client
 func NewClient(baseURL, token, accountID string, httpClient *http.Client) *Client {
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = &http.Client{
+			Timeout: 120 * time.Second, // 2 minutos para múltiplas mídias
+		}
 	}
 
 	return &Client{

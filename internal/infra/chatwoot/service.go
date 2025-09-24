@@ -23,18 +23,17 @@ import (
 
 // Service representa o serviço de integração Chatwoot
 type Service struct {
-	client             *Client
-	config             *ChatwootConfig
-	logger             *slog.Logger
-	cache              map[string]interface{}
-	cacheMutex         sync.RWMutex
-	inbox              *Inbox
-	whatsappService    ports.WhatsAppService
-	sessionID          string
-	messageRepo        *repository.MessageRepository
-	zpCwRepo           *repository.ZpCwMessageRepository
-	chatRepo           *repository.ChatRepository
-	conversationMapper *ConversationMapper
+	client          *Client
+	config          *ChatwootConfig
+	logger          *slog.Logger
+	cache           map[string]interface{}
+	cacheMutex      sync.RWMutex
+	inbox           *Inbox
+	whatsappService ports.WhatsAppService
+	sessionID       string
+	messageRepo     *repository.MessageRepository
+	zpCwRepo        *repository.ZpCwMessageRepository
+	chatRepo        *repository.ChatRepository
 }
 
 // NewService cria uma nova instância do serviço Chatwoot
@@ -62,15 +61,6 @@ func NewService(config *ChatwootConfig, logger *slog.Logger, whatsappService por
 	if err := service.initializeInbox(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize inbox: %w", err)
 	}
-
-	// Inicializa o conversation mapper após ter a inbox
-	service.conversationMapper = NewConversationMapper(
-		client,
-		chatRepo,
-		logger,
-		sessionID,
-		service.inbox.ID,
-	)
 
 	return service, nil
 }
@@ -186,17 +176,12 @@ func (s *Service) formatLocationMessage(msg *WhatsAppMessage, isGroup bool) stri
 }
 
 // formatContactMessage formata mensagens de contato
+// formatContactMessage usa o MessageMapper para formatar mensagens de contato
 func (s *Service) formatContactMessage(msg *WhatsAppMessage, isGroup bool) string {
-	content := "👤 Contato compartilhado"
-	if len(msg.Contacts) > 0 {
-		contact := msg.Contacts[0]
-		if contact.DisplayName != "" {
-			content = fmt.Sprintf("👤 Contato: %s", contact.DisplayName)
-		}
-		if len(contact.Phones) > 0 {
-			content = fmt.Sprintf("%s\nTelefone: %s", content, contact.Phones[0].Number)
-		}
-	}
+	mapper := NewMessageMapper(s.config)
+	content := mapper.formatContactMessage(msg)
+
+	// Adiciona prefixo do grupo se necessário
 	if isGroup && msg.PushName != "" {
 		content = fmt.Sprintf("*%s:* %s", msg.PushName, content)
 	}
@@ -553,229 +538,24 @@ func (s *Service) createInbox(ctx context.Context) error {
 	return nil
 }
 
-// getFromCache recupera um item do cache
-func (s *Service) getFromCache(key string) (interface{}, bool) {
-	s.cacheMutex.RLock()
-	defer s.cacheMutex.RUnlock()
-	value, exists := s.cache[key]
-	return value, exists
-}
-
-// setCache armazena um item no cache
-func (s *Service) setCache(key string, value interface{}) {
-	s.cacheMutex.Lock()
-	defer s.cacheMutex.Unlock()
-	s.cache[key] = value
-}
-
-// findOrCreateContact encontra ou cria um contato
+// findOrCreateContact usa o ContactService para encontrar ou criar um contato
 func (s *Service) findOrCreateContact(ctx context.Context, phoneNumber, name, avatarURL string, isGroup bool) (*Contact, error) {
-	cacheKeyBuilder := NewCacheKeyBuilder()
-	cacheKey := cacheKeyBuilder.ContactKey(phoneNumber)
+	// Cria um CacheManager temporário usando o cache interno do Service
+	cacheManager := NewCacheManager()
 
-	// Verifica cache primeiro
-	if cached, exists := s.getFromCache(cacheKey); exists {
-		if contact, ok := cached.(*Contact); ok {
-			return contact, nil
-		}
-	}
-
-	// Busca contato existente
-	var searchQuery string
-	if isGroup {
-		searchQuery = phoneNumber
-	} else {
-		searchQuery = fmt.Sprintf("+%s", phoneNumber)
-	}
-
-	var contacts []Contact
-	var err error
-
-	if isGroup {
-		contacts, err = s.client.SearchContacts(ctx, searchQuery)
-	} else {
-		// Para contatos individuais, usar filtro mais robusto
-		contacts, err = s.client.FilterContacts(ctx, searchQuery)
-	}
-
+	// Usa o ContactService refatorado
+	contactService := NewContactService(s.client, s.logger, cacheManager)
+	contactResponse, err := contactService.FindOrCreateContact(ctx, phoneNumber, name, avatarURL, isGroup, s.inbox.ID)
 	if err != nil {
-		s.logger.Error("Failed to search contacts", "error", err)
+		return nil, err
 	}
 
-	// Se encontrou contato, atualiza cache e retorna
-	if len(contacts) > 0 {
-		contact := s.findBestMatchContact(contacts, searchQuery)
-		if contact != nil {
-			s.setCache(cacheKey, contact)
-			return contact, nil
-		}
-	}
-
-	// Cria novo contato com fallback para contatos duplicados
-	req := ContactCreateRequest{
-		InboxID: s.inbox.ID,
-		Name:    name,
-	}
-
-	if !isGroup {
-		req.PhoneNumber = fmt.Sprintf("+%s", phoneNumber)
-		req.Identifier = fmt.Sprintf("%s@s.whatsapp.net", phoneNumber)
-	} else {
-		req.Identifier = phoneNumber
-	}
-
-	if avatarURL != "" {
-		req.AvatarURL = avatarURL
-	}
-
-	s.logger.Info("🚀 [CHATWOOT SERVICE DEBUG] Calling CreateContact API", "request", req)
-	contact, err := s.client.CreateContact(ctx, req)
-	if err != nil {
-		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] CreateContact failed", "error", err, "request", req)
-		// Se falhou por contato duplicado, tenta buscar novamente
-		if strings.Contains(err.Error(), "already been taken") || strings.Contains(err.Error(), "Identifier has already been taken") {
-			s.logger.Warn("Contact already exists, searching again", "phoneNumber", phoneNumber, "error", err)
-
-			// Tenta buscar novamente com diferentes métodos
-			var retryContacts []Contact
-			var retryErr error
-			if isGroup {
-				retryContacts, retryErr = s.client.SearchContacts(ctx, searchQuery)
-			} else {
-				retryContacts, retryErr = s.client.FilterContacts(ctx, searchQuery)
-			}
-
-			// Se FilterContacts falhar, tenta SearchContacts como último recurso
-			if retryErr != nil && !isGroup {
-				s.logger.Warn("FilterContacts failed, trying SearchContacts as fallback", "error", retryErr)
-				retryContacts, retryErr = s.client.SearchContacts(ctx, searchQuery)
-			}
-
-			if retryErr == nil && len(retryContacts) > 0 {
-				contact := s.findBestMatchContact(retryContacts, searchQuery)
-				if contact != nil {
-					s.setCache(cacheKey, contact)
-					s.logger.Info("Found existing contact after creation failure", "name", contact.Name, "phone", contact.PhoneNumber, "id", contact.ID)
-					return contact, nil
-				}
-			} else if retryErr != nil {
-				s.logger.Error("All contact search methods failed", "error", retryErr)
-			}
-		}
-		return nil, fmt.Errorf("failed to create contact: %w", err)
-	}
-
-	s.setCache(cacheKey, contact)
-	s.logger.Info("✅ [CHATWOOT SERVICE DEBUG] Successfully created contact",
-		"name", name, "phone", phoneNumber, "id", contact.ID,
-		"identifier", contact.Identifier, "contact_obj", contact)
-	return contact, nil
+	// Converte de volta para tipo interno
+	adapter := NewContactAdapter()
+	return adapter.FromPortsContact(contactResponse), nil
 }
 
 // findBestMatchContact encontra o melhor contato correspondente
-func (s *Service) findBestMatchContact(contacts []Contact, query string) *Contact {
-	if len(contacts) == 0 {
-		return nil
-	}
-
-	// Se há apenas um contato, retorna ele
-	if len(contacts) == 1 {
-		return &contacts[0]
-	}
-
-	// Para números brasileiros com 2 contatos, tenta fazer merge se configurado
-	if len(contacts) == 2 && s.config.MergeBrazilContacts && strings.HasPrefix(query, "+55") {
-		return s.handleBrazilianContacts(contacts, query)
-	}
-
-	// Obtém variações do número de telefone
-	phoneNumbers := s.getPhoneNumberVariations(query)
-	searchableFields := []string{"phone_number"}
-
-	// Procura pelo número mais longo (com 9º dígito para números brasileiros)
-	longestPhone := ""
-	for _, number := range phoneNumbers {
-		if len(number) > len(longestPhone) {
-			longestPhone = number
-		}
-	}
-
-	// Procura contato com o número mais longo
-	for _, contact := range contacts {
-		if contact.PhoneNumber == longestPhone {
-			return &contact
-		}
-	}
-
-	// Procura por correspondência em qualquer campo pesquisável
-	for _, contact := range contacts {
-		for _, field := range searchableFields {
-			var fieldValue string
-			switch field {
-			case "phone_number":
-				fieldValue = contact.PhoneNumber
-			}
-
-			for _, phoneNumber := range phoneNumbers {
-				if fieldValue == phoneNumber {
-					return &contact
-				}
-			}
-		}
-	}
-
-	// Retorna o primeiro contato se não encontrou correspondência exata
-	return &contacts[0]
-}
-
-// handleBrazilianContacts lida com contatos brasileiros (com e sem 9º dígito)
-func (s *Service) handleBrazilianContacts(contacts []Contact, _ string) *Contact {
-	// Procura contato com número de 14 dígitos (com 9º dígito)
-	var contactWith9 *Contact
-	var contactWithout9 *Contact
-
-	for i := range contacts {
-		contact := &contacts[i]
-		if len(contact.PhoneNumber) == 14 {
-			contactWith9 = contact
-		} else if len(contact.PhoneNumber) == 13 {
-			contactWithout9 = contact
-		}
-	}
-
-	// Se encontrou ambos, prefere o com 9º dígito (mais atual)
-	if contactWith9 != nil {
-		// TODO: Implementar merge de contatos se necessário
-		// Por enquanto, retorna o contato com 9º dígito
-		return contactWith9
-	}
-
-	// Se não encontrou com 9º dígito, retorna sem 9º dígito
-	if contactWithout9 != nil {
-		return contactWithout9
-	}
-
-	// Fallback: retorna o primeiro contato
-	return &contacts[0]
-}
-
-// getPhoneNumberVariations retorna variações do número de telefone (especialmente para números brasileiros)
-func (s *Service) getPhoneNumberVariations(phoneNumber string) []string {
-	numbers := []string{phoneNumber}
-
-	// Para números brasileiros, adiciona variação com/sem 9º dígito
-	if strings.HasPrefix(phoneNumber, "+55") && len(phoneNumber) == 14 {
-		// Remove o 9º dígito
-		withoutNine := phoneNumber[:5] + phoneNumber[6:]
-		numbers = append(numbers, withoutNine)
-	} else if strings.HasPrefix(phoneNumber, "+55") && len(phoneNumber) == 13 {
-		// Adiciona o 9º dígito
-		withNine := phoneNumber[:5] + "9" + phoneNumber[5:]
-		numbers = append(numbers, withNine)
-	}
-
-	return numbers
-}
 
 // findOrCreateConversationWithEvolutionStrategy implementa estratégia Evolution API melhorada
 func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Context, contact *Contact) (*Conversation, error) {
@@ -813,12 +593,6 @@ func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Cont
 					convActivity = float64(activityVal)
 				}
 
-				s.logger.Info("🔍 [EVOLUTION STRATEGY] Evaluating conversation",
-					"conversation_id", conv.ID,
-					"status", conv.Status,
-					"last_activity", convActivity,
-					"inbox_id", conv.InboxID)
-
 				// Escolhe conversa com atividade mais recente
 				if convActivity > latestActivity {
 					latestActivity = convActivity
@@ -830,20 +604,12 @@ func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Cont
 				} else if bestConversation == nil {
 					// Fallback: primeira conversa válida encontrada
 					bestConversation = &conv
-					s.logger.Info("📝 [EVOLUTION STRATEGY] Using fallback conversation",
-						"conversation_id", conv.ID,
-						"status", conv.Status)
 				}
 			} else {
 				s.logger.Info("⏭️ [EVOLUTION STRATEGY] Skipping resolved conversation",
 					"conversation_id", conv.ID,
 					"status", conv.Status)
 			}
-		} else {
-			s.logger.Info("⏭️ [EVOLUTION STRATEGY] Skipping conversation from different inbox",
-				"conversation_id", conv.ID,
-				"conversation_inbox_id", conv.InboxID,
-				"target_inbox_id", s.inbox.ID)
 		}
 	}
 
@@ -892,8 +658,9 @@ func (s *Service) saveConversationMappingAsync(_ context.Context, chatJid, phone
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		// Tenta salvar mapeamento via ConversationMapper
-		err := s.conversationMapper.SaveConversationMapping(asyncCtx, chatJid, phoneNumber, contactID, conversationID)
+		// Salva mapeamento diretamente no repositório
+		chatID := strings.Split(chatJid, "@")[0]
+		err := s.chatRepo.UpdateChatwootMapping(asyncCtx, chatID, int64(contactID), int64(conversationID))
 		if err != nil {
 			s.logger.Error("❌ [ASYNC MAPPING] Failed to save conversation mapping",
 				"error", err,
@@ -966,51 +733,29 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"contact_name", contact.Name,
 		"contact_phone", contact.PhoneNumber)
 
-	// 🎯 ESTRATÉGIA HÍBRIDA: Mapeamento Persistente + Evolution API Fallback
-	s.logger.Info("🔍 [HYBRID MAPPING] Starting hybrid conversation mapping",
+	// 🎯 ESTRATÉGIA SIMPLIFICADA: SEMPRE USA ÚLTIMA CONVERSA (como outgoing)
+	s.logger.Info("🔍 [UNIFIED MAPPING] Using last conversation strategy for consistency",
 		"contact_id", contact.ID,
 		"chat_jid", msg.From,
 		"phone_number", phoneNumber)
 
-	// FASE 1: Tenta ConversationMapper (usa colunas zpChats)
-	mapping, err := s.conversationMapper.GetOrCreateConversationMapping(ctx, msg.From, phoneNumber)
+	// SEMPRE usa Evolution API strategy (última conversa com atividade)
+	conversation, err := s.findOrCreateConversationWithEvolutionStrategy(ctx, contact)
 	if err != nil {
-		s.logger.Error("❌ [HYBRID MAPPING] ConversationMapper failed, using Evolution fallback", "error", err)
-		mapping = nil // Força fallback
+		s.logger.Error("❌ [UNIFIED MAPPING] Evolution strategy failed", "error", err)
+		return fmt.Errorf("failed to find conversation with unified strategy: %w", err)
 	}
 
-	var conversationID int
+	conversationID := conversation.ID
 
-	if mapping != nil && mapping.IsValid {
-		// SUCESSO: Usa mapeamento persistente
-		conversationID = mapping.ConversationID
-		s.logger.Info("✅ [HYBRID MAPPING] Using persistent mapping",
-			"chat_id", mapping.ChatID,
-			"contact_id", mapping.ContactID,
-			"conversation_id", conversationID,
-			"source", "persistent_mapping")
-	} else {
-		// FALLBACK: Usa Evolution API strategy
-		s.logger.Info("🔄 [HYBRID MAPPING] Using Evolution API fallback",
-			"reason", "no_persistent_mapping")
+	s.logger.Info("✅ [UNIFIED MAPPING] Using last conversation strategy",
+		"conversation_id", conversationID,
+		"inbox_id", conversation.InboxID,
+		"status", conversation.Status,
+		"source", "last_conversation_strategy")
 
-		conversation, err := s.findOrCreateConversationWithEvolutionStrategy(ctx, contact)
-		if err != nil {
-			s.logger.Error("❌ [HYBRID MAPPING] Evolution fallback failed", "error", err)
-			return fmt.Errorf("failed to find conversation with hybrid strategy: %w", err)
-		}
-
-		conversationID = conversation.ID
-
-		s.logger.Info("✅ [HYBRID MAPPING] Evolution fallback successful",
-			"conversation_id", conversationID,
-			"inbox_id", conversation.InboxID,
-			"status", conversation.Status,
-			"source", "evolution_fallback")
-
-		// IMPORTANTE: Salva mapeamento para próximas mensagens
-		go s.saveConversationMappingAsync(ctx, msg.From, phoneNumber, contact.ID, conversationID)
-	}
+	// IMPORTANTE: Salva mapeamento para próximas mensagens
+	go s.saveConversationMappingAsync(ctx, msg.From, phoneNumber, contact.ID, conversationID)
 
 	s.logger.Info("🎯 [HYBRID MAPPING] Final conversation selected",
 		"conversation_id", conversationID,
@@ -1338,8 +1083,43 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 		}
 	}
 
+	// 🎯 SOLUÇÃO SIMPLES: Busca última conversa com interação para este número
+	targetChatJID := ""
+	chats, err := s.chatRepo.GetChatsByPhoneNumber(context.Background(), s.sessionID, cleanPhoneNumber)
+	if err != nil {
+		s.logger.Error("❌ Failed to find chats by phone number",
+			"phone_number", cleanPhoneNumber,
+			"session_id", s.sessionID,
+			"error", err)
+	} else if len(chats) > 0 {
+		// Pega a conversa com última interação mais recente
+		latestChat := chats[0]
+		for _, chat := range chats {
+			if chat.LastMsgAt != nil && latestChat.LastMsgAt != nil && chat.LastMsgAt.After(*latestChat.LastMsgAt) {
+				latestChat = chat
+			} else if chat.LastMsgAt != nil && latestChat.LastMsgAt == nil {
+				latestChat = chat
+			}
+		}
+		targetChatJID = latestChat.ChatJid
+		lastMsgAtStr := "nil"
+		if latestChat.LastMsgAt != nil {
+			lastMsgAtStr = latestChat.LastMsgAt.String()
+		}
+		s.logger.Info("✅ FOUND LATEST CHAT FOR PHONE NUMBER",
+			"phone_number", cleanPhoneNumber,
+			"target_chat_jid", targetChatJID,
+			"last_msg_at", lastMsgAtStr,
+			"total_chats_found", len(chats))
+	} else {
+		s.logger.Warn("⚠️ No chats found for phone number",
+			"phone_number", cleanPhoneNumber,
+			"session_id", s.sessionID)
+	}
+
 	s.logger.Info("📨 SENDING MESSAGE TO WHATSAPP",
 		"to", cleanPhoneNumber,
+		"target_chat_jid", targetChatJID,
 		"content", content,
 		"session_id", s.sessionID,
 		"whatsapp_service_available", s.whatsappService != nil,
@@ -1348,11 +1128,17 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 
 	// Envia mensagem via WhatsApp usando o serviço zpmeow
 	if s.whatsappService != nil {
-		// contentType and attachments already extracted above
+		// Usa targetChatJID se disponível, senão usa o número limpo
+		recipient := cleanPhoneNumber
+		if targetChatJID != "" {
+			recipient = targetChatJID
+		}
 
 		s.logger.Info("🚀 CALLING WHATSAPP SERVICE",
 			"session_id", s.sessionID,
-			"to", cleanPhoneNumber,
+			"to", recipient,
+			"original_phone", cleanPhoneNumber,
+			"target_chat_jid", targetChatJID,
 			"content", content,
 			"content_type", contentType,
 			"has_attachments", len(attachments) > 0)
@@ -1362,12 +1148,12 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 
 		// Verifica se há anexos na mensagem
 		if len(attachments) > 0 {
-			_, err = s.sendAttachmentMessage(ctx, cleanPhoneNumber, content, attachments)
+			_, err = s.sendAttachmentMessage(ctx, recipient, attachments)
 		} else if content != "" {
-			_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, cleanPhoneNumber, content)
+			_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, recipient, content)
 		} else {
 			s.logger.Warn("⚠️ MESSAGE WITH NO CONTENT OR ATTACHMENTS",
-				"to", cleanPhoneNumber,
+				"to", recipient,
 				"content_type", contentType)
 			return fmt.Errorf("message has no content or attachments")
 		}
@@ -1375,7 +1161,9 @@ func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPa
 		if err != nil {
 			s.logger.Error("❌ FAILED TO SEND MESSAGE TO WHATSAPP",
 				"error", err,
-				"to", cleanPhoneNumber,
+				"to", recipient,
+				"original_phone", cleanPhoneNumber,
+				"target_chat_jid", targetChatJID,
 				"session_id", s.sessionID,
 				"content_type", contentType)
 			return fmt.Errorf("failed to send message to WhatsApp: %w", err)
@@ -1429,201 +1217,56 @@ func (s *Service) extractPhoneFromContactMap(contact map[string]interface{}) str
 	return ""
 }
 
-// sendAttachmentMessage envia mensagens com anexos
-func (s *Service) sendAttachmentMessage(ctx context.Context, phoneNumber, content string, attachments []interface{}) (interface{}, error) {
+// sendAttachmentMessage envia mensagens com anexos usando o MediaProcessor otimizado
+func (s *Service) sendAttachmentMessage(ctx context.Context, phoneNumber string, attachments []interface{}) (interface{}, error) {
 	if len(attachments) == 0 {
 		return nil, fmt.Errorf("no attachments found")
 	}
 
-	s.logger.Info("📎 PROCESSING MULTIPLE ATTACHMENTS",
+	s.logger.Info("📎 PROCESSING MULTIPLE ATTACHMENTS WITH OPTIMIZED PROCESSOR",
 		"total_attachments", len(attachments),
 		"to", phoneNumber)
 
-	var results []interface{}
-	var lastResult interface{}
+	// Cria o MediaProcessor otimizado
+	mediaProcessor := NewMediaProcessor(s.whatsappService, s.logger, s.sessionID)
 
-	// Processa todos os anexos
-	for i, attachment := range attachments {
-		// Convert interface{} to map[string]interface{}
-		attachmentMap, ok := attachment.(map[string]interface{})
-		if !ok {
-			s.logger.Error("❌ INVALID ATTACHMENT FORMAT", "attachment_index", i+1)
-			continue
-		}
+	// Configura para múltiplas mídias se necessário
+	if len(attachments) > 5 {
+		mediaProcessor.SetMaxConcurrent(2)          // Reduz concorrência para muitos arquivos
+		mediaProcessor.SetTimeout(90 * time.Second) // Aumenta timeout
+	}
 
-		fileType := ""
-		dataURL := ""
-		if ft, ok := attachmentMap["file_type"].(string); ok {
-			fileType = ft
-		}
-		if du, ok := attachmentMap["data_url"].(string); ok {
-			dataURL = du
-		}
+	// Extrai itens de mídia dos anexos
+	mediaItems := mediaProcessor.ExtractMediaItems(attachments)
+	if len(mediaItems) == 0 {
+		return nil, fmt.Errorf("no valid media items found in attachments")
+	}
 
-		s.logger.Info("📎 SENDING ATTACHMENT MESSAGE",
-			"attachment_index", i+1,
-			"total_attachments", len(attachments),
-			"file_type", fileType,
-			"data_url", dataURL,
+	s.logger.Info("📎 EXTRACTED MEDIA ITEMS",
+		"total_attachments", len(attachments),
+		"valid_media_items", len(mediaItems),
+		"to", phoneNumber)
+
+	// Processa as mídias de forma otimizada
+	err := mediaProcessor.ProcessMultipleMedia(ctx, phoneNumber, mediaItems)
+	if err != nil {
+		s.logger.Error("❌ FAILED TO PROCESS MEDIA WITH OPTIMIZED PROCESSOR",
+			"error", err,
+			"total_items", len(mediaItems),
 			"to", phoneNumber)
-
-		// Download do arquivo
-		fileData, err := s.downloadAttachment(ctx, dataURL)
-		if err != nil {
-			s.logger.Error("❌ FAILED TO DOWNLOAD ATTACHMENT",
-				"error", err,
-				"attachment_index", i+1,
-				"data_url", dataURL)
-			continue // Continua com o próximo anexo
-		}
-
-		// Determina o tipo real do arquivo baseado na URL ou extensão
-		actualFileType := s.determineActualFileTypeFromMap(attachmentMap)
-
-		// Envia baseado no tipo de arquivo
-		var result interface{}
-		switch actualFileType {
-		case "audio":
-			s.logger.Info("🎵 SENDING AUDIO MESSAGE",
-				"size", len(fileData),
-				"to", phoneNumber,
-				"attachment_index", i+1,
-				"original_type", fileType,
-				"detected_type", actualFileType)
-			// Use SendAudioMessageWithPTT com PTT=true para mensagens de voz do Chatwoot
-			result, err = s.whatsappService.SendAudioMessageWithPTT(ctx, s.sessionID, phoneNumber, fileData, "audio/ogg", true)
-		case "image":
-			s.logger.Info("📷 SENDING IMAGE MESSAGE",
-				"size", len(fileData),
-				"to", phoneNumber,
-				"attachment_index", i+1,
-				"original_type", fileType,
-				"detected_type", actualFileType)
-			result, err = s.whatsappService.SendImageMessage(ctx, s.sessionID, phoneNumber, fileData, content, "image/jpeg")
-		case "video":
-			s.logger.Info("🎬 SENDING VIDEO MESSAGE",
-				"size", len(fileData),
-				"to", phoneNumber,
-				"attachment_index", i+1,
-				"original_type", fileType,
-				"detected_type", actualFileType)
-			result, err = s.whatsappService.SendVideoMessage(ctx, s.sessionID, phoneNumber, fileData, content, "video/mp4")
-		case "document", "file":
-			s.logger.Info("📄 SENDING DOCUMENT MESSAGE",
-				"size", len(fileData),
-				"to", phoneNumber,
-				"attachment_index", i+1,
-				"original_type", fileType,
-				"detected_type", actualFileType)
-			fileName := s.getFileNameFromAttachmentMap(attachmentMap)
-			result, err = s.whatsappService.SendDocumentMessage(ctx, s.sessionID, phoneNumber, fileData, fileName, content, "application/octet-stream")
-		default:
-			// Para qualquer outro tipo, tenta enviar como documento
-			s.logger.Info("📎 SENDING UNKNOWN TYPE AS DOCUMENT",
-				"size", len(fileData),
-				"to", phoneNumber,
-				"attachment_index", i+1,
-				"original_type", fileType,
-				"detected_type", actualFileType)
-			fileName := s.getFileNameFromAttachmentMap(attachmentMap)
-			result, err = s.whatsappService.SendDocumentMessage(ctx, s.sessionID, phoneNumber, fileData, fileName, content, "application/octet-stream")
-		}
-
-		if err != nil {
-			s.logger.Error("❌ FAILED TO SEND ATTACHMENT",
-				"error", err,
-				"attachment_index", i+1,
-				"file_type", fileType)
-			continue // Continua com o próximo anexo
-		}
-
-		results = append(results, result)
-		lastResult = result
-
-		s.logger.Info("✅ ATTACHMENT SENT SUCCESSFULLY",
-			"attachment_index", i+1,
-			"total_attachments", len(attachments),
-			"file_type", fileType)
+		return nil, fmt.Errorf("failed to process media: %w", err)
 	}
 
-	s.logger.Info("📎 FINISHED PROCESSING ALL ATTACHMENTS",
-		"total_attachments", len(attachments),
-		"successful_sends", len(results),
+	s.logger.Info("✅ ALL MEDIA PROCESSED SUCCESSFULLY WITH OPTIMIZED PROCESSOR",
+		"total_items", len(mediaItems),
 		"to", phoneNumber)
 
-	// Retorna o último resultado para compatibilidade
-	if lastResult != nil {
-		return lastResult, nil
-	}
-
-	return nil, fmt.Errorf("failed to send any attachments")
-}
-
-// determineActualFileTypeFromMap determina o tipo real do arquivo baseado na URL, extensão ou MIME type
-func (s *Service) determineActualFileTypeFromMap(attachmentMap map[string]interface{}) string {
-	// Extrai apenas a URL dos dados que é o que precisamos
-	var dataURL string
-	if url, ok := attachmentMap["data_url"].(string); ok {
-		dataURL = url
-	}
-
-	detector := NewFileTypeDetector()
-	return detector.DetectFileType(dataURL)
-}
-
-// getFileNameFromAttachmentMap extrai o nome do arquivo do anexo a partir de um map
-func (s *Service) getFileNameFromAttachmentMap(attachmentMap map[string]interface{}) string {
-	// Extrai apenas a URL dos dados que é o que precisamos
-	var dataURL string
-	if url, ok := attachmentMap["data_url"].(string); ok {
-		dataURL = url
-	}
-
-	detector := NewFileTypeDetector()
-	return detector.extractFileName(dataURL)
-}
-
-// downloadAttachment faz download do anexo do Chatwoot
-func (s *Service) downloadAttachment(ctx context.Context, dataURL string) ([]byte, error) {
-	if dataURL == "" {
-		return nil, fmt.Errorf("data URL is empty")
-	}
-
-	s.logger.Info("⬇️ DOWNLOADING ATTACHMENT", "url", dataURL)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", dataURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download file: %w", err)
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			s.logger.Error("Failed to close response body", "error", closeErr)
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to download file: status %d", resp.StatusCode)
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file data: %w", err)
-	}
-
-	s.logger.Info("✅ ATTACHMENT DOWNLOADED",
-		"size", len(data),
-		"url", dataURL)
-
-	return data, nil
+	// Retorna sucesso (compatibilidade com código existente)
+	return map[string]interface{}{
+		"success":     true,
+		"total_items": len(mediaItems),
+		"phone":       phoneNumber,
+	}, nil
 }
 
 // sendMediaMessage envia mensagens de mídia baseado no tipo de conteúdo (mantido para compatibilidade)

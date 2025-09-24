@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -344,13 +345,25 @@ func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 	// Converte DTO para payload interno
 	internalPayload := h.webhookDTOToInternal(&payload)
 
-	// Processa webhook
-	if err := h.chatwootIntegration.ProcessWebhook(c.Context(), sessionID, internalPayload); err != nil {
-		h.logger.Errorf("Failed to process Chatwoot webhook: %v", err)
-		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "WEBHOOK_ERROR", "Failed to process webhook", err)
-	}
+	// Responde imediatamente para evitar timeout do Chatwoot
+	response := h.SendSuccessResponse(c, fiber.StatusOK, map[string]string{"message": "Webhook received successfully"})
 
-	return h.SendSuccessResponse(c, fiber.StatusOK, map[string]string{"message": "Webhook processed successfully"})
+	// Processa webhook assincronamente em background
+	go func() {
+		// Cria contexto com timeout para processamento em background
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		h.logger.Infof("Starting async processing of Chatwoot webhook for session %s", sessionID)
+
+		if err := h.chatwootIntegration.ProcessWebhook(ctx, sessionID, internalPayload); err != nil {
+			h.logger.Errorf("Failed to process Chatwoot webhook asynchronously: %v", err)
+		} else {
+			h.logger.Infof("Successfully processed Chatwoot webhook asynchronously for session %s", sessionID)
+		}
+	}()
+
+	return response
 }
 
 // webhookDTOToInternal converte DTO do webhook para payload interno

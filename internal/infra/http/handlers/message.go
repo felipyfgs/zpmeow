@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"zpmeow/internal/application"
 	"zpmeow/internal/application/ports"
@@ -44,7 +45,27 @@ func (h *MessageHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName string) 
 
 func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
 	if strings.HasPrefix(dataURL, "http://") || strings.HasPrefix(dataURL, "https://") {
-		resp, err := http.Get(dataURL)
+		// Cria requisição com contexto
+		req, err := http.NewRequest("GET", dataURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Adiciona headers necessários para Chatwoot
+		req.Header.Set("User-Agent", "zpmeow/1.0")
+		req.Header.Set("Accept", "*/*")
+
+		// Se for URL do Chatwoot local, adiciona headers específicos
+		if strings.Contains(dataURL, "localhost:3001") || strings.Contains(dataURL, "127.0.0.1:3001") {
+			req.Header.Set("X-Forwarded-For", "127.0.0.1")
+			req.Header.Set("X-Real-IP", "127.0.0.1")
+		}
+
+		client := &http.Client{
+			Timeout: 30 * time.Second,
+		}
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download from URL: %w", err)
 		}

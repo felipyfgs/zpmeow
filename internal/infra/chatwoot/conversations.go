@@ -15,19 +15,18 @@ type ConversationService struct {
 	cacheManager ports.ChatwootCacheManager
 	errorHandler ports.ChatwootErrorHandler
 	validator    ports.ChatwootValidator
-	mapper       *ConversationMapper
-	adapter      *ConversationAdapter
+
+	adapter *ConversationAdapter
 }
 
 // NewConversationService cria um novo serviço de conversas
-func NewConversationService(client *Client, logger *slog.Logger, cacheManager ports.ChatwootCacheManager, mapper *ConversationMapper) *ConversationService {
+func NewConversationService(client *Client, logger *slog.Logger, cacheManager ports.ChatwootCacheManager) *ConversationService {
 	return &ConversationService{
 		client:       client,
 		logger:       logger,
 		cacheManager: cacheManager,
 		errorHandler: NewErrorHandler(),
 		validator:    NewValidator(),
-		mapper:       mapper,
 		adapter:      NewConversationAdapter(),
 	}
 }
@@ -182,29 +181,14 @@ func (cs *ConversationService) ClearConversationCache(contactID int) {
 	cs.logger.Info("Cleared conversation cache", "contact_id", contactID)
 }
 
-// MapConversation cria mapeamento entre chat e conversa
+// MapConversation cria mapeamento entre chat e conversa (deprecated - now handled by service)
 func (cs *ConversationService) MapConversation(ctx context.Context, chatJID string, contactID int, conversationID int) error {
-	if cs.mapper == nil {
-		cs.logger.Warn("Conversation mapper not available")
-		return nil
-	}
-
-	cs.logger.Info("Creating conversation mapping",
+	cs.logger.Info("Conversation mapping handled by unified strategy",
 		"chat_jid", chatJID,
 		"contact_id", contactID,
 		"conversation_id", conversationID)
 
-	// Usa o mapper para criar o mapeamento
-	_, err := cs.mapper.GetOrCreateConversationMapping(ctx, chatJID, fmt.Sprintf("%d", contactID))
-	if err != nil {
-		return fmt.Errorf("failed to create conversation mapping: %w", err)
-	}
-
-	cs.logger.Info("Successfully created conversation mapping",
-		"chat_jid", chatJID,
-		"contact_id", contactID,
-		"conversation_id", conversationID)
-
+	// Mapeamento agora é feito pela estratégia unificada no service
 	return nil
 }
 

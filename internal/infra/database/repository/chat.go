@@ -256,3 +256,22 @@ func (r *ChatRepository) GetChatWithChatwootMapping(ctx context.Context, session
 
 	return &chat, nil
 }
+
+// GetChatsByPhoneNumber busca todas as conversas para um número de telefone
+func (r *ChatRepository) GetChatsByPhoneNumber(ctx context.Context, sessionID, phoneNumber string) ([]*models.ChatModel, error) {
+	query := `
+		SELECT id, "sessionId", "chatJid", "chatName", "phoneNumber", "isGroup",
+			   "groupSubject", "groupDescription", "chatwootConversationId", "chatwootContactId",
+			   "lastMsgAt", "unreadCount", "isArchived", metadata, "createdAt", "updatedAt"
+		FROM "zpChats"
+		WHERE "sessionId" = $1 AND "phoneNumber" = $2
+		ORDER BY "lastMsgAt" DESC`
+
+	var chats []*models.ChatModel
+	err := r.db.SelectContext(ctx, &chats, query, sessionID, phoneNumber)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chats by phone number: %w", err)
+	}
+
+	return chats, nil
+}

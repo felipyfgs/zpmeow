@@ -92,7 +92,10 @@ services:
 
       # Webhook Configuration
       INSTALLATION_ENV: docker
-      WEBHOOKS_TRIGGER_TIMEOUT: 40
+      WEBHOOKS_TRIGGER_TIMEOUT: 120
+
+      # Rack Timeout Configuration (para múltiplas mídias)
+      RACK_TIMEOUT_SERVICE_TIMEOUT: 120
 
       # Docker Host Configuration (para conectar ao zpmeow)
       ZPMEOW_HOST: host.docker.internal
@@ -173,7 +176,10 @@ services:
 
       # Webhook Configuration
       INSTALLATION_ENV: docker
-      WEBHOOKS_TRIGGER_TIMEOUT: 40
+      WEBHOOKS_TRIGGER_TIMEOUT: 120
+
+      # Rack Timeout Configuration (para múltiplas mídias)
+      RACK_TIMEOUT_SERVICE_TIMEOUT: 120
 
       # Docker Host Configuration (para conectar ao zpmeow)
       ZPMEOW_HOST: host.docker.internal
