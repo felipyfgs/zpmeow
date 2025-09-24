@@ -234,87 +234,6 @@ func (h *ChatwootHandler) UpdateChatwootConfig(c *fiber.Ctx) error {
 	return h.SendSuccessResponse(c, fiber.StatusOK, response)
 }
 
-// DeleteChatwootConfig remove a configuração Chatwoot de uma sessão
-// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
-func (h *ChatwootHandler) DeleteChatwootConfig(c *fiber.Ctx) error {
-	sessionID, valid := h.validateSessionID(c)
-	if !valid {
-		return nil
-	}
-
-	// Verifica se a sessão existe
-	_, err := h.sessionService.GetSession(c.Context(), sessionID)
-	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "DATABASE_ERROR", "Database error", err)
-	}
-
-	// Remove do banco de dados
-	if err := h.chatwootRepo.Delete(c.Context(), sessionID); err != nil {
-		h.logger.Errorf("Failed to delete Chatwoot config: %v", err)
-		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "DATABASE_ERROR", "Database error", err)
-	}
-
-	// Remove da integração
-	h.chatwootIntegration.UnregisterInstance(sessionID)
-
-	return h.SendSuccessResponse(c, fiber.StatusOK, nil)
-}
-
-// GetChatwootStatus retorna o status da integração Chatwoot
-// FUNÇÃO NÃO UTILIZADA - SEM ROTA CORRESPONDENTE
-func (h *ChatwootHandler) GetChatwootStatus(c *fiber.Ctx) error {
-	sessionID, valid := h.validateSessionID(c)
-	if !valid {
-		return nil
-	}
-
-	// Verifica se a sessão existe
-	_, err := h.sessionService.GetSession(c.Context(), sessionID)
-	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "DATABASE_ERROR", "Database error", err)
-	}
-
-	// Busca configuração do banco de dados
-	dbConfig, err := h.chatwootRepo.GetBySessionID(c.Context(), sessionID)
-	if err != nil {
-		h.logger.Errorf("Failed to get Chatwoot config: %v", err)
-		return h.SendErrorResponse(c, fiber.StatusInternalServerError, "DATABASE_ERROR", "Database error", err)
-	}
-
-	if dbConfig == nil {
-		response := &dto.ChatwootStatusResponse{
-			Enabled:   false,
-			Connected: false,
-		}
-		return h.SendSuccessResponse(c, fiber.StatusOK, response)
-	}
-
-	_, serviceExists := h.chatwootIntegration.GetService(sessionID)
-
-	response := &dto.ChatwootStatusResponse{
-		Enabled:       dbConfig.IsActive,
-		Connected:     serviceExists && dbConfig.IsActive && dbConfig.InboxId != nil,
-		InboxName:     stringPtrToString(dbConfig.NameInbox),
-		MessagesCount: 0, /* TODO: calcular dinamicamente */
-		ContactsCount: 0, /* TODO: calcular dinamicamente */
-	}
-
-	if dbConfig.InboxId != nil {
-		response.InboxID = dbConfig.InboxId
-	}
-
-	if dbConfig.LastSync != nil {
-		response.LastSync = dbConfig.LastSync.Format(time.RFC3339)
-	}
-
-	// TODO: implementar ErrorMessage usando metadata
-	// if dbConfig.ErrorMessage != nil {
-	//     response.ErrorMessage = *dbConfig.ErrorMessage
-	// }
-
-	return h.SendSuccessResponse(c, fiber.StatusOK, response)
-}
-
 // ReceiveChatwootWebhook recebe webhooks do Chatwoot (interno, não documentado no swagger)
 func (h *ChatwootHandler) ReceiveChatwootWebhook(c *fiber.Ctx) error {
 	sessionIDOrName := c.Params("sessionId")
@@ -760,12 +679,4 @@ func (h *ChatwootHandler) dbModelToConfig(model *models.ChatwootModel) *chatwoot
 	}
 
 	return config
-}
-
-// stringPtrToString converte *string para string
-func stringPtrToString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

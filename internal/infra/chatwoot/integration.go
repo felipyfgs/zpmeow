@@ -46,67 +46,67 @@ func (i *Integration) SetWhatsAppService(whatsappService ports.WhatsAppService) 
 	}
 }
 
-// RegisterInstance registra uma nova instância com configuração Chatwoot
-func (i *Integration) RegisterInstance(instanceName string, config *ChatwootConfig) error {
+// RegisterSession registra uma nova sessão com configuração Chatwoot
+func (i *Integration) RegisterSession(sessionId string, config *ChatwootConfig) error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 
 	if !config.IsActive {
-		i.logger.Info("Chatwoot disabled for instance", "instance", instanceName)
+		i.logger.Info("Chatwoot disabled for session", "sessionId", sessionId)
 		// Remove serviço se existir
-		delete(i.services, instanceName)
-		i.configs[instanceName] = config
+		delete(i.services, sessionId)
+		i.configs[sessionId] = config
 		return nil
 	}
 
-	// Cria serviço para a instância (whatsappService pode ser nil aqui, será definido depois)
-	service, err := NewService(config, i.logger.With("instance", instanceName), i.whatsappService, instanceName, i.messageRepo, i.zpCwRepo, i.chatRepo)
+	// Cria serviço para a sessão (whatsappService pode ser nil aqui, será definido depois)
+	service, err := NewService(config, i.logger.With("sessionId", sessionId), i.whatsappService, sessionId, i.messageRepo, i.zpCwRepo, i.chatRepo)
 	if err != nil {
-		return fmt.Errorf("failed to create chatwoot service for instance %s: %w", instanceName, err)
+		return fmt.Errorf("failed to create chatwoot service for session %s: %w", sessionId, err)
 	}
 
 	// Armazena configurações
-	i.services[instanceName] = service
-	i.configs[instanceName] = config
+	i.services[sessionId] = service
+	i.configs[sessionId] = config
 
-	i.logger.Info("Chatwoot integration registered", "instance", instanceName)
+	i.logger.Info("Chatwoot integration registered", "sessionId", sessionId)
 	return nil
 }
 
-// UnregisterInstance remove uma instância da integração
-func (i *Integration) UnregisterInstance(instanceName string) {
+// UnregisterSession remove uma sessão da integração
+func (i *Integration) UnregisterSession(sessionId string) {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 
-	delete(i.services, instanceName)
-	delete(i.configs, instanceName)
+	delete(i.services, sessionId)
+	delete(i.configs, sessionId)
 
-	i.logger.Info("Chatwoot integration unregistered", "instance", instanceName)
+	i.logger.Info("Chatwoot integration unregistered", "sessionId", sessionId)
 }
 
-// GetService retorna o serviço Chatwoot para uma instância
-func (i *Integration) GetService(instanceName string) (*Service, bool) {
+// GetService retorna o serviço Chatwoot para uma sessão
+func (i *Integration) GetService(sessionId string) (*Service, bool) {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
-	service, exists := i.services[instanceName]
+	service, exists := i.services[sessionId]
 	return service, exists
 }
 
-// GetConfig retorna a configuração Chatwoot para uma instância
-func (i *Integration) GetConfig(instanceName string) (*ChatwootConfig, bool) {
+// GetConfig retorna a configuração Chatwoot para uma sessão
+func (i *Integration) GetConfig(sessionId string) (*ChatwootConfig, bool) {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
-	config, exists := i.configs[instanceName]
+	config, exists := i.configs[sessionId]
 	return config, exists
 }
 
-// ProcessMessage processa uma mensagem do WhatsApp para uma instância específica
-func (i *Integration) ProcessMessage(ctx context.Context, instanceName string, msg *WhatsAppMessage) error {
-	service, exists := i.GetService(instanceName)
+// ProcessMessage processa uma mensagem do WhatsApp para uma sessão específica
+func (i *Integration) ProcessMessage(ctx context.Context, sessionId string, msg *WhatsAppMessage) error {
+	service, exists := i.GetService(sessionId)
 	if !exists {
-		// Não há integração Chatwoot configurada para esta instância
+		// Não há integração Chatwoot configurada para esta sessão
 		return nil
 	}
 
@@ -114,46 +114,46 @@ func (i *Integration) ProcessMessage(ctx context.Context, instanceName string, m
 }
 
 // ProcessWebhook processa um webhook do Chatwoot
-func (i *Integration) ProcessWebhook(ctx context.Context, instanceName string, payload *WebhookPayload) error {
-	service, exists := i.GetService(instanceName)
+func (i *Integration) ProcessWebhook(ctx context.Context, sessionId string, payload *WebhookPayload) error {
+	service, exists := i.GetService(sessionId)
 	if !exists {
-		return fmt.Errorf("no chatwoot service found for instance: %s", instanceName)
+		return fmt.Errorf("no chatwoot service found for session: %s", sessionId)
 	}
 
 	return service.ProcessWebhook(ctx, payload)
 }
 
-// IsEnabled verifica se a integração Chatwoot está habilitada para uma instância
-func (i *Integration) IsEnabled(instanceName string) bool {
-	config, exists := i.GetConfig(instanceName)
+// IsEnabled verifica se a integração Chatwoot está habilitada para uma sessão
+func (i *Integration) IsEnabled(sessionId string) bool {
+	config, exists := i.GetConfig(sessionId)
 	return exists && config.IsActive
 }
 
-// GetEnabledInstances retorna lista de instâncias com Chatwoot habilitado
-func (i *Integration) GetEnabledInstances() []string {
+// GetEnabledSessions retorna lista de sessões com Chatwoot habilitado
+func (i *Integration) GetEnabledSessions() []string {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
 	var enabled []string
-	for instanceName, config := range i.configs {
+	for sessionId, config := range i.configs {
 		if config.IsActive {
-			enabled = append(enabled, instanceName)
+			enabled = append(enabled, sessionId)
 		}
 	}
 
 	return enabled
 }
 
-// GetInstancesCount retorna o número total de instâncias registradas
-func (i *Integration) GetInstancesCount() int {
+// GetSessionsCount retorna o número total de sessões registradas
+func (i *Integration) GetSessionsCount() int {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
 	return len(i.configs)
 }
 
-// GetEnabledInstancesCount retorna o número de instâncias habilitadas
-func (i *Integration) GetEnabledInstancesCount() int {
+// GetEnabledSessionsCount retorna o número de sessões habilitadas
+func (i *Integration) GetEnabledSessionsCount() int {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
@@ -167,17 +167,17 @@ func (i *Integration) GetEnabledInstancesCount() int {
 	return count
 }
 
-// ListInstances retorna informações sobre todas as instâncias
-func (i *Integration) ListInstances() []InstanceInfo {
+// ListSessions retorna informações sobre todas as sessões
+func (i *Integration) ListSessions() []SessionInfo {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 
-	instances := make([]InstanceInfo, 0, len(i.configs))
-	for instanceName, config := range i.configs {
-		_, hasService := i.services[instanceName]
+	sessions := make([]SessionInfo, 0, len(i.configs))
+	for sessionId, config := range i.configs {
+		_, hasService := i.services[sessionId]
 
-		instances = append(instances, InstanceInfo{
-			Name:      instanceName,
+		sessions = append(sessions, SessionInfo{
+			SessionId: sessionId,
 			Enabled:   config.IsActive,
 			URL:       config.URL,
 			InboxName: config.NameInbox,
@@ -185,12 +185,12 @@ func (i *Integration) ListInstances() []InstanceInfo {
 		})
 	}
 
-	return instances
+	return sessions
 }
 
-// InstanceInfo representa informações sobre uma instância
-type InstanceInfo struct {
-	Name      string `json:"name"`
+// SessionInfo representa informações sobre uma sessão
+type SessionInfo struct {
+	SessionId string `json:"sessionId"`
 	Enabled   bool   `json:"enabled"`
 	URL       string `json:"url"`
 	InboxName string `json:"inboxName"`
@@ -206,10 +206,10 @@ func (i *Integration) Health() HealthStatus {
 	enabled := 0
 	connected := 0
 
-	for _, config := range i.configs {
+	for sessionId, config := range i.configs {
 		if config.IsActive {
 			enabled++
-			if _, hasService := i.services[config.NameInbox]; hasService {
+			if _, hasService := i.services[sessionId]; hasService {
 				connected++
 			}
 		}
@@ -223,19 +223,19 @@ func (i *Integration) Health() HealthStatus {
 	}
 
 	return HealthStatus{
-		Status:             status,
-		TotalInstances:     total,
-		EnabledInstances:   enabled,
-		ConnectedInstances: connected,
+		Status:            status,
+		TotalSessions:     total,
+		EnabledSessions:   enabled,
+		ConnectedSessions: connected,
 	}
 }
 
 // HealthStatus representa o status de saúde da integração
 type HealthStatus struct {
-	Status             string `json:"status"`
-	TotalInstances     int    `json:"totalInstances"`
-	EnabledInstances   int    `json:"enabledInstances"`
-	ConnectedInstances int    `json:"connectedInstances"`
+	Status            string `json:"status"`
+	TotalSessions     int    `json:"totalSessions"`
+	EnabledSessions   int    `json:"enabledSessions"`
+	ConnectedSessions int    `json:"connectedSessions"`
 }
 
 // Shutdown desliga graciosamente a integração
@@ -307,28 +307,28 @@ func (i *Integration) GetMetrics() Metrics {
 	defer i.mutex.RUnlock()
 
 	metrics := Metrics{
-		TotalInstances:     len(i.configs),
-		EnabledInstances:   0,
-		ConnectedInstances: 0,
-		InstanceMetrics:    make(map[string]InstanceMetrics),
+		TotalSessions:     len(i.configs),
+		EnabledSessions:   0,
+		ConnectedSessions: 0,
+		SessionMetrics:    make(map[string]SessionMetrics),
 	}
 
-	for instanceName, config := range i.configs {
-		instanceMetric := InstanceMetrics{
+	for sessionId, config := range i.configs {
+		sessionMetric := SessionMetrics{
 			Enabled:   config.IsActive,
 			Connected: false,
 		}
 
 		if config.IsActive {
-			metrics.EnabledInstances++
+			metrics.EnabledSessions++
 
-			if _, hasService := i.services[instanceName]; hasService {
-				metrics.ConnectedInstances++
-				instanceMetric.Connected = true
+			if _, hasService := i.services[sessionId]; hasService {
+				metrics.ConnectedSessions++
+				sessionMetric.Connected = true
 			}
 		}
 
-		metrics.InstanceMetrics[instanceName] = instanceMetric
+		metrics.SessionMetrics[sessionId] = sessionMetric
 	}
 
 	return metrics
@@ -336,14 +336,14 @@ func (i *Integration) GetMetrics() Metrics {
 
 // Metrics representa métricas da integração
 type Metrics struct {
-	TotalInstances     int                        `json:"totalInstances"`
-	EnabledInstances   int                        `json:"enabledInstances"`
-	ConnectedInstances int                        `json:"connectedInstances"`
-	InstanceMetrics    map[string]InstanceMetrics `json:"instanceMetrics"`
+	TotalSessions     int                       `json:"totalSessions"`
+	EnabledSessions   int                       `json:"enabledSessions"`
+	ConnectedSessions int                       `json:"connectedSessions"`
+	SessionMetrics    map[string]SessionMetrics `json:"sessionMetrics"`
 }
 
-// InstanceMetrics representa métricas de uma instância específica
-type InstanceMetrics struct {
+// SessionMetrics representa métricas de uma sessão específica
+type SessionMetrics struct {
 	Enabled   bool `json:"enabled"`
 	Connected bool `json:"connected"`
 	// Aqui você pode adicionar mais métricas específicas como:
@@ -351,3 +351,40 @@ type InstanceMetrics struct {
 	// LastActivity      time.Time `json:"lastActivity"`
 	// ErrorCount        int `json:"errorCount"`
 }
+
+// Métodos de compatibilidade para manter API existente funcionando
+// DEPRECATED: Use RegisterSession instead
+func (i *Integration) RegisterInstance(instanceName string, config *ChatwootConfig) error {
+	return i.RegisterSession(instanceName, config)
+}
+
+// DEPRECATED: Use UnregisterSession instead
+func (i *Integration) UnregisterInstance(instanceName string) {
+	i.UnregisterSession(instanceName)
+}
+
+// DEPRECATED: Use GetEnabledSessions instead
+func (i *Integration) GetEnabledInstances() []string {
+	return i.GetEnabledSessions()
+}
+
+// DEPRECATED: Use GetSessionsCount instead
+func (i *Integration) GetInstancesCount() int {
+	return i.GetSessionsCount()
+}
+
+// DEPRECATED: Use GetEnabledSessionsCount instead
+func (i *Integration) GetEnabledInstancesCount() int {
+	return i.GetEnabledSessionsCount()
+}
+
+// DEPRECATED: Use ListSessions instead
+func (i *Integration) ListInstances() []SessionInfo {
+	return i.ListSessions()
+}
+
+// DEPRECATED: Use SessionInfo instead
+type InstanceInfo = SessionInfo
+
+// DEPRECATED: Use SessionMetrics instead
+type InstanceMetrics = SessionMetrics

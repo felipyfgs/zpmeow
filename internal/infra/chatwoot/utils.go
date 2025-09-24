@@ -282,3 +282,8 @@ func (su *StringUtils) SanitizeForLog(s string) string {
 
 	return strings.TrimSpace(s)
 }
+
+// isValidURL valida se uma URL é válida
+func isValidURL(url string) bool {
+	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
+}
