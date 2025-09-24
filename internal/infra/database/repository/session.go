@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"strings"
 	"time"
 
@@ -48,7 +49,11 @@ func (r *PostgresRepo) CreateWithGeneratedID(ctx context.Context, sessionEntity 
 
 	apiKey := sessionEntity.ApiKey().Value()
 	if apiKey == "" || apiKey == "temp-key" {
-		apiKey = r.generateAPIKey()
+		var err error
+		apiKey, err = r.generateAPIKey()
+		if err != nil {
+			return "", fmt.Errorf("failed to generate API key: %w", err)
+		}
 	}
 
 	var generatedID string
@@ -477,13 +482,17 @@ func (r *PostgresRepo) modelToDomain(model *models.SessionModel) (*session.Sessi
 	return sessionEntity, nil
 }
 
-func (r *PostgresRepo) generateAPIKey() string {
+func (r *PostgresRepo) generateAPIKey() (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 32
 
 	b := make([]byte, keyLength)
 	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", fmt.Errorf("failed to generate random number: %w", err)
+		}
+		b[i] = charset[randomIndex.Int64()]
 	}
-	return string(b)
+	return string(b), nil
 }

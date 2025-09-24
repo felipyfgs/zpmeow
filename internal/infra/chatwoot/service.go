@@ -676,6 +676,93 @@ func (s *Service) saveConversationMappingAsync(_ context.Context, chatJid, phone
 	}()
 }
 
+// validateMessage valida se a mensagem deve ser processada
+func (s *Service) validateMessage(msg *WhatsAppMessage) error {
+	if !s.config.IsActive {
+		s.logger.Info("⏭️ Chatwoot integration disabled, skipping message")
+		return fmt.Errorf("chatwoot integration disabled")
+	}
+
+	if s.shouldIgnoreMessage(msg) {
+		s.logger.Info("⏭️ Message ignored by filter rules")
+		return fmt.Errorf("message ignored by filter rules")
+	}
+
+	return nil
+}
+
+// extractContactInfo extrai informações de contato da mensagem
+func (s *Service) extractContactInfo(msg *WhatsAppMessage) (phoneNumber, contactName string, isGroup bool) {
+	phoneNumber = s.extractPhoneNumber(msg.From)
+	isGroup = strings.Contains(msg.From, "@g.us")
+
+	s.logger.Info("📞 EXTRACTED PHONE AND GROUP INFO",
+		"phone_number", phoneNumber,
+		"is_group", isGroup,
+		"original_from", msg.From)
+
+	if isGroup {
+		contactName = fmt.Sprintf("%s (GROUP)", msg.ChatName)
+	} else {
+		contactName = msg.PushName
+		if contactName == "" {
+			contactName = phoneNumber
+		}
+	}
+
+	return phoneNumber, contactName, isGroup
+}
+
+// processContact encontra ou cria o contato no Chatwoot
+func (s *Service) processContact(ctx context.Context, phoneNumber, contactName string, isGroup bool) (*Contact, error) {
+	s.logger.Info("👤 CREATING/FINDING CONTACT",
+		"contact_name", contactName,
+		"phone_number", phoneNumber,
+		"is_group", isGroup)
+
+	contact, err := s.findOrCreateContact(ctx, phoneNumber, contactName, "", isGroup)
+	if err != nil {
+		s.logger.Error("❌ FAILED TO FIND/CREATE CONTACT", "error", err)
+		return nil, fmt.Errorf("failed to find or create contact: %w", err)
+	}
+
+	s.logger.Info("✅ CONTACT FOUND/CREATED",
+		"contact_id", contact.ID,
+		"contact_name", contact.Name,
+		"contact_phone", contact.PhoneNumber)
+
+	return contact, nil
+}
+
+// processConversation encontra ou cria a conversação no Chatwoot
+func (s *Service) processConversation(ctx context.Context, msg *WhatsAppMessage, contact *Contact, phoneNumber string) (int, error) {
+	s.logger.Info("🔍 [UNIFIED MAPPING] Using last conversation strategy for consistency",
+		"contact_id", contact.ID,
+		"chat_jid", msg.From,
+		"phone_number", phoneNumber)
+
+	conversation, err := s.findOrCreateConversationWithEvolutionStrategy(ctx, contact)
+	if err != nil {
+		s.logger.Error("❌ FAILED TO FIND/CREATE CONVERSATION", "error", err)
+		return 0, fmt.Errorf("failed to find or create conversation: %w", err)
+	}
+
+	conversationID := conversation.ID
+
+	s.logger.Info("✅ CONVERSATION FOUND/CREATED",
+		"conversation_id", conversationID,
+		"contact_id", contact.ID)
+
+	// Salva mapeamento para próximas mensagens
+	go s.saveConversationMappingAsync(ctx, msg.From, phoneNumber, contact.ID, conversationID)
+
+	s.logger.Info("🎯 [HYBRID MAPPING] Final conversation selected",
+		"conversation_id", conversationID,
+		"contact_id", contact.ID)
+
+	return conversationID, nil
+}
+
 // ProcessWhatsAppMessage processa uma mensagem do WhatsApp e envia para o Chatwoot
 func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessage) error {
 	s.logger.Info("📱 PROCESSING WHATSAPP MESSAGE FOR CHATWOOT",
@@ -687,79 +774,32 @@ func (s *Service) ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessa
 		"chat_name", msg.ChatName,
 		"timestamp", msg.Timestamp)
 
-	if !s.config.IsActive {
-		s.logger.Info("⏭️ Chatwoot integration disabled, skipping message")
-		return nil
+	// Validação da mensagem
+	if err := s.validateMessage(msg); err != nil {
+		return nil // Não é erro, apenas skip
 	}
 
-	// Verifica se deve ignorar esta mensagem
-	if s.shouldIgnoreMessage(msg) {
-		s.logger.Info("⏭️ Message ignored by filter rules")
-		return nil
-	}
+	// Extração de informações de contato
+	phoneNumber, contactName, isGroup := s.extractContactInfo(msg)
 
-	phoneNumber := s.extractPhoneNumber(msg.From)
-	isGroup := strings.Contains(msg.From, "@g.us")
-
-	s.logger.Info("📞 EXTRACTED PHONE AND GROUP INFO",
-		"phone_number", phoneNumber,
-		"is_group", isGroup,
-		"original_from", msg.From)
-
-	var contactName string
-	if isGroup {
-		contactName = fmt.Sprintf("%s (GROUP)", msg.ChatName)
-	} else {
-		contactName = msg.PushName
-		if contactName == "" {
-			contactName = phoneNumber
-		}
-	}
-
-	s.logger.Info("👤 CREATING/FINDING CONTACT",
-		"contact_name", contactName,
-		"phone_number", phoneNumber,
-		"is_group", isGroup)
-
-	// Encontra ou cria contato
-	contact, err := s.findOrCreateContact(ctx, phoneNumber, contactName, "", isGroup)
+	// Processamento do contato
+	contact, err := s.processContact(ctx, phoneNumber, contactName, isGroup)
 	if err != nil {
-		s.logger.Error("❌ FAILED TO FIND/CREATE CONTACT", "error", err)
-		return fmt.Errorf("failed to find or create contact: %w", err)
+		return err
 	}
 
-	s.logger.Info("✅ CONTACT FOUND/CREATED",
-		"contact_id", contact.ID,
-		"contact_name", contact.Name,
-		"contact_phone", contact.PhoneNumber)
-
-	// 🎯 ESTRATÉGIA SIMPLIFICADA: SEMPRE USA ÚLTIMA CONVERSA (como outgoing)
-	s.logger.Info("🔍 [UNIFIED MAPPING] Using last conversation strategy for consistency",
-		"contact_id", contact.ID,
-		"chat_jid", msg.From,
-		"phone_number", phoneNumber)
-
-	// SEMPRE usa Evolution API strategy (última conversa com atividade)
-	conversation, err := s.findOrCreateConversationWithEvolutionStrategy(ctx, contact)
+	// Processamento da conversação
+	conversationID, err := s.processConversation(ctx, msg, contact, phoneNumber)
 	if err != nil {
-		s.logger.Error("❌ [UNIFIED MAPPING] Evolution strategy failed", "error", err)
-		return fmt.Errorf("failed to find conversation with unified strategy: %w", err)
+		return err
 	}
 
-	conversationID := conversation.ID
+	// Envio para Chatwoot
+	return s.sendMessageToChatwoot(ctx, msg, conversationID, isGroup)
+}
 
-	s.logger.Info("✅ [UNIFIED MAPPING] Using last conversation strategy",
-		"conversation_id", conversationID,
-		"inbox_id", conversation.InboxID,
-		"status", conversation.Status,
-		"source", "last_conversation_strategy")
-
-	// IMPORTANTE: Salva mapeamento para próximas mensagens
-	go s.saveConversationMappingAsync(ctx, msg.From, phoneNumber, contact.ID, conversationID)
-
-	s.logger.Info("🎯 [HYBRID MAPPING] Final conversation selected",
-		"conversation_id", conversationID,
-		"contact_id", contact.ID)
+// sendMessageToChatwoot envia a mensagem processada para o Chatwoot
+func (s *Service) sendMessageToChatwoot(ctx context.Context, msg *WhatsAppMessage, conversationID int, isGroup bool) error {
 
 	// Determina tipo de mensagem (0 = incoming, 1 = outgoing)
 	messageType := 0 // incoming
@@ -1015,6 +1055,148 @@ func (s *Service) ProcessWebhook(ctx context.Context, payload *WebhookPayload) e
 	s.logger.Info("⏭️ Skipping webhook - not an outgoing message",
 		"event", payload.Event,
 		"message_type", messageType)
+	return nil
+}
+
+// OutgoingMessageData estrutura para dados da mensagem de saída
+type OutgoingMessageData struct {
+	MessageType string
+	Content     string
+	ContentType string
+	Attachments []interface{}
+	PhoneNumber string
+}
+
+// extractOutgoingMessageData extrai dados da mensagem do payload
+func (s *Service) extractOutgoingMessageData(payload *WebhookPayload) (*OutgoingMessageData, error) {
+	if payload.Message == nil {
+		return nil, fmt.Errorf("message data is nil")
+	}
+
+	if payload.Conversation == nil || payload.Contact == nil {
+		s.logger.Error("❌ Missing conversation or contact in webhook payload",
+			"conversation_exists", payload.Conversation != nil,
+			"contact_exists", payload.Contact != nil)
+		return nil, fmt.Errorf("missing conversation or contact in webhook payload")
+	}
+
+	data := &OutgoingMessageData{}
+
+	// Extrai campos da mensagem
+	if mt, ok := payload.Message["message_type"].(string); ok {
+		data.MessageType = mt
+	}
+	if c, ok := payload.Message["content"].(string); ok {
+		data.Content = c
+	}
+	if ct, ok := payload.Message["content_type"].(string); ok {
+		data.ContentType = ct
+	}
+	if att, ok := payload.Message["attachments"].([]interface{}); ok {
+		data.Attachments = att
+	}
+
+	// Extrai número de telefone do contato
+	data.PhoneNumber = s.extractPhoneFromContactMap(payload.Contact)
+
+	return data, nil
+}
+
+// validateOutgoingMessageData valida os dados da mensagem de saída
+func (s *Service) validateOutgoingMessageData(data *OutgoingMessageData) error {
+	if data.PhoneNumber == "" {
+		return fmt.Errorf("phone number is required")
+	}
+
+	if data.Content == "" && len(data.Attachments) == 0 {
+		s.logger.Warn("⚠️ MESSAGE WITH NO CONTENT OR ATTACHMENTS")
+		return fmt.Errorf("message has no content or attachments")
+	}
+
+	return nil
+}
+
+// resolveWhatsAppRecipient resolve o destinatário final para WhatsApp
+func (s *Service) resolveWhatsAppRecipient(ctx context.Context, phoneNumber string) (string, error) {
+	cleanPhoneNumber := s.cleanPhoneNumber(phoneNumber)
+
+	s.logger.Info("🔍 RESOLVING WHATSAPP RECIPIENT",
+		"original_phone", phoneNumber,
+		"clean_phone", cleanPhoneNumber)
+
+	// Busca chats existentes para encontrar o JID correto
+	chats, err := s.whatsappService.ListChats(ctx, s.sessionID, cleanPhoneNumber, 1)
+	if err != nil {
+		s.logger.Warn("⚠️ Failed to list chats for phone number",
+			"phone_number", cleanPhoneNumber,
+			"error", err)
+		return cleanPhoneNumber, nil // Usa número limpo como fallback
+	}
+
+	// Se encontrou chats, usa o JID do chat mais recente
+	if len(chats) > 0 {
+		latestChat := chats[0]
+		targetChatJID := latestChat.ChatJid
+
+		s.logger.Info("✅ FOUND LATEST CHAT FOR PHONE NUMBER",
+			"phone_number", cleanPhoneNumber,
+			"target_chat_jid", targetChatJID,
+			"total_chats_found", len(chats))
+
+		return targetChatJID, nil
+	}
+
+	s.logger.Warn("⚠️ No chats found for phone number",
+		"phone_number", cleanPhoneNumber,
+		"session_id", s.sessionID)
+
+	return cleanPhoneNumber, nil
+}
+
+// sendToWhatsAppService envia a mensagem para o serviço WhatsApp
+func (s *Service) sendToWhatsAppService(ctx context.Context, recipient string, data *OutgoingMessageData) error {
+	if s.whatsappService == nil {
+		s.logger.Warn("⚠️ WHATSAPP SERVICE NOT AVAILABLE",
+			"to", recipient,
+			"session_id", s.sessionID,
+			"content", data.Content)
+		return nil
+	}
+
+	s.logger.Info("🚀 CALLING WHATSAPP SERVICE",
+		"session_id", s.sessionID,
+		"to", recipient,
+		"content", data.Content,
+		"content_type", data.ContentType,
+		"has_attachments", len(data.Attachments) > 0)
+
+	var err error
+
+	// Verifica se há anexos na mensagem
+	if len(data.Attachments) > 0 {
+		_, err = s.sendAttachmentMessage(ctx, recipient, data.Attachments)
+	} else if data.Content != "" {
+		_, err = s.whatsappService.SendTextMessage(ctx, s.sessionID, recipient, data.Content)
+	} else {
+		return fmt.Errorf("message has no content or attachments")
+	}
+
+	if err != nil {
+		s.logger.Error("❌ FAILED TO SEND MESSAGE TO WHATSAPP",
+			"error", err,
+			"to", recipient,
+			"session_id", s.sessionID,
+			"content_type", data.ContentType)
+		return fmt.Errorf("failed to send message to WhatsApp: %w", err)
+	}
+
+	s.logger.Info("✅ MESSAGE SENT TO WHATSAPP SUCCESSFULLY",
+		"to", recipient,
+		"content", data.Content,
+		"session_id", s.sessionID,
+		"content_type", data.ContentType,
+		"has_attachments", len(data.Attachments) > 0)
+
 	return nil
 }
 
