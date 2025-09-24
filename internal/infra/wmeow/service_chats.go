@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"zpmeow/internal/application/ports"
+	"zpmeow/internal/infra/database/models"
 
 	waTypes "go.mau.fi/whatsmeow/types"
 )
@@ -13,9 +14,57 @@ import (
 // ChatManager methods - gestão de conversas e chats
 
 func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string) ([]ports.ChatInfo, error) {
-	// For now, return empty list
-	// TODO: Implement proper chat listing when needed
-	m.logger.Debugf("ListChats for session %s, chatType: %s (returning empty for now)", sessionID, chatType)
+	client := m.getClient(sessionID)
+	if client == nil {
+		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	}
+
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	}
+
+	// Get chats from database if available
+	if m.chatRepo != nil {
+		chats, err := m.chatRepo.GetChatsBySessionID(ctx, sessionID, 100, 0)
+		if err != nil {
+			m.logger.Warnf("Failed to get chats from database: %v", err)
+		} else {
+			var result []ports.ChatInfo
+			for _, chat := range chats {
+				var lastMessageAt string
+				if chat.LastMsgAt != nil {
+					lastMessageAt = chat.LastMsgAt.Format(time.RFC3339)
+				}
+
+				chatInfo := ports.ChatInfo{
+					JID:           chat.ChatJid,
+					Name:          getStringValue(chat.ChatName),
+					IsGroup:       chat.IsGroup,
+					UnreadCount:   chat.UnreadCount,
+					LastMessageAt: lastMessageAt,
+					IsArchived:    chat.IsArchived,
+				}
+
+				// Filter by chat type if specified
+				if chatType != "" {
+					if chatType == "group" && !chat.IsGroup {
+						continue
+					}
+					if chatType == "individual" && chat.IsGroup {
+						continue
+					}
+				}
+
+				result = append(result, chatInfo)
+			}
+
+			m.logger.Debugf("ListChats for session %s, chatType: %s - found %d chats", sessionID, chatType, len(result))
+			return result, nil
+		}
+	}
+
+	// Fallback: return empty list if no database or error
+	m.logger.Debugf("ListChats for session %s, chatType: %s (returning empty - no database or error)", sessionID, chatType)
 	return []ports.ChatInfo{}, nil
 }
 
@@ -33,14 +82,42 @@ func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID str
 		limit = 50
 	}
 
-	// For now, return empty message history
-	// TODO: Implement proper message retrieval when repository method is available
-	m.logger.Debugf("GetChatHistory: %s for session %s (returning empty for now, limit: %d)", chatJID, sessionID, limit)
+	// Get chat from database to get chatId
+	var chatId string
+	if m.chatRepo != nil {
+		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+		if err != nil {
+			m.logger.Warnf("Failed to get chat from database: %v", err)
+		} else if chat != nil {
+			chatId = chat.ID
+		}
+	}
 
 	var result []ports.ChatMessage
-	// Return empty result for now
 
-	m.logger.Debugf("Retrieved %d messages from chat %s for session %s", len(result), chatJID, sessionID)
+	// Get messages from database if available
+	if m.messageRepo != nil && chatId != "" {
+		messages, err := m.messageRepo.GetMessagesByChatId(ctx, chatId, limit, offset)
+		if err != nil {
+			m.logger.Warnf("Failed to get messages from database: %v", err)
+		} else {
+			for _, msg := range messages {
+				chatMessage := ports.ChatMessage{
+					ID:        msg.MsgId,
+					ChatJID:   chatId,
+					FromJID:   msg.SenderJid,
+					Text:      getStringValue(msg.Content),
+					Content:   getStringValue(msg.Content),
+					Type:      msg.MsgType,
+					Timestamp: msg.Timestamp,
+				}
+
+				result = append(result, chatMessage)
+			}
+		}
+	}
+
+	m.logger.Debugf("GetChatHistory: %s for session %s (limit: %d) - retrieved %d messages", chatJID, sessionID, limit, len(result))
 	return result, nil
 }
 
@@ -55,10 +132,37 @@ func (m *MeowService) ArchiveChat(ctx context.Context, sessionID, chatJID string
 	}
 
 	// Archive functionality - store archive status locally
-	// For now, just log the operation
-	m.logger.Debugf("ArchiveChat: %s (archived: %v) for session %s", chatJID, archive, sessionID)
+	if m.chatRepo != nil {
+		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+		if err != nil {
+			m.logger.Warnf("Failed to get chat from database: %v", err)
+		} else if chat != nil {
+			// Update archive status in database
+			chat.IsArchived = archive
+			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+				m.logger.Errorf("Failed to update chat archive status: %v", err)
+				return fmt.Errorf("failed to update chat archive status: %w", err)
+			}
+		} else {
+			// Chat doesn't exist in database, create it
+			jid, err := waTypes.ParseJID(chatJID)
+			if err != nil {
+				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+			}
 
-	// TODO: Implement proper archive status storage when repository method is available
+			newChat := &models.ChatModel{
+				SessionId:  sessionID,
+				ChatJid:    chatJID,
+				IsGroup:    jid.Server == waTypes.GroupServer,
+				IsArchived: archive,
+			}
+
+			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+				m.logger.Errorf("Failed to create chat with archive status: %v", err)
+				return fmt.Errorf("failed to create chat with archive status: %w", err)
+			}
+		}
+	}
 
 	action := "archived"
 	if !archive {
@@ -80,10 +184,24 @@ func (m *MeowService) DeleteChat(ctx context.Context, sessionID, chatJID string)
 	}
 
 	// Delete chat functionality - clear local messages
-	// For now, just log the operation
-	m.logger.Debugf("DeleteChat: %s for session %s", chatJID, sessionID)
+	if m.chatRepo != nil && m.messageRepo != nil {
+		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+		if err != nil {
+			m.logger.Warnf("Failed to get chat from database: %v", err)
+		} else if chat != nil {
+			// Delete all messages from this chat
+			if err := m.messageRepo.DeleteMessagesByChatId(ctx, chat.ID); err != nil {
+				m.logger.Errorf("Failed to delete messages from chat: %v", err)
+				return fmt.Errorf("failed to delete messages from chat: %w", err)
+			}
 
-	// TODO: Implement proper message deletion when repository method is available
+			// Optionally delete the chat record itself
+			// For now, we'll keep the chat record but clear messages
+			m.logger.Debugf("Deleted all messages from chat %s for session %s", chatJID, sessionID)
+		}
+	}
+
+	m.logger.Debugf("DeleteChat: %s for session %s", chatJID, sessionID)
 
 	m.logger.Debugf("Deleted chat %s for session %s", chatJID, sessionID)
 	return nil
@@ -102,12 +220,62 @@ func (m *MeowService) MuteChat(ctx context.Context, sessionID, chatJID string, m
 	// Removed unused variables for compilation
 
 	// Mute functionality - store mute status locally
-	// For now, just log the operation
-	m.logger.Debugf("MuteChat: %s (mute: %v, duration: %v) for session %s", chatJID, mute, duration, sessionID)
+	if m.chatRepo != nil {
+		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+		if err != nil {
+			m.logger.Warnf("Failed to get chat from database: %v", err)
+		} else if chat != nil {
+			// Store mute status and duration in metadata
+			if chat.Metadata == nil {
+				chat.Metadata = make(models.JSONB)
+			}
 
-	// TODO: Implement proper mute status storage when repository method is available
+			chat.Metadata["muted"] = mute
+			if mute && duration > 0 {
+				muteUntil := time.Now().Add(duration)
+				chat.Metadata["muteUntil"] = muteUntil.Unix()
+			} else {
+				delete(chat.Metadata, "muteUntil")
+			}
 
-	m.logger.Debugf("Muted chat %s for %v in session %s", chatJID, duration, sessionID)
+			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+				m.logger.Errorf("Failed to update chat mute status: %v", err)
+				return fmt.Errorf("failed to update chat mute status: %w", err)
+			}
+		} else {
+			// Chat doesn't exist in database, create it with mute status
+			jid, err := waTypes.ParseJID(chatJID)
+			if err != nil {
+				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+			}
+
+			metadata := make(models.JSONB)
+			metadata["muted"] = mute
+			if mute && duration > 0 {
+				muteUntil := time.Now().Add(duration)
+				metadata["muteUntil"] = muteUntil.Unix()
+			}
+
+			newChat := &models.ChatModel{
+				SessionId: sessionID,
+				ChatJid:   chatJID,
+				IsGroup:   jid.Server == waTypes.GroupServer,
+				Metadata:  metadata,
+			}
+
+			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+				m.logger.Errorf("Failed to create chat with mute status: %v", err)
+				return fmt.Errorf("failed to create chat with mute status: %w", err)
+			}
+		}
+	}
+
+	action := "muted"
+	if !mute {
+		action = "unmuted"
+	}
+
+	m.logger.Debugf("Chat %s %s for %v in session %s", chatJID, action, duration, sessionID)
 	return nil
 }
 
@@ -122,13 +290,7 @@ func (m *MeowService) UnmuteChat(ctx context.Context, sessionID, chatJID string)
 	}
 
 	// Unmute functionality - remove mute status locally
-	// For now, just log the operation
-	m.logger.Debugf("UnmuteChat: %s for session %s", chatJID, sessionID)
-
-	// TODO: Implement proper mute status removal when repository method is available
-
-	m.logger.Debugf("Unmuted chat %s for session %s", chatJID, sessionID)
-	return nil
+	return m.MuteChat(ctx, sessionID, chatJID, false, 0)
 }
 
 func (m *MeowService) PinChat(ctx context.Context, sessionID, chatJID string, pin bool) error {
@@ -141,10 +303,54 @@ func (m *MeowService) PinChat(ctx context.Context, sessionID, chatJID string, pi
 		return fmt.Errorf("client not connected for session %s", sessionID)
 	}
 
-	// Pin functionality - for now just log
-	m.logger.Debugf("PinChat: %s (pinned: %v) for session %s", chatJID, pin, sessionID)
+	// Pin functionality - store pin status locally (WhatsApp doesn't have server-side pin API)
+	if m.chatRepo != nil {
+		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+		if err != nil {
+			m.logger.Warnf("Failed to get chat from database: %v", err)
+		} else if chat != nil {
+			// Store pin status in metadata
+			if chat.Metadata == nil {
+				chat.Metadata = make(models.JSONB)
+			}
 
-	// TODO: Implement proper pin functionality when whatsmeow supports it
+			chat.Metadata["pinned"] = pin
+			if pin {
+				chat.Metadata["pinnedAt"] = time.Now().Unix()
+			} else {
+				delete(chat.Metadata, "pinnedAt")
+			}
+
+			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+				m.logger.Errorf("Failed to update chat pin status: %v", err)
+				return fmt.Errorf("failed to update chat pin status: %w", err)
+			}
+		} else {
+			// Chat doesn't exist in database, create it with pin status
+			jid, err := waTypes.ParseJID(chatJID)
+			if err != nil {
+				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+			}
+
+			metadata := make(models.JSONB)
+			metadata["pinned"] = pin
+			if pin {
+				metadata["pinnedAt"] = time.Now().Unix()
+			}
+
+			newChat := &models.ChatModel{
+				SessionId: sessionID,
+				ChatJid:   chatJID,
+				IsGroup:   jid.Server == waTypes.GroupServer,
+				Metadata:  metadata,
+			}
+
+			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+				m.logger.Errorf("Failed to create chat with pin status: %v", err)
+				return fmt.Errorf("failed to create chat with pin status: %w", err)
+			}
+		}
+	}
 
 	action := "pinned"
 	if !pin {

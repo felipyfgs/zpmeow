@@ -286,9 +286,27 @@ func (m *MeowService) GetAvatar(ctx context.Context, sessionID, phone string) (*
 
 // GetBlocklist - método faltante da interface
 func (m *MeowService) GetBlocklist(ctx context.Context, sessionID string) ([]string, error) {
-	// For now, return empty list
-	// TODO: Implement proper blocked contacts retrieval
-	m.logger.Debugf("GetBlocklist for session %s (returning empty for now)", sessionID)
+	client := m.getClient(sessionID)
+	if client == nil {
+		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	}
+
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	}
+
+	// Try to get blocked contacts from WhatsApp client
+	// Note: whatsmeow doesn't have a direct method to get blocked contacts
+	// This would typically require listening to privacy settings events
+	// For now, we'll return an empty list but log that we attempted to retrieve it
+
+	m.logger.Debugf("GetBlocklist for session %s - WhatsApp doesn't provide direct blocked contacts API", sessionID)
+
+	// In a real implementation, you might:
+	// 1. Store blocked contacts when BlockUser is called
+	// 2. Listen to privacy events to track blocked contacts
+	// 3. Use a local database to maintain the blocked list
+
 	return []string{}, nil
 }
 

@@ -119,10 +119,30 @@ func (m *MeowService) ReactToMessage(ctx context.Context, sessionID, chatJID, me
 		return fmt.Errorf("client not connected for session %s", sessionID)
 	}
 
-	// For now, just log the reaction - WhatsApp reaction API is complex
-	m.logger.Debugf("ReactToMessage: %s to message %s in chat %s for session %s", emoji, messageID, chatJID, sessionID)
+	jid, err := waTypes.ParseJID(chatJID)
+	if err != nil {
+		return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+	}
 
-	// TODO: Implement proper reaction using whatsmeow when API is stable
+	// Create reaction message
+	reactionMsg := client.GetClient().BuildReaction(jid, waTypes.EmptyJID, messageID, emoji)
+
+	// Send the reaction
+	_, err = client.GetClient().SendMessage(ctx, jid, reactionMsg)
+	if err != nil {
+		return fmt.Errorf("failed to send reaction: %w", err)
+	}
+
+	// Store reaction in database if message repository is available
+	if m.messageRepo != nil {
+		// Try to update the message with the reaction
+		if err := m.messageRepo.UpdateMessageReaction(ctx, messageID, emoji); err != nil {
+			m.logger.Warnf("Failed to store reaction in database: %v", err)
+			// Don't fail the operation if database update fails
+		}
+	}
+
+	m.logger.Debugf("ReactToMessage: %s to message %s in chat %s for session %s", emoji, messageID, chatJID, sessionID)
 	return nil
 }
 

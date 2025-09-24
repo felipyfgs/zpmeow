@@ -296,3 +296,36 @@ func (r *MessageRepository) GetMessagesByTimeRange(ctx context.Context, chatID s
 
 	return messages, nil
 }
+
+// UpdateMessageReaction atualiza a reação de uma mensagem
+func (r *MessageRepository) UpdateMessageReaction(ctx context.Context, msgId, reaction string) error {
+	query := `
+		UPDATE "zpMessages" SET
+			reaction = $2,
+			"updatedAt" = NOW()
+		WHERE "msgId" = $1`
+
+	_, err := r.db.ExecContext(ctx, query, msgId, reaction)
+	if err != nil {
+		return fmt.Errorf("failed to update message reaction: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteMessagesByChatId deleta todas as mensagens de um chat
+func (r *MessageRepository) DeleteMessagesByChatId(ctx context.Context, chatId string) error {
+	query := `
+		UPDATE "zpMessages" SET
+			"isDeleted" = TRUE,
+			"deletedAt" = NOW(),
+			"updatedAt" = NOW()
+		WHERE "chatId" = $1`
+
+	_, err := r.db.ExecContext(ctx, query, chatId)
+	if err != nil {
+		return fmt.Errorf("failed to delete messages by chat id: %w", err)
+	}
+
+	return nil
+}
