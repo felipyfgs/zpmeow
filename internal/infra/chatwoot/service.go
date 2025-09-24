@@ -1204,36 +1204,26 @@ func (s *Service) sendToWhatsAppService(ctx context.Context, recipient string, d
 func (s *Service) processOutgoingMessage(ctx context.Context, payload *WebhookPayload) error {
 	s.logger.Info("📤 PROCESSING OUTGOING MESSAGE")
 
-	// Extract message fields from the Message map
-	messageType := ""
-	content := ""
-	contentType := ""
-	attachments := []interface{}{}
-
-	if payload.Message != nil {
-		if mt, ok := payload.Message["message_type"].(string); ok {
-			messageType = mt
-		}
-		if c, ok := payload.Message["content"].(string); ok {
-			content = c
-		}
-		if ct, ok := payload.Message["content_type"].(string); ok {
-			contentType = ct
-		}
-		if att, ok := payload.Message["attachments"].([]interface{}); ok {
-			attachments = att
-		}
+	// Extração de dados da mensagem
+	data, err := s.extractOutgoingMessageData(payload)
+	if err != nil {
+		return err
 	}
 
-	if payload.Conversation == nil || payload.Contact == nil {
-		s.logger.Error("❌ Missing conversation or contact in webhook payload",
-			"conversation_exists", payload.Conversation != nil,
-			"contact_exists", payload.Contact != nil)
-		return fmt.Errorf("missing conversation or contact in webhook payload")
+	// Validação dos dados
+	if err := s.validateOutgoingMessageData(data); err != nil {
+		return nil // Não é erro crítico, apenas skip
 	}
 
-	// Extrai número de telefone do contato
-	phoneNumber := s.extractPhoneFromContactMap(payload.Contact)
+	// Resolução do destinatário WhatsApp
+	recipient, err := s.resolveWhatsAppRecipient(ctx, data.PhoneNumber)
+	if err != nil {
+		return err
+	}
+
+	// Envio para WhatsApp
+	return s.sendToWhatsAppService(ctx, recipient, data)
+}
 
 	contactPhone := ""
 	contactIdentifier := ""
