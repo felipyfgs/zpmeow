@@ -5,6 +5,7 @@ Sistema de cache implementado com Redis para melhorar a performance da API zpmeo
 ## 🎯 **Funcionalidades**
 
 ### ✅ **Implementado**
+
 - **Cache de Sessões** - Sessões WhatsApp (TTL: 24h)
 - **Cache de QR Codes** - QR codes temporários (TTL: 60s)
 - **Cache de Credenciais** - Device JIDs (TTL: 6h)
@@ -26,6 +27,7 @@ Sistema de cache implementado com Redis para melhorar a performance da API zpmeo
 ```
 
 ### **Padrão Cache-Aside**
+
 1. **Cache Hit**: Dados retornados diretamente do cache
 2. **Cache Miss**: Busca no banco → Armazena no cache → Retorna dados
 3. **Cache Invalidation**: Remove dados do cache quando atualizados
@@ -43,6 +45,7 @@ internal/infra/cache/
 ## 🔧 **Configuração**
 
 ### **Variáveis de Ambiente (Opcionais)**
+
 ```bash
 # Configurações básicas (defaults funcionam bem)
 CACHE_ENABLED=true
@@ -52,6 +55,7 @@ REDIS_PASSWORD=
 ```
 
 ### **Configurações Avançadas (Código)**
+
 ```go
 // Configurações automáticas com defaults sensatos
 DefaultCacheConfig() CacheConfig {
@@ -71,14 +75,17 @@ DefaultCacheConfig() CacheConfig {
 ## 🚀 **Uso**
 
 ### **Automático**
+
 O cache funciona automaticamente quando habilitado. Não requer mudanças no código existente.
 
 ### **Health Check**
+
 ```bash
 curl http://localhost:8080/health
 ```
 
 **Resposta com cache:**
+
 ```json
 {
   "success": true,
@@ -93,11 +100,13 @@ curl http://localhost:8080/health
 ```
 
 ### **Métricas**
+
 ```bash
 curl http://localhost:8080/metrics
 ```
 
 **Resposta:**
+
 ```json
 {
   "success": true,
@@ -114,12 +123,14 @@ curl http://localhost:8080/metrics
 ## 📊 **Performance**
 
 ### **Benefícios Esperados**
+
 - **70-80% redução** nas consultas ao banco
 - **Respostas 5-10x mais rápidas** para dados em cache
 - **Menor carga** no PostgreSQL
 - **Melhor experiência** do usuário
 
 ### **TTL Otimizado**
+
 - **Sessions (24h)**: Dados raramente mudam
 - **QR Codes (60s)**: Dados temporários por natureza
 - **Credentials (6h)**: Balanceio entre performance e segurança
@@ -128,6 +139,7 @@ curl http://localhost:8080/metrics
 ## 🔄 **Estratégias de Cache**
 
 ### **1. Session Cache**
+
 ```go
 // Cache Hit - Retorna imediatamente
 session := cache.GetSession(sessionID)
@@ -138,12 +150,14 @@ cache.SetSession(sessionID, session, 24*time.Hour)
 ```
 
 ### **2. QR Code Cache**
+
 ```go
 // Cache temporário para QR codes
 cache.SetQRCode(sessionID, qrCode) // TTL: 60s
 ```
 
 ### **3. Credential Cache**
+
 ```go
 // Cache de credenciais WhatsApp
 cache.SetDeviceJID(sessionID, deviceJID, 6*time.Hour)
@@ -152,16 +166,19 @@ cache.SetDeviceJID(sessionID, deviceJID, 6*time.Hour)
 ## 🛡️ **Resiliência**
 
 ### **Fallback Automático**
+
 - **Redis offline**: Funciona normalmente (sem cache)
 - **Redis lento**: Timeout automático → fallback para banco
 - **Dados corrompidos**: Ignora cache → busca no banco
 
 ### **No-Op Service**
+
 Quando cache está desabilitado, usa implementação no-op que não faz nada.
 
 ## 🧪 **Testes**
 
 ### **Teste Manual**
+
 ```bash
 # 1. Inicie o Redis
 docker compose up -d redis
@@ -179,6 +196,7 @@ curl http://localhost:8080/metrics
 ```
 
 ### **Logs de Debug**
+
 ```bash
 # Ative logs de debug
 LOG_LEVEL=debug make run
@@ -191,6 +209,7 @@ LOG_LEVEL=debug make run
 ## 🔧 **Troubleshooting**
 
 ### **Redis não conecta**
+
 ```bash
 # Verifique se Redis está rodando
 docker compose ps redis
@@ -203,6 +222,7 @@ redis-cli ping
 ```
 
 ### **Cache não funciona**
+
 ```bash
 # Verifique configuração
 curl http://localhost:8080/health
@@ -212,6 +232,7 @@ tail -f log/app.log | grep cache
 ```
 
 ### **Performance não melhora**
+
 - Verifique se TTL não está muito baixo
 - Confirme que dados estão sendo cacheados
 - Monitore hit rate nas métricas
@@ -219,11 +240,13 @@ tail -f log/app.log | grep cache
 ## 📈 **Monitoramento**
 
 ### **Métricas Importantes**
+
 - **Hit Rate**: % de requests que usam cache
 - **Total Keys**: Número de itens em cache
 - **Connected**: Status da conexão Redis
 
 ### **Logs Estruturados**
+
 ```json
 {
   "level": "debug",
@@ -235,6 +258,7 @@ tail -f log/app.log | grep cache
 ## 🎯 **Próximos Passos**
 
 ### **Melhorias Futuras**
+
 - Cache de contatos WhatsApp
 - Cache de grupos
 - Métricas avançadas (hit rate, latência)
@@ -242,6 +266,7 @@ tail -f log/app.log | grep cache
 - Compressão de dados grandes
 
 ### **Otimizações**
+
 - Pipeline Redis para operações em lote
 - Clustering Redis para alta disponibilidade
 - Monitoramento com Prometheus/Grafana

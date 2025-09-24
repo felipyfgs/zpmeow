@@ -31,6 +31,7 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 ### ✅ **Funcionalidades Implementadas (90%)**
 
 #### 📨 **Mensagens** (16/18 endpoints - 89%)
+
 - ✅ **SendText** - Envio de mensagens de texto
 - ✅ **SendImage** - Envio de imagens (URL/Base64)
 - ✅ **SendVideo** - Envio de vídeos (URL/Base64)
@@ -49,6 +50,7 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 - ✅ **MarkAsRead** - Marcar mensagens como lidas
 
 #### 🔧 **Sessões** (12/12 endpoints - 100%)
+
 - ✅ **CreateSession** - Criar nova sessão
 - ✅ **GetSessions** - Listar todas as sessões
 - ✅ **GetSession** - Obter informações da sessão
@@ -60,6 +62,7 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 - ✅ **UpdateSessionWebhook** - Configurar webhooks
 
 #### 📰 **Newsletters** (15/15 endpoints - 100%)
+
 - ✅ **CreateNewsletter** - Criar newsletters 📝
 - ✅ **GetNewsletter** - Obter informações
 - ✅ **ListNewsletters** - Listar newsletters
@@ -76,6 +79,7 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 - ✅ **GetNewsletterMessageUpdates** - Atualizações de mensagens
 
 #### 👥 **Grupos**
+
 - ✅ **CreateGroup** - Criar grupos
 - ✅ **ListGroups** - Listar grupos
 - ✅ **GetGroupInfo** - Obter informações
@@ -87,6 +91,7 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 - ✅ **JoinGroupWithInvite** - Entrar via convite
 
 #### 👤 **Contatos & Chat**
+
 - ✅ **GetContacts** - Obter contatos
 - ✅ **CheckUser** - Verificar usuário
 - ✅ **SetPresence** - Definir presença (online, offline, typing)
@@ -96,11 +101,13 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 - ✅ **DownloadImage/Video/Audio/Document** - Download de mídias
 
 #### 🔒 **Privacidade & Segurança**
+
 - ✅ Configurações de privacidade
 - ✅ **Lista de bloqueados** 🚫
 - ✅ Atualizar configurações
 
 ### ❌ **Pendentes (10%)**
+
 - ⏳ **Community Operations** - Operações de comunidade (estrutura básica presente)
 - ⏳ **Advanced Media Processing** - Processamento avançado de mídia
 - ⏳ **Enhanced Error Handling** - Tratamento avançado de erros para algumas operações
@@ -110,18 +117,21 @@ zpmeow é uma API REST moderna e completa que permite integração total com o W
 ## 🛠️ **Tecnologias**
 
 ### **Core Stack**
+
 - **Backend**: Go 1.24.0 (85 arquivos Go)
 - **Web Framework**: [Fiber v2.52.9](https://gofiber.io/) (alta performance, Express-inspired)
 - **WhatsApp**: [whatsmeow](https://github.com/tulir/whatsmeow) (biblioteca oficial)
 - **Arquitetura**: Clean Architecture + Domain-Driven Design
 
 ### **Infrastructure**
+
 - **Database**: PostgreSQL 13 (banco principal)
 - **Cache**: Redis 6.2 (melhora performance em 70-80%)
 - **File Storage**: MinIO (S3-compatible, para arquivos de mídia)
 - **Database Admin**: DbGate (interface web para PostgreSQL)
 
 ### **Development & Operations**
+
 - **Containerização**: Docker + Docker Compose (multi-service)
 - **Documentação**: Swagger/OpenAPI (UI integrada em `/swagger/`)
 - **Logging**: Zerolog (logging estruturado)
@@ -175,6 +185,7 @@ go run cmd/server/main.go
 ## 📖 **Uso Rápido**
 
 ### 1. **Criar Sessão**
+
 ```bash
 curl -X POST http://localhost:8080/sessions/create \
   -H "Content-Type: application/json" \
@@ -183,6 +194,7 @@ curl -X POST http://localhost:8080/sessions/create \
 ```
 
 ### 2. **Conectar via QR Code**
+
 ```bash
 curl -X POST http://localhost:8080/sessions/minha-sessao/connect \
   -H "Authorization: Bearer your-api-key"
@@ -190,6 +202,7 @@ curl -X POST http://localhost:8080/sessions/minha-sessao/connect \
 ```
 
 ### 3. **Enviar Mensagem de Texto**
+
 ```bash
 curl -X POST http://localhost:8080/session/minha-sessao/message/send/text \
   -H "Content-Type: application/json" \
@@ -201,6 +214,7 @@ curl -X POST http://localhost:8080/session/minha-sessao/message/send/text \
 ```
 
 ### 4. **Reagir a Mensagem**
+
 ```bash
 curl -X POST http://localhost:8080/session/minha-sessao/message/react \
   -H "Content-Type: application/json" \
@@ -213,6 +227,7 @@ curl -X POST http://localhost:8080/session/minha-sessao/message/react \
 ```
 
 ### 5. **Criar Newsletter**
+
 ```bash
 curl -X POST http://localhost:8080/session/minha-sessao/newsletter \
   -H "Content-Type: application/json" \
@@ -224,6 +239,7 @@ curl -X POST http://localhost:8080/session/minha-sessao/newsletter \
 ```
 
 ### 6. **Verificar Status da Sessão**
+
 ```bash
 curl -X GET http://localhost:8080/sessions/minha-sessao/status \
   -H "Authorization: Bearer your-api-key"
@@ -243,17 +259,20 @@ curl -X GET http://localhost:8080/sessions/minha-sessao/status \
 ### **Endpoints Implementados e Funcionais**
 
 **📊 Estatísticas Gerais:**
+
 - **Total de arquivos Go**: 85 arquivos
 - **Handlers implementados**: 13 handlers principais
 - **Taxa de implementação**: 90% dos endpoints WhatsApp
 - **Arquitetura**: Clean Architecture com 4 camadas bem definidas
 
 **🔥 Funcionalidades Core (100% implementadas):**
+
 - ✅ **Sessões**: 12/12 endpoints (Create, Connect, Status, Pair, etc.)
 - ✅ **Newsletters**: 15/15 endpoints (Create, Subscribe, Send, Mute, etc.)
 - ✅ **Mensagens**: 16/18 endpoints (Text, Media, React, Edit, Delete, etc.)
 
 **⚡ Performance e Infraestrutura:**
+
 - ✅ **Fiber Framework**: Alta performance e baixa latência
 - ✅ **PostgreSQL + Redis**: Persistência robusta com cache
 - ✅ **MinIO**: Storage S3-compatible para arquivos
@@ -265,6 +284,7 @@ curl -X GET http://localhost:8080/sessions/minha-sessao/status \
 ## 🏗️ **Arquitetura do Sistema**
 
 ### **Clean Architecture + DDD**
+
 ```
 zpmeow/
 ├── cmd/server/           # 🚀 Entry Point (Fiber setup)
@@ -278,6 +298,7 @@ zpmeow/
 ```
 
 ### **Principais Benefícios da Arquitetura**
+
 - ✅ **Modularidade**: 85 arquivos organizados em camadas claras
 - ✅ **Testabilidade**: Cada camada pode ser testada independentemente
 - ✅ **Flexibilidade**: Fácil trocar implementações (banco, framework, etc.)
@@ -285,6 +306,7 @@ zpmeow/
 - ✅ **Escalabilidade**: Suporta crescimento horizontal e vertical
 
 ### **Performance e Confiabilidade**
+
 - 🚀 **Fiber Framework**: ~10x mais rápido que frameworks tradicionais
 - 💾 **PostgreSQL + Redis**: Persistência robusta com cache inteligente
 - 📦 **MinIO**: Storage distribuído para arquivos de mídia

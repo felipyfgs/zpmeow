@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Pre-commit hook for zpmeow project
+# Runs markdownlint on staged markdown files
+
+echo "Running pre-commit checks..."
+
+# Check if markdownlint is installed
+if ! command -v markdownlint &> /dev/null; then
+    echo "Warning: markdownlint not found. Install with: npm install -g markdownlint-cli"
+    exit 0
+fi
+
+# Get list of staged markdown files
+STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$')
+
+if [ -n "$STAGED_MD_FILES" ]; then
+    echo "Checking markdown files..."
+    
+    # Run markdownlint on staged files
+    if ! markdownlint $STAGED_MD_FILES; then
+        echo "❌ Markdown linting failed. Please fix the issues above."
+        echo "You can auto-fix some issues with: markdownlint --fix <file>"
+        exit 1
+    fi
+    
+    echo "✅ Markdown files passed linting"
+fi
+
+# Run Go build check
+echo "Running Go build check..."
+if ! make build; then
+    echo "❌ Go build failed. Please fix compilation errors."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

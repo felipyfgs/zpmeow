@@ -18,6 +18,7 @@ import (
 )
 
 type MessageHandler struct {
+	*BaseHandler
 	sessionService  *application.SessionApp
 	wmeowService    wmeow.WameowService
 	operationHelper *GroupOperationHelper
@@ -25,6 +26,7 @@ type MessageHandler struct {
 
 func NewMessageHandler(sessionService *application.SessionApp, wmeowService wmeow.WameowService) *MessageHandler {
 	return &MessageHandler{
+		BaseHandler:     NewBaseHandler("message-handler"),
 		sessionService:  sessionService,
 		wmeowService:    wmeowService,
 		operationHelper: NewGroupOperationHelper(),
@@ -43,6 +45,26 @@ func (h *MessageHandler) resolveSessionID(c *fiber.Ctx, sessionIDOrName string) 
 	}
 
 	return session.ID().String(), nil
+}
+
+// validateAndResolveSessionID validates sessionID from params and resolves it
+func (h *MessageHandler) validateAndResolveSessionID(c *fiber.Ctx) (string, error) {
+	sessionIDOrName := h.GetSessionIDFromParams(c)
+	if sessionIDOrName == "" {
+		return "", fmt.Errorf("session ID is required")
+	}
+
+	return h.resolveSessionID(c, sessionIDOrName)
+}
+
+// sendSessionErrorResponse sends standardized session error response
+func (h *MessageHandler) sendSessionErrorResponse(c *fiber.Ctx, err error) error {
+	return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
+		fiber.StatusBadRequest,
+		"MISSING_SESSION_ID",
+		"Session ID is required",
+		err.Error(),
+	))
 }
 
 func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
@@ -126,24 +148,9 @@ func (h *MessageHandler) decodeMediaData(dataURL string) ([]byte, error) {
 // @Failure 500 {object} dto.MessageResponse "Failed to send message"
 // @Router /session/{sessionId}/message/send/text [post]
 func (h *MessageHandler) SendText(c *fiber.Ctx) error {
-	sessionIDOrName := c.Params("sessionId")
-	if sessionIDOrName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.NewMessageErrorResponse(
-			fiber.StatusBadRequest,
-			"MISSING_SESSION_ID",
-			"Session ID is required",
-			"Session ID must be provided in the URL path",
-		))
-	}
-
-	sessionID, err := h.resolveSessionID(c, sessionIDOrName)
+	sessionID, err := h.validateAndResolveSessionID(c)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(dto.NewMessageErrorResponse(
-			fiber.StatusNotFound,
-			"SESSION_NOT_FOUND",
-			"Session not found",
-			err.Error(),
-		))
+		return h.sendSessionErrorResponse(c, err)
 	}
 
 	var req dto.SendTextRequest

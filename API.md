@@ -15,6 +15,7 @@
 ### 🧪 **Funcionalidades Implementadas - Setembro 2025**
 
 **✅ Mensagens (16/18 endpoints)**
+
 - ✅ **SendText** - Envio de mensagens de texto
 - ✅ **SendImage** - Envio de imagens (URL/Base64)
 - ✅ **SendVideo** - Envio de vídeos (URL/Base64)
@@ -33,6 +34,7 @@
 - ✅ **SendList** - Listas interativas (implementado)
 
 **✅ Sessões (12/12 endpoints)**
+
 - ✅ **CreateSession** - Criar nova sessão
 - ✅ **GetSessions** - Listar todas as sessões
 - ✅ **GetSession** - Obter informações da sessão
@@ -44,6 +46,7 @@
 - ✅ **UpdateSessionWebhook** - Configurar webhooks
 
 **✅ Newsletters (15/15 endpoints)**
+
 - ✅ **CreateNewsletter** - Criar newsletters
 - ✅ **GetNewsletter** - Obter informações
 - ✅ **ListNewsletters** - Listar newsletters
@@ -71,7 +74,9 @@
 ## 📱 zpmeow API Endpoints
 
 ### 🔐 Authentication
+
 All endpoints require authentication via the `Authorization` header:
+
 ```
 Authorization: Bearer your-super-secret-global-api-key-here
 ```
@@ -84,11 +89,13 @@ Authorization: Bearer your-super-secret-global-api-key-here
 ## 🔧 Session Management
 
 ### 📋 Create Session
+
 **POST** `/sessions/create`
 
 Create a new WhatsApp session.
 
 **Request Body:**
+
 ```json
 {
   "session_id": "my-session",
@@ -97,6 +104,7 @@ Create a new WhatsApp session.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -112,11 +120,13 @@ Create a new WhatsApp session.
 ```
 
 ### 📱 Connect Session
+
 **POST** `/sessions/{sessionId}/connect`
 
 Connect session and get QR code for WhatsApp pairing.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -131,11 +141,13 @@ Connect session and get QR code for WhatsApp pairing.
 ```
 
 ### 📊 Session Status
+
 **GET** `/sessions/{sessionId}/status`
 
 Get current session connection status.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -156,11 +168,13 @@ Get current session connection status.
 ### 🔥 **Advanced Message Actions**
 
 #### 👍 React to Message
+
 **POST** `/session/{sessionId}/message/react`
 
 React to a message with an emoji.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -170,6 +184,7 @@ React to a message with an emoji.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -185,11 +200,13 @@ React to a message with an emoji.
 ```
 
 #### ✏️ Edit Message
+
 **POST** `/session/{sessionId}/message/edit`
 
 Edit the text content of a previously sent message.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -199,11 +216,13 @@ Edit the text content of a previously sent message.
 ```
 
 #### 🗑️ Delete Message
+
 **POST** `/session/{sessionId}/message/delete`
 
 Delete a message for yourself or everyone.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -213,11 +232,13 @@ Delete a message for yourself or everyone.
 ```
 
 ### 📝 Send Text Message
+
 **POST** `/session/{sessionId}/message/send/text`
 
 Send a text message to a WhatsApp contact.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -226,6 +247,7 @@ Send a text message to a WhatsApp contact.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -251,11 +273,13 @@ Send a text message to a WhatsApp contact.
 ## 📰 Newsletter Endpoints
 
 ### 📝 Create Newsletter
+
 **POST** `/session/{sessionId}/newsletter`
 
 Create a new newsletter channel.
 
 **Request Body:**
+
 ```json
 {
   "name": "Tech Updates",
@@ -264,6 +288,7 @@ Create a new newsletter channel.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -278,11 +303,13 @@ Create a new newsletter channel.
 ```
 
 ### 📋 List Newsletters
+
 **GET** `/session/{sessionId}/newsletter/list`
 
 Get all subscribed newsletters.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -302,11 +329,13 @@ Get all subscribed newsletters.
 ```
 
 ### 🔇 Toggle Newsletter Mute
+
 **POST** `/session/{sessionId}/newsletter/{newsletterId}/mute`
 
 Mute or unmute a newsletter.
 
 **Request Body:**
+
 ```json
 {
   "mute": true
@@ -318,16 +347,19 @@ Mute or unmute a newsletter.
 ## 🖼️ Media Endpoints
 
 All media endpoints support **3 input formats**:
+
 - **Base64**: `"iVBORw0KGgoAAAANSUhEUgAA..."`
 - **Data URL**: `"data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAA..."`
 - **HTTP/HTTPS URL**: `"https://example.com/image.jpg"`
 
 ### 🖼️ Send Image
+
 **POST** `/session/{sessionId}/send/image`
 
 Send an image with optional caption.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -337,6 +369,7 @@ Send an image with optional caption.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -360,11 +393,13 @@ Send an image with optional caption.
 ```
 
 ### 🎵 Send Audio
+
 **POST** `/session/{sessionId}/send/audio`
 
 Send an audio file with optional PTT (Push-to-Talk) mode.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -374,12 +409,14 @@ Send an audio file with optional PTT (Push-to-Talk) mode.
 ```
 
 **Parameters:**
+
 - `audio` (string, required): Audio data in base64, data URL, or HTTP/HTTPS URL
 - `ptt` (boolean, optional): Enable Push-to-Talk mode (default: false)
   - When `true`: Audio is sent as voice message (PTT) with `audio/ogg; codecs=opus` MIME type
   - When `false`: Audio is sent as regular audio file with original MIME type
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -403,11 +440,13 @@ Send an audio file with optional PTT (Push-to-Talk) mode.
 ```
 
 ### 🎥 Send Video
+
 **POST** `/session/{sessionId}/send/video`
 
 Send a video file with optional caption.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -417,10 +456,12 @@ Send a video file with optional caption.
 ```
 
 **Parameters:**
+
 - `video` (string, required): Video data in base64, data URL, or HTTP/HTTPS URL
 - `caption` (string, optional): Video caption
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -445,11 +486,13 @@ Send a video file with optional caption.
 ```
 
 ### 📄 Send Document
+
 **POST** `/session/{sessionId}/send/document`
 
 Send a document file with filename.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -459,10 +502,12 @@ Send a document file with filename.
 ```
 
 **Parameters:**
+
 - `document` (string, required): Document data in base64, data URL, or HTTP/HTTPS URL
 - `filename` (string, required): Document filename with extension
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -486,11 +531,13 @@ Send a document file with filename.
 ```
 
 ### 🎭 Send Sticker
+
 **POST** `/session/{sessionId}/send/sticker`
 
 Send a sticker (WebP format recommended).
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -499,9 +546,11 @@ Send a sticker (WebP format recommended).
 ```
 
 **Parameters:**
+
 - `sticker` (string, required): Sticker data in base64, data URL, or HTTP/HTTPS URL
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -528,11 +577,13 @@ Send a sticker (WebP format recommended).
 ## 📍 Location Endpoint
 
 ### 📍 Send Location
+
 **POST** `/session/{sessionId}/send/location`
 
 Send a location with coordinates.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -544,6 +595,7 @@ Send a location with coordinates.
 ```
 
 **Parameters:**
+
 - `latitude` (number, required): Location latitude
 - `longitude` (number, required): Location longitude
 - `name` (string, optional): Location name
@@ -554,11 +606,13 @@ Send a location with coordinates.
 ## 👤 Contact Endpoint
 
 ### 👤 Send Contact
+
 **POST** `/session/{sessionId}/send/contact`
 
 Send a contact card.
 
 **Request Body:**
+
 ```json
 {
   "phone": "5511999999999",
@@ -574,6 +628,7 @@ Send a contact card.
 ## ⚠️ Error Responses
 
 ### 400 Bad Request
+
 ```json
 {
   "success": false,
@@ -596,6 +651,7 @@ Send a contact card.
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "success": false,
@@ -608,6 +664,7 @@ Send a contact card.
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "success": false,
@@ -624,6 +681,7 @@ Send a contact card.
 ## 📝 Notes
 
 ### Media Format Support
+
 - **Images**: JPEG, PNG, GIF, WebP
 - **Audio**: MP3, AAC, OGG, WAV
 - **Video**: MP4, AVI, MOV, WebM
@@ -631,6 +689,7 @@ Send a contact card.
 - **Stickers**: WebP (recommended), PNG, JPEG
 
 ### File Size Limits
+
 - **Images**: Up to 16MB
 - **Audio**: Up to 16MB
 - **Video**: Up to 64MB
@@ -638,12 +697,16 @@ Send a contact card.
 - **Stickers**: Up to 1MB
 
 ### Session ID
+
 The `sessionId` parameter can be:
+
 - **UUID**: `8e30680e-c96b-4361-bf00-4e62b17dae8f`
 - **Name**: `default`, `main`, `production`, etc.
 
 ### Phone Number Format
+
 Phone numbers should be in international format without `+`:
+
 - ✅ Correct: `5511999999999`
 - ❌ Incorrect: `+55 11 99999-9999`
 
@@ -654,6 +717,7 @@ Phone numbers should be in international format without `+`:
 ### cURL Examples
 
 **Create Session:**
+
 ```bash
 curl -X POST 'http://localhost:8080/sessions/create' \
   -H 'Authorization: YOUR_API_KEY' \
@@ -662,12 +726,14 @@ curl -X POST 'http://localhost:8080/sessions/create' \
 ```
 
 **Connect Session:**
+
 ```bash
 curl -X POST 'http://localhost:8080/sessions/my-session/connect' \
   -H 'Authorization: YOUR_API_KEY'
 ```
 
 **Send Text:**
+
 ```bash
 curl -X POST 'http://localhost:8080/session/my-session/message/send/text' \
   -H 'Authorization: YOUR_API_KEY' \
@@ -676,6 +742,7 @@ curl -X POST 'http://localhost:8080/session/my-session/message/send/text' \
 ```
 
 **Send Image from URL:**
+
 ```bash
 curl -X POST 'http://localhost:8080/session/my-session/message/send/image' \
   -H 'Authorization: YOUR_API_KEY' \
@@ -684,6 +751,7 @@ curl -X POST 'http://localhost:8080/session/my-session/message/send/image' \
 ```
 
 **React to Message:**
+
 ```bash
 curl -X POST 'http://localhost:8080/session/my-session/message/react' \
   -H 'Authorization: YOUR_API_KEY' \
@@ -692,6 +760,7 @@ curl -X POST 'http://localhost:8080/session/my-session/message/react' \
 ```
 
 **Create Newsletter:**
+
 ```bash
 curl -X POST 'http://localhost:8080/session/my-session/newsletter' \
   -H 'Authorization: YOUR_API_KEY' \
@@ -704,11 +773,13 @@ curl -X POST 'http://localhost:8080/session/my-session/newsletter' \
 ## 👥 Group Management
 
 ### 🏗️ Create Group
+
 **POST** `/session/{sessionId}/group/create`
 
 Create a new WhatsApp group.
 
 **Request Body:**
+
 ```json
 {
   "name": "Development Team",
@@ -717,11 +788,13 @@ Create a new WhatsApp group.
 ```
 
 ### 👤 Update Participants
+
 **POST** `/session/{sessionId}/group/participants/update`
 
 Add or remove group participants.
 
 **Request Body:**
+
 ```json
 {
   "group_jid": "120363123456789012@g.us",
@@ -731,11 +804,13 @@ Add or remove group participants.
 ```
 
 ### 🖼️ Set Group Photo
+
 **POST** `/session/{sessionId}/group/photo`
 
 Set group profile photo.
 
 **Request Body:**
+
 ```json
 {
   "group_jid": "120363123456789012@g.us",
@@ -748,11 +823,13 @@ Set group profile photo.
 ## 🔧 Additional Session Management
 
 ### 📋 List Sessions
+
 **GET** `/sessions/list`
 
 Get all available sessions.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -769,6 +846,7 @@ Get all available sessions.
 ```
 
 ### 🔌 Disconnect Session
+
 **POST** `/sessions/{id}/disconnect`
 
 Disconnect a session from WhatsApp.
@@ -792,6 +870,7 @@ Disconnect a session from WhatsApp.
 Configure webhooks to receive real-time events:
 
 ### 🎯 Set Webhook
+
 **POST** `/session/{sessionId}/webhook`
 
 ```json
@@ -804,6 +883,7 @@ Configure webhooks to receive real-time events:
 ### 📨 Webhook Events
 
 **Message Received:**
+
 ```json
 {
   "event": "message",
@@ -817,6 +897,7 @@ Configure webhooks to receive real-time events:
 ```
 
 **Message Receipt:**
+
 ```json
 {
   "event": "receipt",
@@ -834,16 +915,19 @@ Configure webhooks to receive real-time events:
 ## 🛡️ Best Practices
 
 ### 🔐 Security
+
 - Keep your API key secure and never expose it in client-side code
 - Use HTTPS in production environments
 - Implement rate limiting on your side
 
 ### 📈 Performance
+
 - Use URLs for large media files instead of base64 when possible
 - Implement proper error handling and retry logic
 - Monitor your webhook endpoints for reliability
 
 ### 📱 meow Compliance
+
 - Respect meow's terms of service
 - Don't send spam or unsolicited messages
 - Implement proper user consent mechanisms
@@ -856,6 +940,7 @@ Configure webhooks to receive real-time events:
 ### Common Issues
 
 **1. Session Not Connected**
+
 ```json
 {
   "error": {
@@ -864,9 +949,11 @@ Configure webhooks to receive real-time events:
   }
 }
 ```
+
 **Solution:** Connect the session using `/sessions/{id}/connect`
 
 **2. Invalid Phone Number**
+
 ```json
 {
   "error": {
@@ -875,9 +962,11 @@ Configure webhooks to receive real-time events:
   }
 }
 ```
+
 **Solution:** Use international format without `+`: `5511999999999`
 
 **3. Media Download Failed**
+
 ```json
 {
   "error": {
@@ -886,9 +975,11 @@ Configure webhooks to receive real-time events:
   }
 }
 ```
+
 **Solution:** Ensure the URL is accessible and returns the correct content type
 
 **4. File Too Large**
+
 ```json
 {
   "error": {
@@ -897,6 +988,7 @@ Configure webhooks to receive real-time events:
   }
 }
 ```
+
 **Solution:** Reduce file size or use a different format
 
 ---
@@ -904,7 +996,8 @@ Configure webhooks to receive real-time events:
 ## 📞 Support
 
 For technical support and questions:
-- 📧 Email: support@zpmeow.com
+
+- 📧 Email: <support@zpmeow.com>
 - 📚 Documentation: Built-in Swagger UI at `/swagger/`
 - 🐛 Issues: GitHub Issues
 - 💬 Community: Discord/Telegram

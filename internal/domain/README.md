@@ -5,6 +5,7 @@ Esta camada contém apenas **conceitos de domínio puros**, seguindo rigorosamen
 ## 🏛️ Princípios DDD Aplicados
 
 ### Core Concepts
+
 - **Entities**: Objetos com identidade única e ciclo de vida
 - **Value Objects**: Objetos imutáveis definidos por seus valores
 - **Aggregates**: Cluster de objetos tratados como uma unidade
@@ -14,6 +15,7 @@ Esta camada contém apenas **conceitos de domínio puros**, seguindo rigorosamen
 - **Domain Events**: Eventos que representam mudanças importantes no domínio
 
 ### Design Principles
+
 - **Independência de Infraestrutura**: Zero dependências externas
 - **Regras de Negócio Puras**: Apenas lógica de domínio
 - **Linguagem Ubíqua**: Termos do negócio WhatsApp API
@@ -40,15 +42,18 @@ internal/domain/
 ## 🎯 Bounded Context: Session Management
 
 ### Session Aggregate
+
 **Session** é o **Aggregate Root** principal do sistema:
 
 #### Core Responsibilities
+
 - **Gerenciar ciclo de vida**: Criação → Conexão → Desconexão → Exclusão
 - **Manter invariantes**: Estado consistente, transições válidas
 - **Encapsular regras de negócio**: Validações, autenticação, configuração
 - **Publicar eventos de domínio**: Mudanças de estado importantes
 
 #### Aggregate Composition
+
 - **Session Entity** (Aggregate Root)
   - Identity: SessionID (Value Object)
   - Core attributes: Name, Status, Timestamps
@@ -63,40 +68,48 @@ internal/domain/
   - WebhookConfig: Configuração de webhooks
 
 #### Domain Services
+
 - **SessionDomainService**: Regras que envolvem múltiplas entidades
 - **SessionIdentifierService**: Resolução e validação de identificadores
 
 #### Domain Events
+
 - SessionCreated, SessionConnected, SessionDisconnected
 - SessionAuthenticated, SessionConfigurationChanged
 
 ## 🔧 Componentes do Session
 
 ### `entity.go`
+
 - Entidade `Session` com comportamentos ricos
 - Enum `Status` com validações
 - Métodos de negócio (`CanConnect`, `IsAuthenticated`, etc.)
 
 ### `services.go`
+
 - Implementação de regras de negócio complexas
 - Validações que envolvem múltiplas entidades
 - Lógica que não pertence a uma entidade específica
 
 ### `repository.go`
+
 - Interface para persistência (implementada na infraestrutura)
 - Apenas operações necessárias para o domínio
 
 ### `valueobjects.go`
+
 - Objetos de valor imutáveis
 - `SessionName`, `ProxyURL` (SessionID movido para shared/types)
 - Validações intrínsecas aos value objects
 
 ### `identifier.go`
+
 - Serviço de identificação e resolução de sessões
 - Validação de formato UUID e nomes
 - Normalização de identificadores
 
 ### `errors.go`
+
 - Erros específicos do domínio
 - Representam violações de regras de negócio
 - Linguagem ubíqua nos nomes dos erros

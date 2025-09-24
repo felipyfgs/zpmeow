@@ -1,0 +1,13 @@
+{
+  "MD022": {
+    "lines_above": 1,
+    "lines_below": 1
+  },
+  "MD032": true,
+  "MD026": {
+    "punctuation": ".,;:!?"
+  },
+  "MD013": false,
+  "MD033": false,
+  "MD041": false
+}

@@ -24,6 +24,7 @@ zpmeow is a WhatsApp API built with **Clean Architecture** principles and **Go F
 The architecture's effectiveness has been validated through comprehensive implementation:
 
 ### ✅ **Implemented Components** (90% Success Rate)
+
 - **Message Layer**: 16/18 endpoints (SendText, SendMedia, ReactToMessage, EditMessage, DeleteMessage) ✅
 - **Session Management**: 12/12 endpoints (Create, Connect, Status, Pair, Disconnect) ✅
 - **Newsletter System**: 15/15 endpoints (Create, Subscribe, Send, Mute, React) ✅
@@ -32,6 +33,7 @@ The architecture's effectiveness has been validated through comprehensive implem
 - **Privacy & Security**: Blocklist, privacy settings, webhook management ✅
 
 ### 🔧 **Architecture Benefits Demonstrated**
+
 - **Modularity**: 85 Go files organized in clear layers and domains
 - **Flexibility**: Easy to add new handlers without affecting business logic
 - **Maintainability**: Clean separation allows independent development
@@ -163,18 +165,21 @@ zpmeow/
 ## 🛠️ **Technology Stack**
 
 ### **Core Technologies**
+
 - **Language**: Go 1.24.0
 - **Web Framework**: Fiber v2.52.9 (Express-inspired, high performance)
 - **WhatsApp Library**: whatsmeow (official Go library)
 - **Architecture**: Clean Architecture + Domain-Driven Design
 
 ### **Infrastructure**
+
 - **Database**: PostgreSQL 13 (primary storage)
 - **Cache**: Redis 6.2 (session caching, performance boost)
 - **File Storage**: MinIO (S3-compatible object storage)
 - **Database Admin**: DbGate (web-based database management)
 
 ### **Development & Operations**
+
 - **Containerization**: Docker + Docker Compose
 - **Documentation**: Swagger/OpenAPI (built-in UI)
 - **Logging**: Zerolog (structured logging)
@@ -184,9 +189,11 @@ zpmeow/
 ## 🏛️ Architecture Layers
 
 ### 1. Domain Layer (Core Business Logic)
+
 **Location**: `internal/domain/`
 
 **Responsibilities**:
+
 - ✅ Business entities with behavior
 - ✅ Repository and service interfaces
 - ✅ Business validation rules
@@ -194,6 +201,7 @@ zpmeow/
 - ❌ **NEVER** external dependencies
 
 **Key Files**:
+
 - `session.go`: Session entity with business methods
 - `repository.go`: Repository interface definition
 - `service.go`: Domain service interface
@@ -201,9 +209,11 @@ zpmeow/
 - `validation.go`: Business validation logic
 
 ### 2. Use Case Layer (Application Logic)
+
 **Location**: `internal/usecase/`
 
 **Responsibilities**:
+
 - ✅ Orchestrate business operations
 - ✅ Input/output DTOs
 - ✅ Coordinate domain and infrastructure
@@ -211,6 +221,7 @@ zpmeow/
 - ❌ **NEVER** complex business rules
 
 **Key Files**:
+
 - `create.go`, `get.go`, etc.: Specific use cases
 - `strategies.go`: Implementation strategies (messaging)
 - `service.go`: Application service coordination
@@ -218,9 +229,11 @@ zpmeow/
 - `common/`: Shared application utilities
 
 ### 3. Infrastructure Layer (External Concerns)
+
 **Location**: `internal/infra/`
 
 **Responsibilities**:
+
 - ✅ Repository implementations
 - ✅ External service clients
 - ✅ Database connections
@@ -228,6 +241,7 @@ zpmeow/
 - ❌ **NEVER** business logic
 
 **Key Components**:
+
 - `database/`: Database operations and models
 - `whatsmeow/`: meow client integration
 - `web/`: HTTP API implementation
@@ -236,9 +250,11 @@ zpmeow/
 - `logging/`: Logging implementation
 
 ### 4. Shared Layer (Cross-cutting Concerns)
+
 **Location**: `internal/shared/`
 
 **Responsibilities**:
+
 - ✅ Common types and utilities
 - ✅ Generic error handling
 - ✅ Design patterns
@@ -258,6 +274,7 @@ HTTP Request → Handler → UseCase → Domain ← Infrastructure
 ## 🎯 Key Design Decisions
 
 ### Centralized Configuration System
+
 - **Location**: `internal/config/`
 - **Structure**: Domain-separated configuration with interfaces
 - **Features**: Typed, validated, environment-aware configuration
@@ -269,23 +286,27 @@ HTTP Request → Handler → UseCase → Domain ← Infrastructure
   - ✅ No more hardcoded values scattered across codebase
 
 ### Database Abstraction
+
 - **Interface**: `internal/domain/session/repository.go`
 - **Implementation**: `internal/infra/database/repository/postgres.go`
 - **Cache Layer**: `internal/infra/cache/session.go` (Redis-backed)
 - **Benefit**: Easy to swap PostgreSQL for MySQL, MongoDB, etc.
 
 ### WhatsApp Integration
+
 - **Abstraction**: `internal/application/ports/interfaces.go` (WameowService)
 - **Implementation**: `internal/infra/wmeow/service.go`
 - **Benefit**: Can switch WhatsApp libraries without affecting business logic
 
 ### HTTP API (Fiber Framework)
+
 - **Handlers**: `internal/infra/http/handlers/` (13 handler files)
 - **DTOs**: `internal/infra/http/dto/`
 - **Routes**: `internal/infra/http/routes/router.go`
 - **Benefit**: API changes don't affect business logic, high performance
 
 ### Handler Organization
+
 - **message.go**: Message operations (16 methods: SendText, SendImage, SendVideo, SendAudio, SendDocument, SendSticker, SendContact, SendLocation, SendMedia, SendPoll, ReactToMessage, EditMessage, DeleteMessage, MarkAsRead, SendButton, SendList)
 - **session.go**: Session management (12 methods: CreateSession, GetSessions, GetSession, DeleteSession, ConnectSession, DisconnectSession, PairPhone, GetSessionStatus, UpdateSessionWebhook)
 - **newsletter.go**: Newsletter operations (15 methods: CreateNewsletter, GetNewsletter, ListNewsletters, Subscribe, Unsubscribe, SendMessage, GetMessages, ToggleMute, SendReaction, MarkViewed, UploadMedia, GetByInvite, SubscribeLiveUpdates, GetMessageUpdates)
@@ -298,16 +319,19 @@ HTTP Request → Handler → UseCase → Domain ← Infrastructure
 ## 📝 Naming Conventions
 
 ### Directories
+
 - **Unique names**: Avoid import conflicts
 - **Contextual**: `sessions/`, `messaging/`, `webhooks/`
 - **Technology-agnostic**: `database/` not `postgres/`
 
 ### Files
+
 - **Max 2 words**: `session.go`, `create.go`, `client.go`
 - **No underscores**: `sessions.go` ❌ `session_handler.go`
 - **Descriptive**: `repository.go`, `service.go`, `errors.go`
 
 ### Imports
+
 ```go
 // ✅ Clean imports (no aliases needed)
 import (
@@ -343,6 +367,7 @@ import (
 ## 🚧 Implementation Status
 
 ### ✅ Fully Implemented (90%)
+
 - **Session Management**: 12/12 endpoints (Create, Get, List, Connect, Disconnect, Pair, Status, Webhook)
 - **Message Operations**: 16/18 endpoints (Text, Image, Video, Audio, Document, Sticker, Contact, Location, Media, Poll, React, Edit, Delete, MarkAsRead, Button, List)
 - **Newsletter System**: 15/15 endpoints (Create, Get, List, Subscribe, Unsubscribe, Send, GetMessages, ToggleMute, React, MarkViewed, UploadMedia, GetByInvite, SubscribeLiveUpdates, GetMessageUpdates)
@@ -353,6 +378,7 @@ import (
 - **Infrastructure**: Docker Compose with PostgreSQL, Redis, MinIO, DbGate
 
 ### ✅ Well Implemented
+
 - **Group Operations**: Create, List, Join, Leave, UpdateParticipants, SetPhoto, GetInfo, InviteLink management
 - **Contact Operations**: GetContacts, CheckUser, SetPresence, GetUserInfo
 - **Chat Operations**: GetHistory, ListChats, SetPresence, Download operations (Image, Video, Audio, Document)
@@ -360,11 +386,13 @@ import (
 - **Webhook System**: Registration, notification, and management framework
 
 ### 🔄 Partially Implemented (10%)
+
 - **Community Operations**: Basic structure present, some endpoints pending
 - **Advanced Media Processing**: Some specialized media handling strategies
 - **Enhanced Error Handling**: Advanced retry mechanisms for some operations
 
 ### 🎯 Architecture Strengths
+
 - **Clean Separation**: Clear boundaries between layers
 - **High Performance**: Fiber framework with Redis caching
 - **Scalability**: Modular design supports easy horizontal scaling

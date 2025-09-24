@@ -96,6 +96,51 @@ func (h *BaseHandler) SendConflictResponse(c *fiber.Ctx, message string, err err
 	return h.SendErrorResponse(c, dto.StatusConflict, dto.ErrorCodeConflict, message, err)
 }
 
+// Common utility functions to reduce code duplication
+
+// GetSessionIDFromParams extracts sessionId parameter from request
+func (h *BaseHandler) GetSessionIDFromParams(c *fiber.Ctx) string {
+	return c.Params("sessionId")
+}
+
+// ValidateAndGetSessionID validates and returns sessionId from request params
+func (h *BaseHandler) ValidateAndGetSessionID(c *fiber.Ctx) (string, bool) {
+	sessionIDOrName := h.GetSessionIDFromParams(c)
+	if sessionIDOrName == "" {
+		if err := h.SendErrorResponse(c, fiber.StatusBadRequest, "SESSION_ID_REQUIRED", "Session ID or name is required", fmt.Errorf("missing session ID or name in path")); err != nil {
+			h.logger.Errorf("Failed to send error response: %v", err)
+		}
+		return "", false
+	}
+	return sessionIDOrName, true
+}
+
+// GetChatJIDFromParams extracts chatJid parameter from request
+func (h *BaseHandler) GetChatJIDFromParams(c *fiber.Ctx) string {
+	return c.Params("chatJid")
+}
+
+// GetMessageIDFromParams extracts messageId parameter from request
+func (h *BaseHandler) GetMessageIDFromParams(c *fiber.Ctx) string {
+	return c.Params("messageId")
+}
+
+// ParseIntParam parses integer parameter from request
+func (h *BaseHandler) ParseIntParam(c *fiber.Ctx, paramName string, defaultValue int) int {
+	paramStr := c.Query(paramName)
+	if paramStr == "" {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(paramStr)
+	if err != nil {
+		h.logger.Warnf("Invalid %s parameter: %s, using default: %d", paramName, paramStr, defaultValue)
+		return defaultValue
+	}
+
+	return value
+}
+
 func (h *HTTPHandler) SendValidationErrorResponse(c *fiber.Ctx, err error) error {
 	return h.BaseHandler.SendValidationErrorResponse(c, err)
 }

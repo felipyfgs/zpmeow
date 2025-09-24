@@ -48,42 +48,49 @@ internal/application/
 
 ## 🎯 Responsabilidades da Application Layer (Use Cases)
 
-### ✅ O que esta camada DEVE fazer:
+### ✅ O que esta camada DEVE fazer
 
 #### **1. Orquestração de Use Cases**
+
 - Implementar casos de uso específicos da aplicação
 - Coordenar chamadas entre Domain e Infrastructure via Ports
 - Gerenciar transações e fluxos de trabalho
 - Aplicar regras de aplicação (não de domínio)
 
 #### **2. Definição de Ports (Interfaces)**
+
 - Definir interfaces para Infrastructure (Dependency Inversion)
 - Abstrair dependências externas via contratos
 - Permitir injeção de dependências
 
 #### **3. Validação de Entrada**
+
 - Validar comandos e queries de entrada
 - Verificar parâmetros antes de chamar Domain
 - Sanitizar dados de entrada
 
 #### **4. Coordenação de Agregados**
+
 - Orquestrar operações que envolvem múltiplos agregados
 - Gerenciar consistência eventual
 - Publicar eventos de integração
 
-### ✅ Dependências Permitidas:
+### ✅ Dependências Permitidas
+
 - ✅ **Domain Layer**: `internal/domain/*` - Usar agregados e domain services
 - ✅ **Standard Library**: `context`, `fmt`, `errors`, etc.
 - ✅ **Próprias interfaces**: Ports definidos na própria Application
 
-### ❌ O que esta camada NÃO PODE fazer:
+### ❌ O que esta camada NÃO PODE fazer
 
 #### **1. Dependências Proibidas**
+
 - ❌ **Infrastructure**: `internal/infra/*` - Violação de dependência
 - ❌ **Interface Handlers**: `*` - Inversão incorreta
 - ❌ **Detalhes de Implementação**: Banco, HTTP, filesystem diretamente
 
 #### **2. Responsabilidades Proibidas**
+
 - ❌ **Regras de Negócio**: Lógica complexa de domínio (vai para Domain)
 - ❌ **Implementações Concretas**: Detalhes de infraestrutura
 - ❌ **Validações de Domínio**: Regras de negócio (delegado para Domain)
@@ -183,6 +190,7 @@ type MegaService interface {
 ### **🔄 COMO CORRIGIR VIOLAÇÕES**
 
 #### **Problema**: Application importando Infrastructure
+
 ```go
 // ❌ INCORRETO
 import "zpmeow/internal/infra/webhooks"
@@ -193,6 +201,7 @@ type WebhookApp struct {
 ```
 
 #### **Solução**: Definir interface na Application
+
 ```go
 // ✅ CORRETO
 type WebhookSender interface {
@@ -212,6 +221,7 @@ func NewWebhookApp(sender WebhookSender) *WebhookApp {
 ## 🎯 Benefícios da Arquitetura Correta
 
 ### ✅ **Vantagens da Application Layer**
+
 1. **Testabilidade**: Fácil de testar com mocks das interfaces
 2. **Flexibilidade**: Pode trocar implementações de Infrastructure
 3. **Reutilização**: Use cases podem ser reutilizados em diferentes interfaces
@@ -219,6 +229,7 @@ func NewWebhookApp(sender WebhookSender) *WebhookApp {
 5. **Evolução**: Fácil adicionar novos casos de uso
 
 ### 📋 **Convenções Go Idiomáticas**
+
 - **Interfaces pequenas**: Preferir interfaces específicas
 - **Dependency Injection**: Via construtores, não globals
 - **Error Handling**: Sempre retornar erros explícitos
@@ -270,6 +281,7 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 ## 🔍 Checklist de Conformidade
 
 ### ✅ **Dependências Corretas**
+
 - [ ] Apenas stdlib Go
 - [ ] Domain layer (`internal/domain/*`)
 - [ ] DTOs (`internal/interfaces/dto`)
@@ -277,11 +289,13 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 - [ ] Bibliotecas externas específicas
 
 ### ❌ **Dependências Proibidas**
+
 - [ ] Infrastructure (`internal/infra/*`)
 - [ ] Interface handlers (`*`)
 - [ ] Frameworks web diretamente
 
 ### 🏗️ **Padrões Implementados**
+
 - [ ] Dependency Inversion (interfaces definidas na Application)
 - [ ] Use Case pattern (um método por caso de uso)
 - [ ] Error handling idiomático
@@ -290,6 +304,7 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 - [ ] Conversão DTO ↔ Domain
 
 ### 📋 **Estrutura de Arquivos**
+
 - [ ] Um arquivo por domínio/contexto
 - [ ] Interfaces em arquivo separado
 - [ ] Conversores em arquivo separado
@@ -298,6 +313,7 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 ## 📊 Estatísticas da Implementação Atual
 
 ### **🎯 Cobertura Completa**
+
 - **28 arquivos** implementados (25 Go + 1 README)
 - **35+ Use Cases** implementados
 - **7 Bounded Contexts** cobertos
@@ -319,9 +335,11 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 ### **🔧 Ports (Interfaces) Implementados**
 
 #### **SessionRepository** (Domain Interface)
+
 - Create, GetByID, GetByName, GetByApiKey, GetAll, Update, Delete, Exists
 
 #### **WhatsAppService** (Application Interface)
+
 - **Session**: ConnectSession, DisconnectSession, GetSessionStatus, PairWithPhone, GetQRCode
 - **Messaging**: SendTextMessage, SendMediaMessage, SendLocationMessage, SendContactMessage
 - **Message Actions**: MarkAsRead, ReactToMessage, EditMessage, DeleteMessage
@@ -331,6 +349,7 @@ func (m *MessageApp) SendMessage(ctx context.Context, sessionID, chatJID, conten
 - **Newsletter**: CreateNewsletter, GetNewsletterInfo, SubscribeNewsletter, UnsubscribeNewsletter
 
 #### **EventPublisher & NotificationService** (Application Interfaces)
+
 - PublishBatch, SendWebhook, SendEmail
 
 ### **🏆 Padrões DDD Implementados**
@@ -362,6 +381,7 @@ A Application Layer está **100% COMPLETA** e em conformidade com Clean Architec
 **Status**: 🎯 **ARQUITETURA COMPLETA E PRODUCTION-READY**
 
 ### **🎉 Conquistas**
+
 - **Cobertura de 95%** dos endpoints dos handlers
 - **Zero violações** de dependência
 - **Arquitetura de referência** para DDD em Go

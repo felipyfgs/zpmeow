@@ -14,107 +14,30 @@ import (
 // ChatManager methods - gestão de conversas e chats
 
 func (m *MeowService) ListChats(ctx context.Context, sessionID, chatType string) ([]ports.ChatInfo, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	if err := m.validateClientConnection(sessionID); err != nil {
+		return nil, err
 	}
 
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
+	result, err := m.processChatsFromDatabase(ctx, sessionID, chatType)
+	if err != nil {
+		m.logger.Debugf("ListChats for session %s, chatType: %s (returning empty - database error)", sessionID, chatType)
+		return []ports.ChatInfo{}, nil
 	}
 
-	// Get chats from database if available
-	if m.chatRepo != nil {
-		chats, err := m.chatRepo.GetChatsBySessionID(ctx, sessionID, 100, 0)
-		if err != nil {
-			m.logger.Warnf("Failed to get chats from database: %v", err)
-		} else {
-			var result []ports.ChatInfo
-			for _, chat := range chats {
-				var lastMessageAt string
-				if chat.LastMsgAt != nil {
-					lastMessageAt = chat.LastMsgAt.Format(time.RFC3339)
-				}
-
-				chatInfo := ports.ChatInfo{
-					JID:           chat.ChatJid,
-					Name:          getStringValue(chat.ChatName),
-					IsGroup:       chat.IsGroup,
-					UnreadCount:   chat.UnreadCount,
-					LastMessageAt: lastMessageAt,
-					IsArchived:    chat.IsArchived,
-				}
-
-				// Filter by chat type if specified
-				if chatType != "" {
-					if chatType == "group" && !chat.IsGroup {
-						continue
-					}
-					if chatType == "individual" && chat.IsGroup {
-						continue
-					}
-				}
-
-				result = append(result, chatInfo)
-			}
-
-			m.logger.Debugf("ListChats for session %s, chatType: %s - found %d chats", sessionID, chatType, len(result))
-			return result, nil
-		}
-	}
-
-	// Fallback: return empty list if no database or error
-	m.logger.Debugf("ListChats for session %s, chatType: %s (returning empty - no database or error)", sessionID, chatType)
-	return []ports.ChatInfo{}, nil
+	m.logger.Debugf("ListChats for session %s, chatType: %s - found %d chats", sessionID, chatType, len(result))
+	return result, nil
 }
 
 func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID string, limit int, offset int) ([]ports.ChatMessage, error) {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return nil, fmt.Errorf("client not found for session %s", sessionID)
+	if err := m.validateClientConnection(sessionID); err != nil {
+		return nil, err
 	}
 
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("client not connected for session %s", sessionID)
-	}
-
-	if limit <= 0 {
-		limit = 50
-	}
-
-	// Get chat from database to get chatId
-	var chatId string
-	if m.chatRepo != nil {
-		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
-		if err != nil {
-			m.logger.Warnf("Failed to get chat from database: %v", err)
-		} else if chat != nil {
-			chatId = chat.ID
-		}
-	}
-
-	var result []ports.ChatMessage
-
-	// Get messages from database if available
-	if m.messageRepo != nil && chatId != "" {
-		messages, err := m.messageRepo.GetMessagesByChatId(ctx, chatId, limit, offset)
-		if err != nil {
-			m.logger.Warnf("Failed to get messages from database: %v", err)
-		} else {
-			for _, msg := range messages {
-				chatMessage := ports.ChatMessage{
-					ID:        msg.MsgId,
-					ChatJID:   chatId,
-					FromJID:   msg.SenderJid,
-					Text:      getStringValue(msg.Content),
-					Content:   getStringValue(msg.Content),
-					Type:      msg.MsgType,
-					Timestamp: msg.Timestamp,
-				}
-
-				result = append(result, chatMessage)
-			}
-		}
+	limit = m.normalizeLimit(limit)
+	chatId := m.getChatIdFromJID(ctx, sessionID, chatJID)
+	result, err := m.getMessagesFromDatabase(ctx, chatId, limit, offset)
+	if err != nil {
+		return nil, err
 	}
 
 	m.logger.Debugf("GetChatHistory: %s for session %s (limit: %d) - retrieved %d messages", chatJID, sessionID, limit, len(result))
@@ -122,55 +45,15 @@ func (m *MeowService) GetChatHistory(ctx context.Context, sessionID, chatJID str
 }
 
 func (m *MeowService) ArchiveChat(ctx context.Context, sessionID, chatJID string, archive bool) error {
-	client := m.getClient(sessionID)
-	if client == nil {
-		return fmt.Errorf("client not found for session %s", sessionID)
+	if err := m.validateClientConnection(sessionID); err != nil {
+		return err
 	}
 
-	if !client.IsConnected() {
-		return fmt.Errorf("client not connected for session %s", sessionID)
+	if m.chatRepo == nil {
+		return m.logArchiveAction(chatJID, archive, sessionID)
 	}
 
-	// Archive functionality - store archive status locally
-	if m.chatRepo != nil {
-		chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
-		if err != nil {
-			m.logger.Warnf("Failed to get chat from database: %v", err)
-		} else if chat != nil {
-			// Update archive status in database
-			chat.IsArchived = archive
-			if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
-				m.logger.Errorf("Failed to update chat archive status: %v", err)
-				return fmt.Errorf("failed to update chat archive status: %w", err)
-			}
-		} else {
-			// Chat doesn't exist in database, create it
-			jid, err := waTypes.ParseJID(chatJID)
-			if err != nil {
-				return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
-			}
-
-			newChat := &models.ChatModel{
-				SessionId:  sessionID,
-				ChatJid:    chatJID,
-				IsGroup:    jid.Server == waTypes.GroupServer,
-				IsArchived: archive,
-			}
-
-			if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
-				m.logger.Errorf("Failed to create chat with archive status: %v", err)
-				return fmt.Errorf("failed to create chat with archive status: %w", err)
-			}
-		}
-	}
-
-	action := "archived"
-	if !archive {
-		action = "unarchived"
-	}
-
-	m.logger.Debugf("Chat %s %s for session %s", chatJID, action, sessionID)
-	return nil
+	return m.updateChatArchiveStatus(ctx, sessionID, chatJID, archive)
 }
 
 func (m *MeowService) DeleteChat(ctx context.Context, sessionID, chatJID string) error {
@@ -465,4 +348,178 @@ func (m *MeowService) createChatWithPinStatus(ctx context.Context, sessionID, ch
 	}
 
 	return m.logPinAction(chatJID, pin, sessionID)
+}
+
+func (m *MeowService) logArchiveAction(chatJID string, archive bool, sessionID string) error {
+	action := "archived"
+	if !archive {
+		action = "unarchived"
+	}
+	m.logger.Debugf("Chat %s %s for session %s", chatJID, action, sessionID)
+	return nil
+}
+
+func (m *MeowService) updateChatArchiveStatus(ctx context.Context, sessionID, chatJID string, archive bool) error {
+	chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+	if err != nil {
+		m.logger.Warnf("Failed to get chat from database: %v", err)
+		return m.logArchiveAction(chatJID, archive, sessionID)
+	}
+
+	if chat != nil {
+		return m.updateExistingChatArchive(ctx, chat, archive, chatJID, sessionID)
+	}
+
+	return m.createChatWithArchiveStatus(ctx, sessionID, chatJID, archive)
+}
+
+func (m *MeowService) updateExistingChatArchive(ctx context.Context, chat *models.ChatModel, archive bool, chatJID, sessionID string) error {
+	chat.IsArchived = archive
+	if err := m.chatRepo.UpdateChat(ctx, chat); err != nil {
+		m.logger.Errorf("Failed to update chat archive status: %v", err)
+		return fmt.Errorf("failed to update chat archive status: %w", err)
+	}
+	return m.logArchiveAction(chatJID, archive, sessionID)
+}
+
+func (m *MeowService) createChatWithArchiveStatus(ctx context.Context, sessionID, chatJID string, archive bool) error {
+	jid, err := waTypes.ParseJID(chatJID)
+	if err != nil {
+		return fmt.Errorf("invalid chat JID %s: %w", chatJID, err)
+	}
+
+	newChat := &models.ChatModel{
+		SessionId:  sessionID,
+		ChatJid:    chatJID,
+		IsGroup:    jid.Server == waTypes.GroupServer,
+		IsArchived: archive,
+	}
+
+	if err := m.chatRepo.CreateChat(ctx, newChat); err != nil {
+		m.logger.Errorf("Failed to create chat with archive status: %v", err)
+		return fmt.Errorf("failed to create chat with archive status: %w", err)
+	}
+
+	return m.logArchiveAction(chatJID, archive, sessionID)
+}
+
+func (m *MeowService) getChatIdFromJID(ctx context.Context, sessionID, chatJID string) string {
+	if m.chatRepo == nil {
+		return ""
+	}
+
+	chat, err := m.chatRepo.GetChatBySessionAndJID(ctx, sessionID, chatJID)
+	if err != nil {
+		m.logger.Warnf("Failed to get chat from database: %v", err)
+		return ""
+	}
+
+	if chat != nil {
+		return chat.ID
+	}
+
+	return ""
+}
+
+func (m *MeowService) getMessagesFromDatabase(ctx context.Context, chatId string, limit, offset int) ([]ports.ChatMessage, error) {
+	if m.messageRepo == nil || chatId == "" {
+		return []ports.ChatMessage{}, nil
+	}
+
+	messages, err := m.messageRepo.GetMessagesByChatId(ctx, chatId, limit, offset)
+	if err != nil {
+		m.logger.Warnf("Failed to get messages from database: %v", err)
+		return []ports.ChatMessage{}, nil
+	}
+
+	return m.formatChatMessages(messages, chatId), nil
+}
+
+func (m *MeowService) formatChatMessages(messages []*models.MessageModel, chatId string) []ports.ChatMessage {
+	var result []ports.ChatMessage
+	for _, msg := range messages {
+		chatMessage := ports.ChatMessage{
+			ID:        msg.MsgId,
+			ChatJID:   chatId,
+			FromJID:   msg.SenderJid,
+			Text:      getStringValue(msg.Content),
+			Content:   getStringValue(msg.Content),
+			Type:      msg.MsgType,
+			Timestamp: msg.Timestamp,
+		}
+		result = append(result, chatMessage)
+	}
+	return result
+}
+
+func (m *MeowService) normalizeLimit(limit int) int {
+	if limit <= 0 {
+		return 50
+	}
+	return limit
+}
+
+func (m *MeowService) getChatsFromDatabase(ctx context.Context, sessionID string) ([]*models.ChatModel, error) {
+	if m.chatRepo == nil {
+		return nil, fmt.Errorf("chat repository not available")
+	}
+
+	chats, err := m.chatRepo.GetChatsBySessionID(ctx, sessionID, 100, 0)
+	if err != nil {
+		m.logger.Warnf("Failed to get chats from database: %v", err)
+		return nil, err
+	}
+
+	return chats, nil
+}
+
+func (m *MeowService) formatChatInfo(chat *models.ChatModel) ports.ChatInfo {
+	var lastMessageAt string
+	if chat.LastMsgAt != nil {
+		lastMessageAt = chat.LastMsgAt.Format(time.RFC3339)
+	}
+
+	return ports.ChatInfo{
+		JID:           chat.ChatJid,
+		Name:          getStringValue(chat.ChatName),
+		IsGroup:       chat.IsGroup,
+		UnreadCount:   chat.UnreadCount,
+		LastMessageAt: lastMessageAt,
+		IsArchived:    chat.IsArchived,
+	}
+}
+
+func (m *MeowService) shouldIncludeChat(chat *models.ChatModel, chatType string) bool {
+	if chatType == "" {
+		return true
+	}
+
+	if chatType == "group" && !chat.IsGroup {
+		return false
+	}
+
+	if chatType == "individual" && chat.IsGroup {
+		return false
+	}
+
+	return true
+}
+
+func (m *MeowService) processChatsFromDatabase(ctx context.Context, sessionID, chatType string) ([]ports.ChatInfo, error) {
+	chats, err := m.getChatsFromDatabase(ctx, sessionID)
+	if err != nil {
+		return []ports.ChatInfo{}, nil // Return empty on error, don't fail
+	}
+
+	var result []ports.ChatInfo
+	for _, chat := range chats {
+		if !m.shouldIncludeChat(chat, chatType) {
+			continue
+		}
+
+		chatInfo := m.formatChatInfo(chat)
+		result = append(result, chatInfo)
+	}
+
+	return result, nil
 }
