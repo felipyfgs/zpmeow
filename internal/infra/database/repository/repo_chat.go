@@ -92,8 +92,24 @@ func (r *ChatRepository) GetChatByID(ctx context.Context, id string) (*models.Ch
 // GetChatByChatwootConversationID - MÉTODO REMOVIDO (campos Chatwoot removidos)
 // Use relação separada para vincular chats com Chatwoot
 func (r *ChatRepository) GetChatByChatwootConversationID(ctx context.Context, conversationID string) (*models.ChatModel, error) {
-	// TODO: Implementar busca via tabela de relação zpCwMessages
-	return nil, fmt.Errorf("método removido - usar relação separada para Chatwoot")
+	// Query to find chat through Chatwoot messages relation
+	query := `
+		SELECT c.* FROM zpChats c
+		INNER JOIN zpCwMessages cm ON c.id = cm.chat_id
+		WHERE cm.conversation_id = $1
+		LIMIT 1
+	`
+
+	var chat models.ChatModel
+	err := r.db.GetContext(ctx, &chat, query, conversationID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get chat by chatwoot conversation ID: %w", err)
+	}
+
+	return &chat, nil
 }
 
 // UpdateChat atualiza um chat

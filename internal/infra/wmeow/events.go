@@ -539,8 +539,8 @@ func (ep *EventProcessor) saveMessageToDatabase(msg *events.Message) error {
 		SenderJid:   msg.Info.Sender.String(),
 		SenderName:  senderNamePtr,
 		IsFromMe:    msg.Info.IsFromMe,
-		IsForwarded: false, // TODO: Detectar mensagens encaminhadas
-		IsBroadcast: false, // TODO: Detectar mensagens de broadcast
+		IsForwarded: detectForwardedMessage(msg),
+		IsBroadcast: detectBroadcastMessage(msg),
 		Status:      status,
 		Timestamp:   msg.Info.Timestamp,
 		Metadata:    models.JSONB{},
@@ -1018,4 +1018,50 @@ func sendWebhook(url string, data interface{}) error {
 
 	logger.Infof("Successfully sent webhook to: %s", url)
 	return nil
+}
+
+// Helper functions for message detection
+func detectForwardedMessage(msg *events.Message) bool {
+	// Check if message has forwarded context
+	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.ContextInfo != nil {
+		return msg.Message.ExtendedTextMessage.ContextInfo.ForwardingScore != nil && *msg.Message.ExtendedTextMessage.ContextInfo.ForwardingScore > 0
+	}
+
+	// Check other message types for forwarding context
+	if msg.Message.ImageMessage != nil && msg.Message.ImageMessage.ContextInfo != nil {
+		return msg.Message.ImageMessage.ContextInfo.ForwardingScore != nil && *msg.Message.ImageMessage.ContextInfo.ForwardingScore > 0
+	}
+
+	if msg.Message.VideoMessage != nil && msg.Message.VideoMessage.ContextInfo != nil {
+		return msg.Message.VideoMessage.ContextInfo.ForwardingScore != nil && *msg.Message.VideoMessage.ContextInfo.ForwardingScore > 0
+	}
+
+	if msg.Message.AudioMessage != nil && msg.Message.AudioMessage.ContextInfo != nil {
+		return msg.Message.AudioMessage.ContextInfo.ForwardingScore != nil && *msg.Message.AudioMessage.ContextInfo.ForwardingScore > 0
+	}
+
+	if msg.Message.DocumentMessage != nil && msg.Message.DocumentMessage.ContextInfo != nil {
+		return msg.Message.DocumentMessage.ContextInfo.ForwardingScore != nil && *msg.Message.DocumentMessage.ContextInfo.ForwardingScore > 0
+	}
+
+	return false
+}
+
+func detectBroadcastMessage(msg *events.Message) bool {
+	// Check if message is from broadcast list
+	if msg.Info.Chat.Server == "broadcast" {
+		return true
+	}
+
+	// Check if sender is broadcast
+	if msg.Info.Sender.Server == "broadcast" {
+		return true
+	}
+
+	// Check for broadcast context in message
+	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.ContextInfo != nil {
+		return msg.Message.ExtendedTextMessage.ContextInfo.IsForwarded != nil && *msg.Message.ExtendedTextMessage.ContextInfo.IsForwarded
+	}
+
+	return false
 }

@@ -3,11 +3,6 @@ package wmeow
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"zpmeow/internal/domain/session"
-
-	"go.mau.fi/whatsmeow"
 )
 
 // SessionManager methods - gestão de sessões e conexões
@@ -99,7 +94,7 @@ func (m *MeowService) ConnectSession(ctx context.Context, sessionID string) (str
 
 	client := m.getOrCreateClient(sessionID)
 	if client == nil {
-		return fmt.Errorf("failed to create client for session %s", sessionID)
+		return "", fmt.Errorf("failed to create client for session %s", sessionID)
 	}
 
 	if err := client.Connect(); err != nil {
@@ -127,18 +122,18 @@ func (m *MeowService) DisconnectSession(ctx context.Context, sessionID string) e
 }
 
 // Internal helper for session configuration (different from service.go)
-func (m *MeowService) loadSessionConfigurationInternal(sessionID string) *sessionConfiguration {
-	config := &sessionConfiguration{}
+func (m *MeowService) loadSessionConfigurationInternal(sessionID string) map[string]interface{} {
+	config := map[string]interface{}{}
 
 	// Try to load session from repository
-	sess, err := m.sessions.GetByID(context.Background(), session.SessionID{})
+	sess, err := m.sessions.GetByID(context.Background(), sessionID)
 	if err != nil {
 		m.logger.Warnf("Failed to load session %s from repository: %v", sessionID, err)
 		return config
 	}
 
 	if sess != nil && sess.IsAuthenticated() {
-		config.deviceJID = sess.ID().Value()
+		config["deviceJID"] = sess.ID().Value()
 	}
 
 	return config

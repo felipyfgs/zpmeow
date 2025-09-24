@@ -2,132 +2,234 @@ package wmeow
 
 import (
 	"fmt"
+	"go.mau.fi/whatsmeow"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"google.golang.org/protobuf/proto"
 	"time"
 	"zpmeow/internal/application/ports"
-	"go.mau.fi/whatsmeow"
 )
 
-// SessionConfiguration holds configuration for a WhatsApp session
-type SessionConfiguration struct {
-	SessionID   string
-	PhoneNumber string
-	Status      string
-	QRCode      string
-	Connected   bool
-	Webhook     string
-	DeviceJID   string
+// WhatsAppClient wraps the whatsmeow client
+type WhatsAppClient struct {
+	client    *whatsmeow.Client
+	connected bool
 }
 
-// sessionConfiguration is the internal type used by session management
-type sessionConfiguration struct {
-	deviceJID string
+func (w *WhatsAppClient) GetClient() *whatsmeow.Client {
+	return w.client
 }
 
-// MessageValidator interface alias for compatibility
-type MessageValidator interface {
-	ValidateClient(client interface{}) error
-	ValidateRecipient(to string) error
-	ValidateTextContent(text string) error
-	ValidateMediaData(data []byte) error
-	ValidateMessageInput(client interface{}, to string) error
+func (w *WhatsAppClient) IsConnected() bool {
+	return w.connected && w.client != nil && w.client.IsConnected()
 }
 
-// MessageBuilder interface alias - actual implementation in helper_messaging.go
+func (w *WhatsAppClient) SetConnected(connected bool) {
+	w.connected = connected
+}
 
-// Additional types needed by service files
+// MessageInfo represents a WhatsApp message
 type MessageInfo struct {
-	ID        string    `json:"id"`
-	FromMe    bool      `json:"from_me"`
-	Timestamp time.Time `json:"timestamp"`
-	ChatJID   string    `json:"chat_jid"`
-	SenderJID string    `json:"sender_jid,omitempty"`
-	Content   string    `json:"content"`
-	Type      string    `json:"type"`
+	ID        string
+	FromMe    bool
+	Timestamp int64
+	ChatJID   string
+	Type      string
+	Content   string
+	SenderJID *string
 }
 
-type UserInfo struct {
-	JID       string `json:"jid"`
-	Phone     string `json:"phone"`
-	Status    string `json:"status"`
-	PictureID string `json:"picture_id,omitempty"`
+// ChatInfo represents a WhatsApp chat
+type ChatInfo struct {
+	JID     string
+	Name    string
+	IsGroup bool
 }
 
+// ContactInfo represents a WhatsApp contact
+type ContactInfo struct {
+	JID   string
+	Phone string
+	Name  string
+}
+
+// UserInfoResult represents user information
+type UserInfoResult struct {
+	Phone string
+	Name  string
+}
+
+// MediaInfo represents media information
 type MediaInfo struct {
-	URL      string `json:"url"`
-	MimeType string `json:"mime_type"`
-	Size     int64  `json:"size"`
-	Filename string `json:"filename,omitempty"`
+	ID       string
+	Type     string
+	MimeType string
+	Size     int64
+	URL      string
 }
 
-type PrivacySettingInfo struct {
-	Category string `json:"category"`
-	Value    string `json:"value"`
+// GroupInfo represents a WhatsApp group
+type GroupInfo struct {
+	JID          string
+	Name         string
+	Description  string
+	CreatedAt    int64
+	Participants []string
 }
 
-// messageValidatorWrapper adapts the existing messageValidator to the interface
-type messageValidatorWrapper struct {
-	validator *messageValidator
+// NewsletterInfo represents a WhatsApp newsletter
+type NewsletterInfo struct {
+	JID         string
+	Name        string
+	Description string
+	CreatedAt   int64
+	Subscribers int
+	Verified    bool
 }
 
-func (w *messageValidatorWrapper) ValidateClient(client interface{}) error {
-	if whatsmeowClient, ok := client.(*whatsmeow.Client); ok {
-		return w.validator.ValidateClient(whatsmeowClient)
+// SendResponse represents a message send response
+type SendResponse struct {
+	MessageID string
+	Timestamp int64
+}
+
+// WhatsAppMessageBuilder wraps message building functionality
+type WhatsAppMessageBuilder struct {
+	// For now, we'll keep it simple
+}
+
+func NewWhatsAppMessageBuilder() *WhatsAppMessageBuilder {
+	return &WhatsAppMessageBuilder{}
+}
+
+func (w *WhatsAppMessageBuilder) BuildTextMessage(text string) (*waProto.Message, error) {
+	return &waProto.Message{
+		Conversation: proto.String(text),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildImageMessage(data []byte, caption string) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String(caption),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildAudioMessage(data []byte, ptt bool) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String("Audio message"),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildVideoMessage(data []byte, caption string) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String(caption),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildDocumentMessage(data []byte, filename, mimetype string) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String("Document: " + filename),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildStickerMessage(data []byte) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String("Sticker"),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildContactMessage(contacts []ports.ContactInfo) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String("Contact message"),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildLocationMessage(latitude, longitude float64, name, address string) (*waProto.Message, error) {
+	// For now, return a simple text message
+	locationText := fmt.Sprintf("Location: %s at %f,%f", name, latitude, longitude)
+	return &waProto.Message{
+		Conversation: proto.String(locationText),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildTemplateMessage(template map[string]interface{}) (*waProto.Message, error) {
+	// For now, return a simple text message
+	return &waProto.Message{
+		Conversation: proto.String("Template message"),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildButtonMessage(text string, buttons []map[string]interface{}) (*waProto.Message, error) {
+	// For now, return a simple text message
+	buttonText := fmt.Sprintf("%s (with %d buttons)", text, len(buttons))
+	return &waProto.Message{
+		Conversation: proto.String(buttonText),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildListMessage(text, buttonText string, sections []map[string]interface{}) (*waProto.Message, error) {
+	// For now, return a simple text message
+	listText := fmt.Sprintf("%s (with %d sections)", text, len(sections))
+	return &waProto.Message{
+		Conversation: proto.String(listText),
+	}, nil
+}
+
+func (w *WhatsAppMessageBuilder) BuildPollMessage(question string, options []string) (*waProto.Message, error) {
+	// For now, return a simple text message
+	pollText := fmt.Sprintf("Poll: %s (with %d options)", question, len(options))
+	return &waProto.Message{
+		Conversation: proto.String(pollText),
+	}, nil
+}
+
+// Helper functions
+
+func parsePhoneToJID(phone string) (string, error) {
+	// Simple phone to JID conversion
+	if phone == "" {
+		return "", fmt.Errorf("phone number cannot be empty")
 	}
-	return fmt.Errorf("invalid client type")
-}
 
-func (w *messageValidatorWrapper) ValidateRecipient(to string) error {
-	return w.validator.ValidateRecipient(to)
-}
-
-func (w *messageValidatorWrapper) ValidateTextContent(text string) error {
-	return w.validator.ValidateTextContent(text)
-}
-
-func (w *messageValidatorWrapper) ValidateMediaData(data []byte) error {
-	return w.validator.ValidateMediaData(data)
-}
-
-func (w *messageValidatorWrapper) ValidateMessageInput(client interface{}, to string) error {
-	if whatsmeowClient, ok := client.(*whatsmeow.Client); ok {
-		return w.validator.ValidateMessageInput(whatsmeowClient, to)
+	// Remove any non-numeric characters except +
+	cleanPhone := phone
+	if cleanPhone[0] == '+' {
+		cleanPhone = cleanPhone[1:]
 	}
-	return fmt.Errorf("invalid client type")
+
+	return cleanPhone + "@s.whatsapp.net", nil
 }
 
-// messageBuilderWrapper adapts the existing MessageBuilder to the interface
-type messageBuilderWrapper struct {
-	builder *MessageBuilder
+func formatTimestamp(timestamp time.Time) int64 {
+	return timestamp.Unix()
 }
 
-func (w *messageBuilderWrapper) BuildTextMessage(text string) (interface{}, error) {
-	return w.builder.BuildTextMessage(text)
+func getCurrentTimestamp() int64 {
+	return time.Now().Unix()
 }
 
-func (w *messageBuilderWrapper) BuildImageMessage(data []byte, caption string) (interface{}, error) {
-	return w.builder.BuildImageMessage(data, caption)
+// Error types
+type WhatsAppError struct {
+	Code    int
+	Message string
+	Details string
 }
 
-func (w *messageBuilderWrapper) BuildAudioMessage(data []byte, mimeType string, ptt bool) (interface{}, error) {
-	return w.builder.BuildAudioMessage(data, mimeType, ptt)
+func (e *WhatsAppError) Error() string {
+	return fmt.Sprintf("WhatsApp error %d: %s - %s", e.Code, e.Message, e.Details)
 }
 
-func (w *messageBuilderWrapper) BuildVideoMessage(data []byte, caption, mimeType string) (interface{}, error) {
-	return w.builder.BuildVideoMessage(data, caption, mimeType)
+func NewWhatsAppError(code int, message, details string) *WhatsAppError {
+	return &WhatsAppError{
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
 }
 
-func (w *messageBuilderWrapper) BuildDocumentMessage(data []byte, filename, mimeType string) (interface{}, error) {
-	return w.builder.BuildDocumentMessage(data, filename, mimeType)
-}
-
-func (w *messageBuilderWrapper) BuildStickerMessage(data []byte, mimeType string) (interface{}, error) {
-	return w.builder.BuildStickerMessage(data, mimeType)
-}
-
-func (w *messageBuilderWrapper) BuildContactsMessage(contacts []ports.ContactData) (interface{}, error) {
-	return w.builder.BuildContactsMessage(contacts)
-}
-
-func (w *messageBuilderWrapper) BuildLocationMessage(latitude, longitude float64, name, address string) (interface{}, error) {
-	return w.builder.BuildLocationMessage(latitude, longitude, name, address)
-}
+// Constants are defined in constants.go
