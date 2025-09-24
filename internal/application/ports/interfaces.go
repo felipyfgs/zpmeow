@@ -325,6 +325,8 @@ type IDGenerator interface {
 type ChatwootService interface {
 	ProcessWebhook(ctx context.Context, sessionID string, payload []byte) error
 	SendMessageToWhatsApp(ctx context.Context, sessionID, phone, content string) error
+	ProcessWhatsAppMessage(ctx context.Context, msg *WhatsAppMessage) error
+	SetWhatsAppService(service WhatsAppService)
 }
 
 // ChatwootClient defines the interface for Chatwoot API operations
@@ -333,34 +335,150 @@ type ChatwootClient interface {
 	CreateContact(ctx context.Context, request ContactCreateRequest) (*ContactResponse, error)
 	GetContact(ctx context.Context, contactID int) (*ContactResponse, error)
 	SearchContacts(ctx context.Context, query string) ([]*ContactResponse, error)
+	FilterContacts(ctx context.Context, query string) ([]*ContactResponse, error)
 
 	// Conversation operations
 	CreateConversation(ctx context.Context, request ConversationCreateRequest) (*ConversationResponse, error)
 	GetConversation(ctx context.Context, conversationID int) (*ConversationResponse, error)
+	ListContactConversations(ctx context.Context, contactID int) ([]*ConversationResponse, error)
 
 	// Message operations
-	SendMessage(ctx context.Context, conversationID int, request MessageCreateRequest) (*MessageResponse, error)
-	SendAttachment(ctx context.Context, conversationID int, file []byte, fileName, mimeType string) (*MessageResponse, error)
+	CreateMessage(ctx context.Context, conversationID int, request MessageCreateRequest) (*MessageResponse, error)
+	CreateMessageWithAttachment(ctx context.Context, conversationID int, content, messageType string, attachment []byte, filename, sourceID string) (*MessageResponse, error)
 
 	// Inbox operations
-	GetInboxes(ctx context.Context) ([]*InboxResponse, error)
+	CreateInbox(ctx context.Context, request InboxCreateRequest) (*InboxResponse, error)
+	ListInboxes(ctx context.Context) ([]*InboxResponse, error)
 	GetInbox(ctx context.Context, inboxID int) (*InboxResponse, error)
 }
 
-// Chatwoot API request/response types
-type ContactCreateRequest struct {
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-	Email       string `json:"email,omitempty"`
-	Identifier  string `json:"identifier,omitempty"`
+// ChatwootContactManager manages contact operations
+type ChatwootContactManager interface {
+	FindOrCreateContact(ctx context.Context, phoneNumber, name, avatarURL string, isGroup bool, inboxID int) (*ContactResponse, error)
+	SearchExistingContact(ctx context.Context, phoneNumber string, isGroup bool) (*ContactResponse, error)
+	CreateNewContact(ctx context.Context, phoneNumber, name, avatarURL string, isGroup bool, inboxID int) (*ContactResponse, error)
+	ValidateContact(contact *ContactResponse) error
 }
 
-type ContactResponse struct {
-	ID          int    `json:"id"`
+// ChatwootMessageProcessor handles message processing between WhatsApp and Chatwoot
+type ChatwootMessageProcessor interface {
+	ProcessIncomingMessage(ctx context.Context, msg *WhatsAppMessage, conversationID int) (*MessageResponse, error)
+	ProcessOutgoingMessage(ctx context.Context, payload *WebhookPayload) error
+	FormatMessageContent(msg *WhatsAppMessage) string
+	GetContentType(msg *WhatsAppMessage) string
+	HasMediaContent(msg *WhatsAppMessage) bool
+}
+
+// ChatwootConversationManager manages conversation operations
+type ChatwootConversationManager interface {
+	GetOrCreateConversation(ctx context.Context, contactID int, inboxID int) (*ConversationResponse, error)
+	FindActiveConversation(ctx context.Context, contactID int, inboxID int) (*ConversationResponse, error)
+	CreateNewConversation(ctx context.Context, contactID int, inboxID int) (*ConversationResponse, error)
+	MapConversation(ctx context.Context, chatJID string, contactID int, conversationID int) error
+}
+
+// ChatwootInboxManager manages inbox operations
+type ChatwootInboxManager interface {
+	InitializeInbox(ctx context.Context, config *ChatwootConfig) (*InboxResponse, error)
+	FindInboxByName(ctx context.Context, name string) (*InboxResponse, error)
+	CreateInbox(ctx context.Context, name, webhookURL string) (*InboxResponse, error)
+	ValidateInbox(ctx context.Context, inbox *InboxResponse) error
+	GenerateWebhookURL(sessionID string) string
+}
+
+// ChatwootCacheManager manages caching for Chatwoot operations
+type ChatwootCacheManager interface {
+	// Contact cache
+	GetContact(phoneNumber string) (*ContactResponse, bool)
+	SetContact(phoneNumber string, contact *ContactResponse, ttl time.Duration)
+	DeleteContact(phoneNumber string)
+
+	// Conversation cache
+	GetConversation(contactID int) (*ConversationResponse, bool)
+	SetConversation(contactID int, conversation *ConversationResponse, ttl time.Duration)
+	DeleteConversation(contactID int)
+
+	// General cache operations
+	Clear()
+	Size() int
+	Close()
+}
+
+// ChatwootErrorHandler handles error processing and logging
+type ChatwootErrorHandler interface {
+	HandleContactError(err error, phoneNumber string) error
+	HandleMessageError(err error, messageID string) error
+	HandleConversationError(err error, conversationID int) error
+	WrapError(err error, operation string, context map[string]interface{}) error
+}
+
+// ChatwootLogger provides structured logging for Chatwoot operations
+type ChatwootLogger interface {
+	LogContactOperation(operation string, phoneNumber string, success bool, details map[string]interface{})
+	LogMessageOperation(operation string, messageID string, success bool, details map[string]interface{})
+	LogConversationOperation(operation string, conversationID int, success bool, details map[string]interface{})
+	LogAPICall(method, endpoint string, statusCode int, duration time.Duration)
+}
+
+// ChatwootValidator validates data for Chatwoot operations
+type ChatwootValidator interface {
+	ValidatePhoneNumber(phoneNumber string) error
+	ValidateContactData(name, phoneNumber string, isGroup bool) error
+	ValidateMessageContent(content string, contentType string) error
+	ValidateWebhookPayload(payload []byte) error
+	ValidateConversationRequest(req *ConversationCreateRequest) error
+	ValidateMessageRequest(req *MessageCreateRequest) error
+	ValidateInboxRequest(req *InboxCreateRequest) error
+	ValidateURL(url string) error
+	ValidateToken(token string) error
+	ValidateAccountID(accountID int) error
+}
+
+// Chatwoot data types for interfaces
+type WhatsAppMessage struct {
+	ID        string                 `json:"id"`
+	From      string                 `json:"from"`
+	To        string                 `json:"to"`
+	Body      string                 `json:"body"`
+	Type      string                 `json:"type"`
+	Timestamp float64                `json:"timestamp"`
+	FromMe    bool                   `json:"from_me"`
+	PushName  string                 `json:"push_name"`
+	ChatName  string                 `json:"chat_name"`
+	Caption   string                 `json:"caption"`
+	FileName  string                 `json:"file_name"`
+	MediaURL  string                 `json:"media_url"`
+	MimeType  string                 `json:"mime_type"`
+	Data      map[string]interface{} `json:"data"`
+}
+
+type WebhookPayload struct {
+	Event        string                 `json:"event"`
+	Account      map[string]interface{} `json:"account"`
+	Conversation map[string]interface{} `json:"conversation"`
+	Message      map[string]interface{} `json:"message"`
+	Contact      map[string]interface{} `json:"contact"`
+	Inbox        map[string]interface{} `json:"inbox"`
+}
+
+type ChatwootConfig struct {
+	IsActive   bool     `json:"is_active"`
+	URL        string   `json:"url"`
+	Token      string   `json:"token"`
+	AccountID  int      `json:"account_id"`
+	NameInbox  string   `json:"name_inbox"`
+	AutoCreate bool     `json:"auto_create"`
+	IgnoreJids []string `json:"ignore_jids"`
+}
+
+// Request types
+type ContactCreateRequest struct {
 	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-	Email       string `json:"email"`
-	Identifier  string `json:"identifier"`
+	PhoneNumber string `json:"phone_number,omitempty"`
+	Email       string `json:"email,omitempty"`
+	Identifier  string `json:"identifier,omitempty"`
+	InboxID     int    `json:"inbox_id"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
 }
 
 type ConversationCreateRequest struct {
@@ -369,17 +487,35 @@ type ConversationCreateRequest struct {
 	Status    string `json:"status,omitempty"`
 }
 
-type ConversationResponse struct {
-	ID        int    `json:"id"`
-	ContactID int    `json:"contact_id"`
-	InboxID   int    `json:"inbox_id"`
-	Status    string `json:"status"`
-}
-
 type MessageCreateRequest struct {
 	Content     string `json:"content"`
 	MessageType int    `json:"message_type"`
-	Private     bool   `json:"private,omitempty"`
+	SourceID    string `json:"source_id,omitempty"`
+}
+
+type InboxCreateRequest struct {
+	Name    string                 `json:"name"`
+	Channel map[string]interface{} `json:"channel"`
+}
+
+// Response types
+type ContactResponse struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email"`
+	Identifier  string `json:"identifier"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
+
+type ConversationResponse struct {
+	ID        int    `json:"id"`
+	InboxID   int    `json:"inbox_id"`
+	Status    string `json:"status"`
+	ContactID int    `json:"contact_id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type MessageResponse struct {
@@ -387,12 +523,17 @@ type MessageResponse struct {
 	Content        string `json:"content"`
 	MessageType    int    `json:"message_type"`
 	ConversationID int    `json:"conversation_id"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
 }
 
 type InboxResponse struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	ChannelType string `json:"channel_type"`
+	WebhookURL  string `json:"webhook_url"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type ContactInfo struct {

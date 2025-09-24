@@ -1,5 +1,14 @@
 package chatwoot
 
+import "time"
+
+// Cache TTL constants
+const (
+	DefaultCacheTTL      = 5 * time.Minute
+	ContactCacheTTL      = 10 * time.Minute
+	ConversationCacheTTL = 15 * time.Minute
+)
+
 // Cache keys
 const (
 	CacheKeyContact      = "contact:%s"
@@ -45,11 +54,6 @@ const (
 const (
 	DefaultHTTPTimeout     = 30 // seconds
 	DefaultDownloadTimeout = 60 // seconds
-)
-
-// Cache TTL
-const (
-	DefaultCacheTTL = 300 // 5 minutes in seconds
 )
 
 // Chatwoot API endpoints

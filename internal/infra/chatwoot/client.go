@@ -235,40 +235,27 @@ func (c *Client) CreateContact(ctx context.Context, req ContactCreateRequest) (*
 
 	fmt.Printf("📋 [CHATWOOT API DEBUG] RAW RESPONSE BODY FOR CONTACT CREATION: %s\n", string(respBody))
 
-	// Primeiro, vamos tentar decodificar diretamente como Contact
-	var contact Contact
-	if err := json.Unmarshal(respBody, &contact); err != nil {
-		fmt.Printf("⚠️ [CHATWOOT API DEBUG] Direct Contact parsing failed: %v\n", err)
-
-		// Se falhar, tenta com APIResponse
-		var apiResp APIResponse
-		if err2 := json.Unmarshal(respBody, &apiResp); err2 != nil {
-			fmt.Printf("❌ [CHATWOOT API DEBUG] Both parsing methods failed: %v, %v\n", err, err2)
-			return nil, fmt.Errorf("failed to parse response as Contact or APIResponse: %v, %v", err, err2)
-		}
-
-		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse structure: %+v\n", apiResp)
-		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse payload type: %T\n", apiResp.Payload)
-		fmt.Printf("🔄 [CHATWOOT API DEBUG] APIResponse payload value: %+v\n", apiResp.Payload)
-
-		// Converte o payload para Contact
-		contactData, err := json.Marshal(apiResp.Payload)
-		if err != nil {
-			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to marshal payload: %v\n", err)
-			return nil, fmt.Errorf("failed to marshal contact data: %w", err)
-		}
-
-		fmt.Printf("🔄 [CHATWOOT API DEBUG] Contact data JSON from payload: %s\n", string(contactData))
-
-		if err := json.Unmarshal(contactData, &contact); err != nil {
-			fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to unmarshal contact from payload: %v\n", err)
-			return nil, fmt.Errorf("failed to unmarshal contact: %w", err)
-		}
-
-		fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully parsed contact from APIResponse payload\n")
-	} else {
-		fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully parsed contact directly from response\n")
+	// Parse the response structure which has nested contact data
+	var responseData struct {
+		Payload struct {
+			Contact Contact `json:"contact"`
+		} `json:"payload"`
 	}
+
+	if err := json.Unmarshal(respBody, &responseData); err != nil {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Failed to parse contact creation response: %v\n", err)
+		return nil, fmt.Errorf("failed to parse contact creation response: %w", err)
+	}
+
+	contact := responseData.Payload.Contact
+
+	// Validate that the contact was parsed correctly
+	if contact.ID == 0 {
+		fmt.Printf("❌ [CHATWOOT API DEBUG] Contact ID is 0, parsing may have failed\n")
+		return nil, fmt.Errorf("contact creation response parsing failed: contact ID is 0")
+	}
+
+	fmt.Printf("✅ [CHATWOOT API DEBUG] Successfully parsed contact directly from response\n")
 
 	fmt.Printf("✅ [CHATWOOT API DEBUG] Created contact - ID: %d, Name: %s, Phone: %s\n", contact.ID, contact.Name, contact.PhoneNumber)
 	return &contact, nil

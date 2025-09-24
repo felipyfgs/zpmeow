@@ -777,100 +777,6 @@ func (s *Service) getPhoneNumberVariations(phoneNumber string) []string {
 	return numbers
 }
 
-// findOrCreateConversation encontra ou cria uma conversa
-func (s *Service) findOrCreateConversation(ctx context.Context, contact *Contact) (*Conversation, error) {
-	cacheKeyBuilder := NewCacheKeyBuilder()
-	cacheKey := cacheKeyBuilder.ConversationKey(contact.ID, s.inbox.ID)
-
-	// Verifica cache primeiro
-	if cached, exists := s.getFromCache(cacheKey); exists {
-		if conversation, ok := cached.(*Conversation); ok {
-			return conversation, nil
-		}
-	}
-
-	// Busca conversas existentes do contato
-	s.logger.Info("🔍 [CHATWOOT SERVICE DEBUG] Searching conversations for contact", "contactID", contact.ID)
-	conversations, err := s.client.ListContactConversations(ctx, contact.ID)
-	if err != nil {
-		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] Failed to list contact conversations", "error", err, "contactID", contact.ID)
-	}
-
-	// 🎯 ESTRATÉGIA EVOLUTION API MELHORADA: Procura conversa com última atividade
-	var bestConversation *Conversation
-	var latestActivity float64 = 0
-
-	s.logger.Info("🔍 [EVOLUTION STRATEGY] Analyzing conversations for intelligent mapping",
-		"total_conversations", len(conversations),
-		"inbox_id", s.inbox.ID)
-
-	for _, conv := range conversations {
-		if conv.InboxID == s.inbox.ID {
-			if s.config.ReopenConversation || conv.Status != string(ConversationStatusResolved) {
-				s.logger.Info("🔍 [EVOLUTION STRATEGY] Analyzing conversation",
-					"conversation_id", conv.ID,
-					"status", conv.Status,
-					"last_activity", conv.LastActivityAt)
-
-				// ESTRATÉGIA: Usa conversa com última atividade (mais recente)
-				var convActivity float64
-				if activityVal, ok := conv.LastActivityAt.(float64); ok {
-					convActivity = activityVal
-				} else if activityVal, ok := conv.LastActivityAt.(int); ok {
-					convActivity = float64(activityVal)
-				}
-
-				if convActivity > latestActivity {
-					latestActivity = convActivity
-					bestConversation = &conv
-					s.logger.Info("✅ [EVOLUTION STRATEGY] Found more recent conversation",
-						"conversation_id", conv.ID,
-						"last_activity", convActivity,
-						"status", conv.Status)
-				} else if bestConversation == nil {
-					// Fallback: usa primeira disponível
-					bestConversation = &conv
-					s.logger.Info("📝 [EVOLUTION STRATEGY] Using fallback conversation",
-						"conversation_id", conv.ID)
-				}
-			}
-		}
-	}
-
-	if bestConversation != nil {
-		s.logger.Info("🎯 [EVOLUTION STRATEGY] Selected conversation with latest activity",
-			"conversation_id", bestConversation.ID,
-			"status", bestConversation.Status,
-			"last_activity", bestConversation.LastActivityAt)
-		s.setCache(cacheKey, bestConversation)
-		return bestConversation, nil
-	}
-
-	// Cria nova conversa
-	req := ConversationCreateRequest{
-		ContactID: contact.ID,
-		InboxID:   s.inbox.ID,
-	}
-
-	if s.config.ConversationPending {
-		req.Status = string(ConversationStatusPending)
-	}
-
-	s.logger.Info("🚀 [CHATWOOT SERVICE DEBUG] Creating new conversation",
-		"contactID", contact.ID, "inboxID", s.inbox.ID, "request", req)
-
-	conversation, err := s.client.CreateConversation(ctx, req)
-	if err != nil {
-		s.logger.Error("❌ [CHATWOOT SERVICE DEBUG] Failed to create conversation", "error", err, "request", req)
-		return nil, fmt.Errorf("failed to create conversation: %w", err)
-	}
-
-	s.setCache(cacheKey, conversation)
-	s.logger.Info("✅ [CHATWOOT SERVICE DEBUG] Successfully created conversation",
-		"conversationID", conversation.ID, "contactID", contact.ID, "status", conversation.Status)
-	return conversation, nil
-}
-
 // findOrCreateConversationWithEvolutionStrategy implementa estratégia Evolution API melhorada
 func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Context, contact *Contact) (*Conversation, error) {
 	s.logger.Info("🔍 [EVOLUTION STRATEGY] Starting Evolution API strategy",
@@ -973,7 +879,7 @@ func (s *Service) findOrCreateConversationWithEvolutionStrategy(ctx context.Cont
 }
 
 // saveConversationMappingAsync salva mapeamento de conversa de forma assíncrona
-func (s *Service) saveConversationMappingAsync(ctx context.Context, chatJid, phoneNumber string, contactID, conversationID int) {
+func (s *Service) saveConversationMappingAsync(_ context.Context, chatJid, phoneNumber string, contactID, conversationID int) {
 	s.logger.Info("💾 [ASYNC MAPPING] Starting async conversation mapping save",
 		"chat_jid", chatJid,
 		"phone_number", phoneNumber,
@@ -1655,46 +1561,26 @@ func (s *Service) sendAttachmentMessage(ctx context.Context, phoneNumber, conten
 
 // determineActualFileTypeFromMap determina o tipo real do arquivo baseado na URL, extensão ou MIME type
 func (s *Service) determineActualFileTypeFromMap(attachmentMap map[string]interface{}) string {
-	// Create an Attachment struct from the map for compatibility with existing detector
-	attachment := Attachment{}
-
-	if fileType, ok := attachmentMap["file_type"].(string); ok {
-		attachment.FileType = fileType
-	}
-	if dataURL, ok := attachmentMap["data_url"].(string); ok {
-		attachment.DataURL = dataURL
-	}
-	if fileSize, ok := attachmentMap["file_size"].(float64); ok {
-		attachment.FileSize = int(fileSize)
-	}
-	if fallback, ok := attachmentMap["fallback"].(string); ok {
-		attachment.Fallback = fallback
+	// Extrai apenas a URL dos dados que é o que precisamos
+	var dataURL string
+	if url, ok := attachmentMap["data_url"].(string); ok {
+		dataURL = url
 	}
 
 	detector := NewFileTypeDetector()
-	return detector.DetectFileType(attachment)
+	return detector.DetectFileType(dataURL)
 }
 
 // getFileNameFromAttachmentMap extrai o nome do arquivo do anexo a partir de um map
 func (s *Service) getFileNameFromAttachmentMap(attachmentMap map[string]interface{}) string {
-	// Create an Attachment struct from the map for compatibility with existing detector
-	attachment := Attachment{}
-
-	if fileType, ok := attachmentMap["file_type"].(string); ok {
-		attachment.FileType = fileType
-	}
-	if dataURL, ok := attachmentMap["data_url"].(string); ok {
-		attachment.DataURL = dataURL
-	}
-	if fileSize, ok := attachmentMap["file_size"].(float64); ok {
-		attachment.FileSize = int(fileSize)
-	}
-	if fallback, ok := attachmentMap["fallback"].(string); ok {
-		attachment.Fallback = fallback
+	// Extrai apenas a URL dos dados que é o que precisamos
+	var dataURL string
+	if url, ok := attachmentMap["data_url"].(string); ok {
+		dataURL = url
 	}
 
 	detector := NewFileTypeDetector()
-	return detector.extractFileName(attachment)
+	return detector.extractFileName(dataURL)
 }
 
 // downloadAttachment faz download do anexo do Chatwoot
